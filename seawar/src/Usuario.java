@@ -22,99 +22,111 @@ public class Usuario {
 	public Date DataCadastro;
 	public Date DataCancelamento;
 	public boolean bStatusUsuario;
-	public void getLogin() {
 	
+	public String getLogin() {
+		return sLogin;
 	}
-	
-	public void setLogin(String login) {
-	
+
+	public void setLogin(String sLogin) {
+		this.sLogin = sLogin;
 	}
-	
-	public void getSenha() {
-	
+
+	public String getSenha() {
+		return sSenha;
 	}
-	
-	public void setSenha(String senha) {
-	
+
+	public void setSenha(String sSenha) {
+		this.sSenha = sSenha;
 	}
-	
-	public void getId_usuario() {
-	
+
+	public int getId_usuario() {
+		return iId_usuario;
 	}
-	
-	public void setId_Usuario(int idUsuario) {
-	
+
+	public void setId_usuario(int iIdUsuario) {
+		iId_usuario = iIdUsuario;
 	}
-	
-	public void getEmail() {
-	
+
+	public String getsEmail() {
+		return sEmail;
 	}
-	
-	public void setEmail(String email) {
-	
+
+	public void setEmail(String sEmail) {
+		this.sEmail = sEmail;
 	}
-	
-	public void getNacionalidade() {
-	
+
+	public String getNacionalidade() {
+		return sNacionalidade;
 	}
-	
-	public void setNacionalidade(String nacionalidade) {
-	
+
+	public void setNacionalidade(String sNacionalidade) {
+		this.sNacionalidade = sNacionalidade;
 	}
-	
-	public void getPontuacao() {
-	
+
+	public int getPontuacao() {
+		return iPontuacao;
 	}
-	
-	public void setPontuacao(int pontuacao) {
-	
+
+	public void setPontuacao(int iPontuacao) {
+		this.iPontuacao = iPontuacao;
 	}
-	
-	public void getDataCadastro() {
-	
+
+	public Date getDataCadastro() {
+		return DataCadastro;
 	}
-	
+
 	public void setDataCadastro(Date dataCadastro) {
-	
+		DataCadastro = dataCadastro;
 	}
-	
-	public void getDataCancelamento() {
-	
+
+	public Date getDataCancelamento() {
+		return DataCancelamento;
 	}
-	
+
 	public void setDataCancelamento(Date dataCancelamento) {
-	
+		DataCancelamento = dataCancelamento;
 	}
-	
-	public void getStatusUsuario() {
-	
+
+	public boolean isUsuarioAtivo() {
+		return bStatusUsuario;
 	}
-	
-	public void setStatusUsuario(boolean statusUsuario) {
-	
+
+	public void setUsuarioAtivo(boolean bStatusUsuario) {
+		this.bStatusUsuario = bStatusUsuario;
 	}
-	
+
 	public void logar(String login, String senha) {
 	
 	}
 	
-	public void cadastrarUsuario(Objeto Usuario) {
+	public void cadastrarUsuario(Usuario objUsuario) {
 	
 	}
 	
-	public void atualizarUsuario(Objeto Usuario) {
+	public void atualizarUsuario(Usuario objUsuario) {
 	
 	}
 	
 	public void excluirUsuario(int id_usuario) {
-	
+		if(UsuarioDAO.excluirUsuario(id_usuario))
+		{
+			//Dê algum feedback para o usuário (ou não)
+		}
 	}
 	
-	public void getUsuario(int id_usuario) {
+	public Usuario getUsuario(int id_usuario) {
 	
+		//TODO: Implementar o DAO
+		Usuario user = UsuarioDAO.getUsuario(id_usuario);
+		
+		return user;
 	}
 	
-	public void getUsuarios(String clausula) {
+	public List<Usuario> getUsuarios(String clausula) {
 	
+		//TODO: Implementar a logica do DAO
+		List<Usuario> usuarios = UsuarioDAO.getUsuarios(clausula);
+		
+		return usuarios;
 	}
 }
