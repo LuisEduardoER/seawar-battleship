@@ -13,15 +13,15 @@
 
 
 public class Regras {
-	public void validarPosicaoNavio(Objeto Embarcacao, Objeto Tabuleiro) {
+	public void validarPosicaoNavio(Embarcacao objEmbarcacao, Tabuleiro objTabuleiro) {
 	
 	}
 	
-	public void validarTiro(Objeto Celula, Objeto Tabuleiro) {
+	public void validarTiro(Celula objCelula, Tabuleiro objTabuleiro) {
 	
 	}
 	
-	public void verificarVencedor(Objeto Tabuleiro) {
+	public void verificarVencedor(Tabuleiro objTabuleiro) {
 	
 	}
 }
