@@ -22,7 +22,7 @@ public class Usuario {
 	public Date DataCadastro;
 	public Date DataCancelamento;
 	public boolean bStatusUsuario;
-	
+
 	public String getLogin() {
 		return sLogin;
 	}
@@ -96,37 +96,49 @@ public class Usuario {
 	}
 
 	public void logar(String login, String senha) {
-	
+
 	}
-	
-	public void cadastrarUsuario(Usuario objUsuario) {
-	
-	}
-	
-	public void atualizarUsuario(Usuario objUsuario) {
-	
-	}
-	
-	public void excluirUsuario(int id_usuario) {
-		if(UsuarioDAO.excluirUsuario(id_usuario))
-		{
-			//Dê algum feedback para o usuário (ou não)
+
+	public boolean cadastrarUsuario(Usuario objUsuario) {
+		if (UsuarioDAO.cadastrarUsuario(objUsuario)){
+			return true;
+		}
+		else{
+			return false;
 		}
 	}
-	
+
+	public boolean atualizarUsuario(Usuario objUsuario) {
+		if(UsuarioDAO.atualizarUsuario(objUsuario)){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
+	public boolean excluirUsuario(int id_usuario) {
+		if(UsuarioDAO.excluirUsuario(id_usuario)){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
 	public Usuario getUsuario(int id_usuario) {
-	
+
 		//TODO: Implementar o DAO
 		Usuario user = UsuarioDAO.getUsuario(id_usuario);
-		
+
 		return user;
 	}
-	
+
 	public List<Usuario> getUsuarios(String clausula) {
-	
+
 		//TODO: Implementar a logica do DAO
 		List<Usuario> usuarios = UsuarioDAO.getUsuarios(clausula);
-		
+
 		return usuarios;
 	}
 }
