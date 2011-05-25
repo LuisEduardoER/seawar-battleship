@@ -9,23 +9,36 @@ public class ListaJogadores extends JApplet
 	private String nomeJogadores[] = {"Débora","Fernando","Reginaldo","Reinaldo","Marcus","Vitor"};
 	private JLabel lUsuario;
 	private JLabel lDadosJogador;
+	private JLabel lEspaco;
+	private GridBagLayout layout;
+	private GridBagConstraints cons;
 	
 	public void init()
 	{
-		setLayout(new FlowLayout());
-		setSize(400,400);
+		Container c = getContentPane();   
+		layout = new GridBagLayout();
+		c.setLayout(layout);
+		cons = new GridBagConstraints();
+		setSize(500,500);
+		cons.fill = GridBagConstraints.BOTH;
 		
-		listaJogadores = new JList(nomeJogadores);
-		listaJogadores.setVisibleRowCount(20);
-		listaJogadores.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-				
+		cons.gridx = 0;   
+        cons.gridy = 0; 
 		lUsuario = new JLabel("Lista de Jogadores Online");
-		add(new JScrollPane(listaJogadores));
-		
+		c.add(lUsuario,cons);
+				
+		cons.gridx = 1;   
+        cons.gridy = 0; 
 		lDadosJogador = new JLabel("Dados do Jogador");
+		c.add(lDadosJogador,cons);
 		
-		add(lUsuario);
-		add(lDadosJogador);
+		cons.gridx = 0;   
+        cons.gridy = 1;
+        listaJogadores = new JList(nomeJogadores);
+		listaJogadores.setVisibleRowCount(10);
+		listaJogadores.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		c.add(new JScrollPane(listaJogadores),cons);
+        
 	}
 
 }
