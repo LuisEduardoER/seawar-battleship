@@ -33,7 +33,7 @@
          add(labSenha);
          add(senha);
          add(ok);
-         //add(cancelar);      	
+         add(cancelar);      	
       }   	   	
    }
     
