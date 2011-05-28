@@ -58,7 +58,7 @@ import java.awt.*;
          
          cons.gridx = 1;   
          cons.gridy = 2;
-         //c.add(cancelar,cons);      	
+         c.add(cancelar,cons);      	
       }   	   	
    }
     
