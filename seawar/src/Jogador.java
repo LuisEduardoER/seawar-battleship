@@ -52,19 +52,19 @@ public class Jogador extends Usuario {
 		oTabuleiroDefesa = tabuleiro;
 	}
 	
-	public static boolean isOnLine(int id_usuario) {
+	public boolean isOnLine(int id_usuario) {
 		
 		return JogadorDAO.IsOnline(id_usuario);
 		
 	}
 	
-	public void setOffline() {
+	public boolean setOffline() {
 		//Ativa o bot
-		bIsBot = true;
+		setIsBot(true);
 		
 		//TODO: Desconecta o cara
-		
-		
+		boolean removido = JogadorDAO.RemoverJogador(this);
+		return removido;
 	}
 	
 	public boolean setOnline() {
