@@ -46,14 +46,16 @@ public class JogadorDAO {
 				StringBuilder strSQL = new StringBuilder("SELECT STATUS_JOGADOR FROM SEAWAR.JOGADOR");
 				strSQL.append(" WHERE COD_ID_USUARIO = " + IdUsuario);
 				ResultSet objRS = objBD.getObjStatement().executeQuery(strSQL.toString());
-				objRS.first();
-				bIsJogando =  objRS.getBoolean("STATUS_JOGADOR");
+				while (objRS.next()){
+					bIsJogando =  objRS.getBoolean("STATUS_JOGADOR");	
+				}
 				objRS.close();
 				objBD.fecharConexaoBanco(objBD.getObjConn());
 			}
 			catch (SQLException ex)
 			{
 				Logger.getLogger(Jogador.class.getName()).log(Level.SEVERE, null, ex);
+				bIsJogando = false;
 			}
 		}
 		return bIsJogando;
@@ -70,7 +72,7 @@ public class JogadorDAO {
 				//concatenação de strings
 				StringBuilder strSQL = new StringBuilder("INSERT INTO SEAWAR.JOGADOR(COD_ID_USUARIO, STATUS_JOGADOR, IP_JOGADOR) VALUES (");
 				strSQL.append(jogador.getId_usuario() +"," );
-				strSQL.append(jogador.isJogando() +"," );
+				strSQL.append("1," );
 				strSQL.append("'"+jogador.getIpJogador()+"'");
 				strSQL.append(");");
 
