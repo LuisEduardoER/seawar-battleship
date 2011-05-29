@@ -76,7 +76,7 @@ public class BancoDeDados {
      */
     public Statement getObjStatement() {
     	try{
-    		return this.objConn.createStatement();
+    		return getObjConn().createStatement();
     	}
         catch(Exception ex)
         {
