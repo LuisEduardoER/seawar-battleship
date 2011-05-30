@@ -9,67 +9,98 @@
 //
 //
 
+import java.io.IOException;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.*;
 
 
 public class Jogo {
 	public int iCodJogadorVencedor;
-	public Array Objeto Jogador aListaJogador;
+	public Jogador[] aListaJogador;
 	public boolean bJogoEncerrado;
 	public Date DataCriacaoJogo;
-	public void getCodJogadorVencedor() {
 	
+	public Jogo(int numeroJogadores){
+		aListaJogador = new Jogador[numeroJogadores];
+		DataCriacaoJogo = new Date();
+		bJogoEncerrado = false;
+		iCodJogadorVencedor = 0;
 	}
 	
-	public void setCodJogadorVencedor(int codJogadorVencedor) {
-	
+	public int getCodJogadorVencedor() {
+		return iCodJogadorVencedor;
 	}
-	
-	public void getListaJogador() {
-	
+
+	public void setCodJogadorVencedor(int iCodJogadorVencedor) {
+		this.iCodJogadorVencedor = iCodJogadorVencedor;
 	}
-	
-	public void setListaJogador(Array Objeto Jogador) {
-	
+
+	public Jogador[] getListaJogador() {
+		return aListaJogador;
 	}
-	
-	public void getJogoEncerrado() {
-	
+
+	public void setListaJogador(Jogador[] aListaJogador) {
+		this.aListaJogador = aListaJogador;
 	}
-	
-	public void setJogoEncerrado(boolean jogoEncerrado) {
-	
+
+	public boolean isJogoEncerrado() {
+		return bJogoEncerrado;
 	}
-	
-	public void getDataCriacaoJogo() {
-	
+
+	private void setJogoEncerrado(boolean bJogoEncerrado) {
+		this.bJogoEncerrado = bJogoEncerrado;
 	}
-	
+
+	public Date getDataCriacaoJogo() {
+		return DataCriacaoJogo;
+	}
+
 	public void setDataCriacaoJogo(Date dataCriacaoJogo) {
+		DataCriacaoJogo = dataCriacaoJogo;
+	}
+
+	public static Jogo iniciarJogo(Jogador[] jogadores) {
 	
+		Jogo jogo = new Jogo(jogadores.length);
+		jogo.setListaJogador(jogadores);
+		jogo.setJogoEncerrado(false);
+		return jogo;
 	}
 	
-	public void iniciarJogo() {
-	
-	}
-	
-	public void conectarJogador(Objeto Jogador) {
-	
+	public void conectarJogador(Jogador jogador) {
+		
+		for(int i = 0; i < aListaJogador.length; i++){
+			if(aListaJogador[i] == null)
+				aListaJogador[i] = jogador;
+		}
 	}
 	
 	public void gerarJogo() {
-	
+		//TODO Verificar o que faz esse método
 	}
 	
-	public void sePingarJogador(Objeto Jogador) {
-	
+	public boolean sePingarJogador(Jogador jogador) {
+		String strIp = jogador.getIpJogador();
+		
+		try {
+			Socket sock = new Socket(strIp, 80);
+			return sock.isConnected();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
 	}
 	
 	public void encerrarJogo() {
-	
+		this.bJogoEncerrado = true;
 	}
 	
-	public void aturarEm(Objeto Jogador, Objeto Celula) {
-	
+	public void atuarEm(Jogador jogador, Celula celula) {
+		Tabuleiro tabuleiro = jogador.getTabuleiroAtaque();
 	}
 }
