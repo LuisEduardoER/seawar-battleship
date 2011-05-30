@@ -22,7 +22,7 @@
    		 layout = new GridBagLayout();
    		 c.setLayout(layout);
    		 cons = new GridBagConstraints();
-   		 //setSize(500,500);
+   		 setSize(500,500);
    		 cons.fill = GridBagConstraints.BOTH;
    		 Imagens i = new Imagens();
    		 c.setBackground(i.corBackground());  
