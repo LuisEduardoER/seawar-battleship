@@ -21,6 +21,8 @@ public class ListaJogadores extends JApplet
 		cons = new GridBagConstraints();
 		setSize(500,500);
 		cons.fill = GridBagConstraints.BOTH;
+		Imagens i = new Imagens();
+		c.setBackground(i.corBackground());
 		
 		cons.gridx = 0;   
         cons.gridy = 0; 

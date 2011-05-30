@@ -1,4 +1,5 @@
-import java.awt.*;
+   import java.awt.*;
+   import java.awt.Event.*;
    import javax.swing.*;
    import javax.swing.event.*;
    import java.applet.*;
@@ -6,24 +7,26 @@ import java.awt.*;
 
     public class TelaLogin extends JApplet
    {
-      private JLabel labUsuario;
-      private JLabel labSenha; 
+      private JLabel labUsuario, labSenha, imagem; 
       private JTextField textUsuario;
       private JPasswordField senha;
       private JButton ok;
       private JButton cancelar;  
       private GridBagLayout layout;
-  	  private GridBagConstraints cons;    
-      
+  	  private GridBagConstraints cons;   
+  	  
+  	  
   	  public void init()
       {    	   
-    	   Container c = getContentPane();   
-   		   layout = new GridBagLayout();
-   		   c.setLayout(layout);
-   		   cons = new GridBagConstraints();
-   		   setSize(500,500);
-   		   cons.fill = GridBagConstraints.BOTH;
-   		
+    	 Container c = getContentPane();   
+   		 layout = new GridBagLayout();
+   		 c.setLayout(layout);
+   		 cons = new GridBagConstraints();
+   		 //setSize(500,500);
+   		 cons.fill = GridBagConstraints.BOTH;
+   		 Imagens i = new Imagens();
+   		 c.setBackground(i.corBackground());  
+   	  	   		 
    		   
          labUsuario = new JLabel("Usuário");
          textUsuario = new JTextField("",11);
@@ -58,7 +61,11 @@ import java.awt.*;
          
          cons.gridx = 1;   
          cons.gridy = 2;
-         c.add(cancelar,cons);      	
-      }   	   	
-   }
-    
+         c.add(cancelar,cons);
+         
+         
+      }
+  	  
+   }  	  
+
+ 
