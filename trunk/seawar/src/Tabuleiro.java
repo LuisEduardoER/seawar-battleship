@@ -13,60 +13,75 @@
 
 
 public class Tabuleiro {
-	public Matriz Objeto Celula mMatrizCelula;
-	public Matriz Objeto Celula mCelulasAtacadas;
+	public Celula[][] mMatrizCelula;
+	public Celula[][] mCelulasAtacadas;
 	public boolean bTravaTabuleiro;
 	public boolean bTurno;
-	public Objeto Jogador oJogador;
-	public void getMatrizCelula() {
+	public Jogador oJogador;
+	public Embarcacao[] arrEmbarcacoes;
 	
+	public Tabuleiro(int tamanho){
+		mMatrizCelula = new Celula[tamanho][tamanho];
+		mCelulasAtacadas = new Celula[tamanho][tamanho];
+	}
+	public Celula[][] getMatrizCelula() {
+		return mMatrizCelula;
+	}
+
+	public void setMatrizCelula(Celula[][] mMatrizCelula) {
+		this.mMatrizCelula = mMatrizCelula;
+	}
+
+	public Celula[][] getCelulasAtacadas() {
+		return mCelulasAtacadas;
+	}
+
+	public void setCelulasAtacadas(Celula[][] mCelulasAtacadas) {
+		this.mCelulasAtacadas = mCelulasAtacadas;
+	}
+
+	public boolean isTravaTabuleiro() {
+		return bTravaTabuleiro;
+	}
+
+	public void setTravaTabuleiro(boolean bTravaTabuleiro) {
+		this.bTravaTabuleiro = bTravaTabuleiro;
+	}
+
+	public boolean isTurno() {
+		return bTurno;
+	}
+
+	public void setTurno(boolean bTurno) {
+		this.bTurno = bTurno;
+	}
+
+	public Jogador getoJogador() {
+		return oJogador;
+	}
+
+	public void setoJogador(Jogador oJogador) {
+		this.oJogador = oJogador;
+	}
+
+	public Embarcacao[] getArrEmbarcacoes() {
+		return arrEmbarcacoes;
+	}
+
+	public void setArrEmbarcacoes(Embarcacao[] arrEmbarcacoes) {
+		this.arrEmbarcacoes = arrEmbarcacoes;
+	}
+
+	public boolean seTabuleiroTravado(Jogador jogador) {
+		return false;
 	}
 	
-	public void setMatrizCelular(Matriz Objeto Celula) {
-	
+	public boolean seCelulaAtacada(Celula celula) {
+		return false;
 	}
 	
-	public void getCelulasAtacadas() {
-	
-	}
-	
-	public void setCelulasAtacadas(Matriz Objeto Celula) {
-	
-	}
-	
-	public void getTravaTabuleiro() {
-	
-	}
-	
-	public void setTravaTabuleiro(boolean travaTabuleiro) {
-	
-	}
-	
-	public void getTurno() {
-	
-	}
-	
-	public void setTurno(boolean turno) {
-	
-	}
-	
-	public void getJogador() {
-	
-	}
-	
-	public void setJogador(Objeto Jogador) {
-	
-	}
-	
-	public void seTabuleiroTravado(Objeto Jogador) {
-	
-	}
-	
-	public void seCelulaAtacada(Objeto Celula) {
-	
-	}
-	
-	public void encontrarCelula(int x, int y) {
-	
+	public Celula encontrarCelula(int x, int y) {
+			Celula objCelula = mMatrizCelula[x][y];
+			return objCelula;
 	}
 }
