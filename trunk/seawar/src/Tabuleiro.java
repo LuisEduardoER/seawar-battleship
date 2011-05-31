@@ -11,7 +11,7 @@
 
 
 
-//Classe relacionada ao tabuleiro do jogo.
+//Classe relacionada ao Tabuleiro do Jogo.
 public class Tabuleiro {
 	public Celula[][] mMatrizCelula;
 	public Celula[][] mCelulasAtacadas;
