@@ -1,17 +1,19 @@
 import java.awt.*;
 import javax.swing.*;
-import javax.swing.event.*;
-import java.applet.*;
 
-public class ListaJogadores extends JApplet
-{
+public class ListaJogadores extends JFrame
+{	
+	private static final long serialVersionUID = 1L;
 	private JList listaJogadores;
 	private String nomeJogadores[] = {"Débora","Fernando","Reginaldo","Reinaldo","Marcus","Vitor"};
-	private JLabel lUsuario;
-	private JLabel lDadosJogador;
-	private JLabel lEspaco;
+	private JLabel lUsuario,lDadosJogador;
+	private JButton jogar, sair;  
 	private GridBagLayout layout;
 	private GridBagConstraints cons;
+	
+	public ListaJogadores(){
+		this.init();	
+	}
 	
 	public void init()
 	{
@@ -23,6 +25,7 @@ public class ListaJogadores extends JApplet
 		cons.fill = GridBagConstraints.BOTH;
 		Imagens i = new Imagens();
 		c.setBackground(i.corBackground());
+		
 		
 		cons.gridx = 0;   
         cons.gridy = 0; 
@@ -40,6 +43,20 @@ public class ListaJogadores extends JApplet
 		listaJogadores.setVisibleRowCount(10);
 		listaJogadores.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		c.add(new JScrollPane(listaJogadores),cons);
+				       
+    
+        cons.gridx = 0;   
+        cons.gridy = 2;
+        sair = new JButton("Sair");
+        sair.setMnemonic( 'S' );
+        c.add(sair,cons);
+        
+        
+        cons.gridx = 1;   
+        cons.gridy = 2;
+		jogar = new JButton("Jogar");
+        jogar.setMnemonic( 'J' );
+        c.add(jogar,cons);
         
 	}
 
