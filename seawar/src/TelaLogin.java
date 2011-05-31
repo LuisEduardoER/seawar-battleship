@@ -1,23 +1,27 @@
-   import java.awt.*;
-   import java.awt.Event.*;
-   import javax.swing.*;
-   import javax.swing.event.*;
-   import java.applet.*;
+import java.awt.*;
+   import java.awt.event.ActionEvent;
+   import java.awt.event.ActionListener;
+import javax.swing.*;
+
    
 
     public class TelaLogin extends JApplet
    {
-      private JLabel labUsuario, labSenha, imagem; 
+      private static final long serialVersionUID = 1L;
+	  private JLabel labUsuario, labSenha; 
       private JTextField textUsuario;
       private JPasswordField senha;
-      private JButton ok;
-      private JButton cancelar;  
+      private JButton ok, cancelar;  
       private GridBagLayout layout;
   	  private GridBagConstraints cons;   
   	  
+  	  public TelaLogin(){
+  		  super();  		  
+  	  }
   	  
   	  public void init()
       {    	   
+  		 
     	 Container c = getContentPane();   
    		 layout = new GridBagLayout();
    		 c.setLayout(layout);
@@ -34,11 +38,28 @@
          senha = new JPasswordField(11);
          ok = new JButton("Entrar");
          ok.setMnemonic( 'E' );
+         ok.addActionListener
+         (      
+             new ActionListener()
+            {
+                public void actionPerformed( ActionEvent event )
+               {                	
+                	Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+            		ListaJogadores window = new ListaJogadores();
+            		window.setSize(dim.width, dim.height);
+            		window.setVisible(true);
+                	
+               }
+            });
       	//para desabilitar um JTextField textUsuario.setEditable(false);
+        
+
          	
          cancelar = new JButton("Cancelar");
          cancelar.setMnemonic( 'C' );
-               	
+         cancelar.setActionCommand("CLOSE");
+                 
+         
          cons.gridx = 0;   
          cons.gridy = 0;
          c.add(labUsuario,cons);
@@ -65,7 +86,11 @@
          
          
       }
-  	  
+/*  	public void start( ){ 
+  	    ListaJogadores lista = new ListaJogadores();
+  	    lista.setVisible(true);
+  	}
+*/  	  
    }  	  
 
  
