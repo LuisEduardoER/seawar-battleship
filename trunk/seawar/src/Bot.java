@@ -5,7 +5,7 @@
 //  @ Project : @Seawar
 //  @ File Name : Bot.java
 //  @ Date : @06/05/2011
-//  @ Author : @Fernando
+//  @ Author : @Fernando,@Marcus
 //
 //
 
