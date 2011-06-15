@@ -12,8 +12,8 @@
 
 
 
-public class TipoCelula {
-	public Object embarcacao;
-	public Object agua;
-	public Object destruido;
+public enum TipoCelula {
+	Embarcacao,
+	Agua,
+	AreaLivre
 }

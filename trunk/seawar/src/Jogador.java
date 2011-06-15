@@ -1,4 +1,4 @@
-import javax.net.ssl.SSLEngineResult.Status;
+
 
 //
 //
@@ -62,14 +62,12 @@ public class Jogador extends Usuario {
 		//Ativa o bot
 		setIsBot(true);
 		
-		//TODO: Desconecta o cara
 		boolean removido = JogadorDAO.RemoverJogador(this);
 		return removido;
 	}
 	
 	public boolean setOnline() {
 		
-		//TODO: Conecta a pessoa
 		boolean inserido = JogadorDAO.InserirJogador(this);
 		
 		return inserido;
