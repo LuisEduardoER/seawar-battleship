@@ -63,9 +63,14 @@ public class Servidor {
 		}
 		
 	}
-	
+	//Método deve ser executado em um intervalo determinado
+	//para que o jogador envie um socket para atualizar o tempo dele online
 	public void verificarJogador(Jogador objJogador) {
 	
+		if(! objJogador.isOnline()) //Quando não renovar o tempo, ele não deve mais estar jogando
+		{
+			derrubarJogador(objJogador);
+		}
 	}
 	
 	public void derrubarJogador(Jogador objJogador) {
