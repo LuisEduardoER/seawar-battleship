@@ -17,11 +17,33 @@ public class Regras {
 	
 	}
 	
-	public void validarTiro(Celula objCelula, Tabuleiro objTabuleiro) {
-	
+	public boolean validarTiro(Celula objCelula, Tabuleiro objTabuleiro) {
+
+		//TODO: Retratar a assinatura do método abaixo, deve retornar apenas um array unitario (normal)
+		Celula[][] celulas = objTabuleiro.getCelulasAtacadas();
+		Celula celulaAtacada = celulas[objCelula.x][objCelula.y];
+		
+		//Retorna true se a célula for uma área livre, senão o tiro é inválido
+		return (celulaAtacada.getTipoCelula() == TipoCelula.AreaLivre);
 	}
 	
-	public void verificarVencedor(Tabuleiro objTabuleiro) {
-	
+	public boolean verificarVencedor(Tabuleiro objTabuleiro) {
+		
+		//Pressupoe-se que o jogador venceu
+		boolean venceu = true;
+		//Pega as embarcacoes do tabuleiro
+		Embarcacao[] embarcacoes = objTabuleiro.getArrEmbarcacoes();
+		
+		//Verifica cada embarcação no tabuleiro,
+		//se todas estiverem naufragadas, 
+		//o jogador que atirou por último é o vencedor
+		for (int i = 0; i < embarcacoes.length; i++) {
+			//Se a embarcação não afundou, marca que o jogador não venceu
+			if(!embarcacoes[i].bNaufragado){
+				venceu = false;
+			}
+		}
+		
+		return venceu;
 	}
 }
