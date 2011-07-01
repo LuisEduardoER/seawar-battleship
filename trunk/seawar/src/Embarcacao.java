@@ -13,39 +13,96 @@
 
 
 public class Embarcacao {
-	public Array Objeto Celula aListaCelulas;
-	public String sNomeEmbarcacao;
-	public int iValorEmbarcacao;
-	public boolean bNaufragado;
-	public void getListaCelulas() {
+	private Celula[] aListaCelulas;
+	private String sNomeEmbarcacao;
+	private int iValorEmbarcacao;
+	private int tamanho;
+	private boolean bNaufragado;
+	private boolean bVertical;
 	
+	public Embarcacao(int tamanho) {
+		bVertical = false;
+		gerarCelulas();
+	}
+	public Embarcacao(int tamanho, boolean vertical){
+		bVertical = vertical;
+		gerarCelulas();
+	}
+	public Celula[] getListaCelulas() {
+		return aListaCelulas;
 	}
 	
-	public void setListaCelulas(Array Objeto Celula) {
-	
+	public void setListaCelulas(Celula[] celulas) {
+		aListaCelulas = celulas;
 	}
 	
-	public void getNomeEmbarcacao() {
-	
+	public String getNomeEmbarcacao() {
+		return sNomeEmbarcacao;
 	}
 	
 	public void setNomeEmbarcacao(String nomeEmbarcacao) {
-	
+		sNomeEmbarcacao = nomeEmbarcacao;
 	}
 	
-	public void getValorEmbarcacao() {
-	
+	public int getValorEmbarcacao() {
+		return iValorEmbarcacao;
 	}
 	
 	public void setValorEmbarcacao(int valorEmbarcacao) {
-	
+		iValorEmbarcacao = valorEmbarcacao * aListaCelulas.length;
 	}
 	
-	public void getNaufragado() {
-	
+	public boolean getNaufragado() {
+		return bNaufragado;
 	}
 	
 	public void setNaufragado(boolean naufragado) {
+		bNaufragado = naufragado;
+	}
+
+	public Celula getCelulaAtacada(Celula celula) {
+		Celula objRetorno = null;
+		for(int i = 0; i < aListaCelulas.length; i++){
+			Celula celulaBarco = aListaCelulas[i];
+			if(celulaBarco != null && celula.x == celulaBarco.x && celula.y == celulaBarco.y){
+				objRetorno = celulaBarco;
+			}
+		}
+		return objRetorno;
+	}
+
+	public void setVertical(boolean makeVertical) {
+		bVertical = makeVertical;
+		ordenarCelulas();
+	}
+
+	private void ordenarCelulas() {
+		//Pega a primeira celula da embarcacao para referencia
+		Celula celulaAnterior = aListaCelulas[0];
+		//Reordena as proximas de acordo
+		for(int i = 1; i < aListaCelulas.length; i++){
+			Celula celulaAtual = aListaCelulas[i];
+			
+			//Coloca a próxima célula na posição adequada
+			if(bVertical){
+				celulaAtual.setLocation(celulaAnterior.x, celulaAnterior.y+1);
+			}
+			else{
+				celulaAtual.setLocation(celulaAnterior.x+1, celulaAnterior.y);
+			}
+			//Troca a celula de referencia para a proxima celula do loop
+			celulaAnterior = celulaAtual;
+		}		
+	}
 	
+	//Gera as celulas da embarcação
+	private void gerarCelulas() {
+		for(int i = 0; i < tamanho; i++){
+			Celula celula = new Celula();
+			celula.setTipoCelula(TipoCelula.Embarcacao);
+			aListaCelulas[i] = celula; 
+		}
+		//Após gerar, ordena-as
+		ordenarCelulas();
 	}
 }

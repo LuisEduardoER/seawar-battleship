@@ -21,8 +21,9 @@ public class Servidor {
 	public List<Jogo> aListaJogos;
 	public List<Jogador> aListaJogadorOnline;
 	public List<Jogador> aListaJogadorJogando;
-	public void getListaJogos() {
 	
+	public List<Jogo> getListaJogos() {
+		return aListaJogos;
 	}
 	
 	public void setListaJogos(List<Jogo> listaJogos) {
