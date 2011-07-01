@@ -20,9 +20,12 @@ public class Tabuleiro {
 	public Jogador oJogador;
 	public Embarcacao[] arrEmbarcacoes;
 	
+	private final int QUANTIDADE_EMBARCACOES_POSSIVEIS = 7; 
+	
 	public Tabuleiro(int tamanho){
 		mMatrizCelula = new Celula[tamanho][tamanho];
 		mCelulasAtacadas = new Celula[tamanho][tamanho];
+		arrEmbarcacoes = new Embarcacao[QUANTIDADE_EMBARCACOES_POSSIVEIS];
 	}
 	public Celula[][] getMatrizCelula() {
 		return mMatrizCelula;
@@ -73,15 +76,66 @@ public class Tabuleiro {
 	}
 
 	public boolean seTabuleiroTravado(Jogador jogador) {
-		return false;
+		return jogador.getTabuleiroAtaque().isTravaTabuleiro();
 	}
 	
 	public boolean seCelulaAtacada(Celula celula) {
-		return false;
+		Celula obj = mCelulasAtacadas[celula.x][celula.y];
+		if(obj != null)
+		{
+			//Celula celulaDefesa = mMatrizCelula[celula.x][celula.y];
+			//return celulaDefesa.aTipoCelula != TipoCelula.AreaLivre; 
+			return obj.aTipoCelula != TipoCelula.AreaLivre;
+		}
+		return  false;
 	}
 	
 	public Celula encontrarCelula(int x, int y) {
 			Celula objCelula = mMatrizCelula[x][y];
 			return objCelula;
+	}
+	
+	public Celula atacar(int x, int y){
+		Celula celAtacada = encontrarCelula(x,y);
+		mCelulasAtacadas[x][y] = celAtacada;
+		
+		switch(celAtacada.getTipoCelula())
+		{
+		case Agua:
+			celAtacada.aTipoCelula = TipoCelula.Agua;
+			break;
+		case AreaLivre:
+			celAtacada.aTipoCelula = TipoCelula.Agua;
+			break;
+		case Embarcacao:
+			acertarEmbarcacao(celAtacada);
+			break;
+		}
+		 
+		return celAtacada;
+	}
+	private void acertarEmbarcacao(Celula celula) {
+		// TODO Implementar com o código correto e refatorado
+		for(int i = 0; i < arrEmbarcacoes.length; i++){
+			Embarcacao barco = arrEmbarcacoes[i];
+			Celula parteBarco = barco.getCelulaAtacada(celula);
+			if(parteBarco != null){
+				// TODO Fazer a lógica para quando um barco é acertado
+			}
+		}
+	}
+	
+	public void ajustarEmbarcacoes(){
+		for(int i = 0; i < arrEmbarcacoes.length; i++){
+			Embarcacao barco = arrEmbarcacoes[i];
+			barco.setVertical(i % 2 == 0);
+			if(barco != null){
+				Celula[] celulasBarco = barco.getListaCelulas();
+				for(int j = 0; j < celulasBarco.length; j++){
+					Celula celula = celulasBarco[j];
+					mMatrizCelula[celula.x][celula.y] = celula;
+				}				
+			}
+		}
 	}
 }
