@@ -55,7 +55,7 @@ public class Jogador extends Usuario {
 	public boolean isOnline() {
 		
 		return JogadorDAO.IsOnline(this.iId_usuario);
-		
+		//return true;
 	}
 	public static boolean isOnline(int id_usuario) {
 		
