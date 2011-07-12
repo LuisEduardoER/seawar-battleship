@@ -56,7 +56,7 @@ public class Jogador extends Usuario {
 	public boolean isOnline() {
 		
 		//return JogadorDAO.IsOnline(this.iId_usuario);
-		return true;   //teste feito para testa o metodo verificaLogin da classe Principal
+		return false;   //teste feito para testa o metodo verificaLogin da classe Principal
 	}
 	public static boolean isOnline(int id_usuario) {
 		
