@@ -104,14 +104,8 @@ public class Tabuleiro {
 	}
 	
 	public Celula encontrarCelula(int x, int y) {
-		Celula objCelula;
-		try{
-			objCelula = mMatrizCelula[x][y];
-		}catch(ArrayIndexOutOfBoundsException ex){
-			throw ex;
-		}
-		return objCelula;
-
+			Celula objCelula = mMatrizCelula[x][y];
+			return objCelula;
 	}
 	
 	public Celula atacar(int x, int y){
@@ -216,12 +210,21 @@ public class Tabuleiro {
 			for(int i = 0; i < celulas.length; i++){
 				Celula celulaBarco = celulas[i];
 				Celula celulaTabuleiro = this.encontrarCelula(celulaBarco.x, celulaBarco.y);
-				boolean celulaOcupada = this.isCelulaOcupadaComBarco(celulaBarco.x,celulaBarco.y);
 				
-				//Se a coordenada pertence ao tabuleiro e a célula está ocupada por outro barco
-				//então a posição é inválida e retorna falso.
-				if(celulaTabuleiro != null && celulaOcupada){
-					return false;
+				//Valida a posição de acordo com a rotação do barco
+				//Caso conflite com alguma outra embarcação, retorna falso o método
+				//pois a posição será inválida
+				if(barco.estaVertical()){
+					if(celulaTabuleiro.getTipoCelula() == TipoCelula.Embarcacao){
+						return false;
+					}
+					y++;
+				}
+				else{
+					if(celulaTabuleiro.getTipoCelula() == TipoCelula.Embarcacao){
+						return false;
+					}
+					x++;
 				}
 			}
 		}
@@ -235,15 +238,6 @@ public class Tabuleiro {
 		return true;
 	}
 	
-	private boolean isCelulaOcupadaComBarco(int x, int y) {
-		for(int i = 0; i < arrEmbarcacoes.length; i++){
-			Embarcacao barco = arrEmbarcacoes[i];
-			if(barco != null && barco.contemCelula(x,y)){
-				return false;
-			}
-		}
-		return false;
-	}
 	private Embarcacao gerarEmbarcacao(int posx, int posy, int tamanho) {
 		Embarcacao obj = new Embarcacao(tamanho);
 		obj.setNomeEmbarcacao("Barco " + tamanho);

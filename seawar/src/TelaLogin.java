@@ -5,7 +5,8 @@ import javax.swing.*;
 
    
 
-    public class TelaLogin extends JApplet
+    //public class TelaLogin extends JApplet
+	  public class TelaLogin extends JApplet
    {
       private static final long serialVersionUID = 1L;
 	  private JLabel labUsuario, labSenha; 
@@ -29,8 +30,7 @@ import javax.swing.*;
    		 setSize(500,500);
    		 cons.fill = GridBagConstraints.BOTH;
    		 Imagens i = new Imagens();
-   		 c.setBackground(i.corBackground());  
-   	  	   		 
+   		 c.setBackground(i.corBackground());  		 
    		   
          labUsuario = new JLabel("Usuário");
          textUsuario = new JTextField("",11);
