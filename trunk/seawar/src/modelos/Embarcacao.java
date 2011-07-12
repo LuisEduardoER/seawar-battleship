@@ -120,13 +120,4 @@ public class Embarcacao {
 		celulaInicial.setLocation(posx, posy);
 		ordenarCelulas();
 	}
-	public boolean contemCelula(int x, int y) {
-		for(int i = 0; i < aListaCelulas.length; i++){
-			if(aListaCelulas[i].x == x && aListaCelulas[i].y == y){
-				return true;
-			}
-		}
-		//retorna falso se a embarcação não ocupar a celula do ponto(x,y)
-		return false;
-	}
 }
