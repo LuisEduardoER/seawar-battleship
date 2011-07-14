@@ -89,7 +89,8 @@ public class Usuario {
 	}
 
 	public boolean isUsuarioAtivo() {
-		return bStatusUsuario;
+		//return bStatusUsuario;
+		return false; //teste para chamada da classe Princpal
 	}
 
 	public void setUsuarioAtivo(boolean bStatusUsuario) {

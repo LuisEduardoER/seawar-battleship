@@ -126,8 +126,8 @@ package modelos;
     		 
       private void verificaLogin()
       {
-         Jogador j = new Jogador();
-         if(j.isOnline() == true)
+         Usuario u = new Usuario();
+         if(u.isUsuarioAtivo() == true)
          {
             labLista.setVisible(true);
             listaJogadores.setVisible(true);
@@ -147,7 +147,7 @@ package modelos;
               	 cancelar.setEnabled(false);*/
          }
            	 
-         if(j.isOnline()== false)
+         if(u.isUsuarioAtivo()== false)
          {
             labMenssagem.setVisible(true);
          }
