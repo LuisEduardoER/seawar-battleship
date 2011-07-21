@@ -1,9 +1,11 @@
-   //package modelos;
 
-   import java.awt.*;
+//package modelos;
+
+   import java.applet.AudioClip;
+import java.awt.*;
    import java.awt.event.ActionEvent;
    import java.awt.event.ActionListener;
-   import javax.swing.*;
+import javax.swing.*;
 //import javax.swing.border.*;
 
 
@@ -20,6 +22,8 @@
       private String nomeJogadores[] = {"Débora","Fernando","Reginaldo","Reinaldo","Marcus","Vitor","______________________________"};
       private JButton jogar, sair;
       Insets insets = new Insets(0,0,5,0);
+      public AudioClip tema;
+ 
      
       public void init()
       {	
@@ -32,7 +36,7 @@
          Imagens i = new Imagens();
          c.setBackground(i.corBackground());
          cons.insets = new Insets(3,3,3,3);
-      		 
+         tema = getAudioClip(getDocumentBase(),"TemaPiratasdoCaribe.wav");
       		 
       		   
          labUsuario = new JLabel("Usuário:");
@@ -52,7 +56,6 @@
                   	window.setSize(dim.width, dim.height);
                   	window.setVisible(true);*/
                      verificaLogin();
-                   	
                   }
                });
          	//para desabilitar um JTextField textUsuario.setEditable(false);
@@ -125,8 +128,8 @@
     		 
       private void verificaLogin()
       {
-         Jogador j = new Jogador();
-         if(j.isOnline() == true)
+         Usuario u = new Usuario();
+         if(u.isUsuarioAtivo() == true)
          {
             labLista.setVisible(true);
             listaJogadores.setVisible(true);
@@ -139,14 +142,14 @@
             senha.setVisible(false);
             entrar.setVisible(false);
             cancelar.setVisible(false);
-              	 
+            tema.play();              	 
               	 /*textUsuario.setEnabled(false);
               	  senha.setEnabled(false);
               	 entrar.setEnabled(false);
               	 cancelar.setEnabled(false);*/
          }
            	 
-         if(j.isOnline()== false)
+         if(u.isUsuarioAtivo()== false)
          {
             labMenssagem.setVisible(true);
          }
