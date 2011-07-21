@@ -88,7 +88,8 @@ public class Usuario {
 	}
 
 	public boolean isUsuarioAtivo() {
-		return bStatusUsuario;
+		//return bStatusUsuario;
+		return true;
 	}
 
 	public void setUsuarioAtivo(boolean bStatusUsuario) {

@@ -1,6 +1,7 @@
 
-package modelos;
+   package modelos;
 
+   import java.applet.AudioClip;
    import java.awt.*;
    import java.awt.event.ActionEvent;
    import java.awt.event.ActionListener;
@@ -21,6 +22,8 @@ package modelos;
       private String nomeJogadores[] = {"Débora","Fernando","Reginaldo","Reinaldo","Marcus","Vitor","______________________________"};
       private JButton jogar, sair;
       Insets insets = new Insets(0,0,5,0);
+      public AudioClip tema;
+   
      
       public void init()
       {	
@@ -32,9 +35,10 @@ package modelos;
          cons.fill = GridBagConstraints.HORIZONTAL;
          Imagens i = new Imagens();
          c.setBackground(i.corBackground());
-         cons.insets = new Insets(3,3,3,3);
-      		 
-      		 
+         cons.insets = new Insets(3,3,3,3);// espaço entre os objetos do layout
+                 
+         tema = getAudioClip(getDocumentBase(),"TemaPiratasdoCaribe.wav");
+         
       		   
          labUsuario = new JLabel("Usuário:");
          textUsuario = new JTextField("",11);
@@ -53,7 +57,6 @@ package modelos;
                   	window.setSize(dim.width, dim.height);
                   	window.setVisible(true);*/
                      verificaLogin();
-                   	
                   }
                });
          	//para desabilitar um JTextField textUsuario.setEditable(false);
@@ -83,6 +86,17 @@ package modelos;
          listaJogadores.setVisibleRowCount(10);
          jogar = new JButton("Jogar");
          jogar.setMnemonic( 'J' );
+         jogar.addActionListener(
+             
+               new ActionListener()
+               {
+                  public void actionPerformed( ActionEvent event )
+                  {
+                    	
+                  }
+               });
+         
+         
          sair = new JButton("Sair");
          sair.setMnemonic( 'S' );
          JSeparator s = new JSeparator();
@@ -140,11 +154,8 @@ package modelos;
             senha.setVisible(false);
             entrar.setVisible(false);
             cancelar.setVisible(false);
+            tema.loop();              	 
               	 
-              	 /*textUsuario.setEnabled(false);
-              	  senha.setEnabled(false);
-              	 entrar.setEnabled(false);
-              	 cancelar.setEnabled(false);*/
          }
            	 
          if(u.isUsuarioAtivo()== false)
