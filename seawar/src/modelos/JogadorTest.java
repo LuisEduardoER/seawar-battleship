@@ -25,7 +25,7 @@ public class JogadorTest extends TestCase {
 	}
 	public void testIsOnline(){
 		objJogador = testIniciaJogador();
-		assertEquals(true,objJogador.isOnLine(14));
+		assertEquals(true,objJogador.isOnline(14));
 	}
 	public void testIsJogando(){
 		objJogador = testIniciaJogador();
