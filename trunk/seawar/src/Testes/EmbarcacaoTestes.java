@@ -1,4 +1,4 @@
-package Funcionalidades;
+package Testes;
 
 import modelos.*;
 
@@ -6,7 +6,7 @@ public class EmbarcacaoTestes {
 
 	public static void main(String args[]){
 		Tabuleiro tabDef;
-		Tabuleiro tabAtaq;
+		//Tabuleiro tabAtaq;
 		
 		tabDef = new Tabuleiro(20);
 		System.out.println("Tabuleiro defesa criado!");
