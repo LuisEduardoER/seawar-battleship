@@ -56,6 +56,7 @@
                   	ListaJogadores window = new ListaJogadores();
                   	window.setSize(dim.width, dim.height);
                   	window.setVisible(true);*/
+                	  
                      verificaLogin();
                   }
                });
