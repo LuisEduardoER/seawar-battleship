@@ -18,17 +18,27 @@ import java.util.*;
 
 public class Jogo {
 	public int iCodJogadorVencedor;
+	private int codJogo;
 	public Jogador[] aListaJogador;
 	public boolean bJogoEncerrado;
 	public Date DataCriacaoJogo;
 	
-	public Jogo(int numeroJogadores){
+	public Jogo(int jogoId, int numeroJogadores){
 		aListaJogador = new Jogador[numeroJogadores];
 		DataCriacaoJogo = new Date();
 		bJogoEncerrado = false;
-		iCodJogadorVencedor = 0;
+		iCodJogadorVencedor = 0;		
+		setIdJogo(jogoId);
 	}
 	
+	public void setIdJogo(int codJogo) {
+		this.codJogo = codJogo;
+	}
+
+	public int getIdJogo() {
+		return codJogo;
+	}
+
 	public int getCodJogadorVencedor() {
 		return iCodJogadorVencedor;
 	}
@@ -61,9 +71,9 @@ public class Jogo {
 		DataCriacaoJogo = dataCriacaoJogo;
 	}
 
-	public static Jogo iniciarJogo(Jogador[] jogadores) {
+	public static Jogo iniciarJogo(int jogoId, Jogador[] jogadores) {
 	
-		Jogo jogo = new Jogo(jogadores.length);
+		Jogo jogo = new Jogo(jogoId,jogadores.length);
 		jogo.setListaJogador(jogadores);
 		jogo.setJogoEncerrado(false);
 		return jogo;

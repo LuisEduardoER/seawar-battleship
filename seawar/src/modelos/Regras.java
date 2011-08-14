@@ -40,7 +40,7 @@ public class Regras {
 		//o jogador que atirou por último é o vencedor
 		for (int i = 0; i < embarcacoes.length; i++) {
 			//Se a embarcação não afundou, marca que o jogador não venceu
-			if(!embarcacoes[i].bNaufragado){
+			if(!embarcacoes[i].getNaufragado()){
 				venceu = false;
 			}
 		}
