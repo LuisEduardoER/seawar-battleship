@@ -58,4 +58,8 @@ public class Log {
 	public void setData(Date data) {
 	
 	}
+	
+	public static void gravarLog(String mensagem){
+		//TODO: Implementar a  gravação de log utilizando um objeto da classe LOG com implementações
+	}
 }

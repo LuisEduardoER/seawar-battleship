@@ -1,5 +1,7 @@
 package modelos;
 
+import java.net.InetAddress;
+
 
 //
 //
@@ -20,6 +22,11 @@ public class Jogador extends Usuario {
 	public boolean bIsBot;
 	public Tabuleiro oTabuleiroAtaque;
 	public Tabuleiro oTabuleiroDefesa;
+	public Conexao conexaoJogador;
+	
+	public Jogador(){
+		conexaoJogador = new Conexao(this);
+	}
 	
 	public String getIpJogador() {
 		return sIpJogador;
@@ -65,7 +72,7 @@ public class Jogador extends Usuario {
 	public boolean setOffline() {
 		//Ativa o bot
 		setIsBot(true);
-		
+		setIpJogador("localhost");
 		boolean removido = JogadorDAO.RemoverJogador(this);
 		return removido;
 	}

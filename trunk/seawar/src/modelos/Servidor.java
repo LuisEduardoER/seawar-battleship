@@ -1,8 +1,23 @@
 package modelos;
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
-import java.util.Scanner;
+import java.util.StringTokenizer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import javax.swing.event.EventListenerList;
+
+import Comunicacao.Constantes;
+import Comunicacao.IMessageListener;
+import Comunicacao.MessageReceiver;
+import Comunicacao.MulticastSender;
+import Comunicacao.TipoMensagem;
+import Events.ServerEvent;
+import Events.ServerEventListener;
+import Events.TipoEventos;
 
 //
 //
@@ -15,13 +30,48 @@ import java.util.Scanner;
 //
 //
 
+public class Servidor implements IMessageListener {
+	private ExecutorService serverExecutor;
+	private boolean continuarRecebendoConexoes;
 
+	//Define uma lista de eventos para a classe Servidor
+	protected EventListenerList listenerList = new EventListenerList();
 
-
-public class Servidor {
 	public List<Jogo> aListaJogos;
 	public List<Jogador> aListaJogadorOnline;
 	public List<Jogador> aListaJogadorJogando;
+	
+	public Servidor(){
+		
+		serverExecutor = Executors.newCachedThreadPool();
+		continuarRecebendoConexoes = true;
+	}
+	
+	public void IniciarServidor(){
+		try{
+			//Cria socket para ouvir uma porta e conseguir manter até 100 conexões
+			ServerSocket serversocket = new ServerSocket(Comunicacao.Constantes.SERVER_PORT, 100);
+			
+			while(continuarRecebendoConexoes){
+				
+				Socket clientSocket = serversocket.accept();
+				
+				serverExecutor.execute(new MessageReceiver(this, clientSocket));
+				
+				fireDisplayChangeEvent(new ServerEvent(String.format("Usuario conectado (%s)", clientSocket.getInetAddress().getHostAddress()),TipoEventos.DisplayAtualizado));
+			}
+		}
+		catch(Exception ex){
+			pararDeReceberConexoes();
+			Log.gravarLog("Erro: " + ex.getMessage());
+		}
+		
+	}
+	
+	public void pararDeReceberConexoes(){
+		continuarRecebendoConexoes = false;
+		serverExecutor.shutdown();
+	}
 	
 	public List<Jogo> getListaJogos() {
 		return aListaJogos;
@@ -31,12 +81,12 @@ public class Servidor {
 		aListaJogos = listaJogos;
 	}
 	
-	public List<Jogo> getListaJogadorOnline() {
-		return aListaJogos;
+	public List<Jogador> getListaJogadorOnline() {
+		return aListaJogadorOnline;
 	}
 	
-	public void setListaJogadorOnline(List<Jogador> listaJogadorOnlne) {
-	
+	public void setListaJogadorOnline(List<Jogador> listaJogadorOnline) {
+		aListaJogadorOnline = listaJogadorOnline;
 	}
 	
 	public void getListaJogadorJogando() {
@@ -48,19 +98,35 @@ public class Servidor {
 	}
 	
 	public void adicionarJogo(Jogo objJogo) {
-	
+		aListaJogos.add(objJogo);
+		fireDisplayChangeEvent(new ServerEvent(String.format("Novo Jogo Aberto (%s)", objJogo.getIdJogo()), TipoEventos.JogosAtualizados));
 	}
 	
-	public void removerJogo() {
-	
+	public void removerJogo(int jogoId) {
+		Jogo objRemover = null;
+		for(Jogo obj : aListaJogos){
+			if(obj.getIdJogo() == jogoId){
+				objRemover = obj;
+				break;
+				}
+		}	
+		if(objRemover != null){
+			aListaJogos.remove(objRemover);
+			ServerEvent evt = new ServerEvent(String.format("Jogo Fechado (%s)", jogoId), TipoEventos.JogosAtualizados);
+			fireDisplayChangeEvent(evt);
+			fireGamesListChangeEvent(evt);
+		}
 	}
 	
 	public void registrarLog(String log) {
+		
 		try {
-			Scanner scan = new Scanner(new File("Log.txt"));
+			Log objLog = new Log();
+			objLog.data = new Date();
+			objLog.setTexto(log);
+			//TODO: Criar o método de gravar log no objLog, pra ficar objLog.Gravar()
 			
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
@@ -75,7 +141,108 @@ public class Servidor {
 		}
 	}
 	
-	public void derrubarJogador(Jogador objJogador) {
-	
+	public void conectarJogador(Jogador objJogador){
+		aListaJogadorOnline.add(objJogador);
+		ServerEvent evt = new ServerEvent(objJogador, TipoEventos.JogadoresAtualizados);
+		firePlayerListChangeEvent(evt);
 	}
+	
+	public void derrubarJogador(Jogador objJogador) {
+		//Dispara evento para dizer que a lista de jogadores foi alterada
+		ServerEvent evt = new ServerEvent(objJogador, TipoEventos.JogadoresAtualizados);
+		firePlayerListChangeEvent(evt);
+	}
+
+	@Override
+	public void mensagemRecebida(String mensagem, String ipDe) {
+		this.registrarLog(mensagem);
+		
+		if(IsMulticastMessage(mensagem)){
+			//Envia a mensagem multicast
+			serverExecutor.execute(new MulticastSender(mensagem));
+		}
+		else{
+			StringTokenizer tokens = new StringTokenizer(mensagem, Constantes.TOKEN_SEPARATOR);
+			receberTokensMensagem(tokens);
+		}
+	}
+
+	private boolean IsMulticastMessage(String mensagem) {
+		boolean isMulticast = false;
+		String[] lstCabecalhos = {
+				"$"+TipoMensagem.ConectarServidor
+				,"$"+TipoMensagem.DesconectarServidor
+				,"$"+TipoMensagem.JogoCriado
+				,"$"+TipoMensagem.JogadorTimeout
+				//,"$"+TipoMensagem.
+				//,"$"+TipoMensagem.ConectarServidor
+				};
+		if(mensagem.contains("$")){
+			String cabecalho = mensagem.substring(0, mensagem.indexOf("$", 3));
+			for (int i = 0; i < lstCabecalhos.length; i++) {
+				if(cabecalho.equalsIgnoreCase(lstCabecalhos[i])){
+					isMulticast = true;
+					break; //quebra o loop se o cabeçalho for de mensagem do tipo multicast
+				}
+			}
+		}
+		
+		return isMulticast;
+	}
+
+	@Override
+	public void receberTokensMensagem(StringTokenizer tokens) {
+		List<String> lstTokens = new ArrayList<String>();
+		
+		
+		//Transforma os tokens em lista
+		while (tokens.hasMoreTokens()){
+			lstTokens.add(tokens.nextToken());
+		}//fim da adatapcao da lista de tokens		
+	}
+
+
+	
+	/*Métodos para manipulação de eventos*/
+	
+	public void AddServerEventListener(ServerEventListener listener){
+		listenerList.add(ServerEventListener.class, listener);
+	}
+	public void RemoveServerEventListener(ServerEventListener listener){
+		listenerList.remove(ServerEventListener.class, listener);
+	}
+	
+	void firePlayerListChangeEvent(ServerEvent evt) {
+        Object[] listeners = listenerList.getListenerList();
+        // Each listener occupies two elements - the first is the listener class
+        // and the second is the listener instance
+        for (int i=0; i<listeners.length; i+=2) {
+            if (listeners[i]==ServerEventListener.class) {
+                ((ServerEventListener)listeners[i+1]).playerListChanged(evt);
+            }
+        }
+    }
+	
+	void fireDisplayChangeEvent(ServerEvent evt) {
+        Object[] listeners = listenerList.getListenerList();
+        // Each listener occupies two elements - the first is the listener class
+        // and the second is the listener instance
+        for (int i=0; i<listeners.length; i+=2) {
+            if (listeners[i]==ServerEventListener.class) {
+                ((ServerEventListener)listeners[i+1]).updateDisplay(evt);
+            }
+        }
+    }
+	
+	void fireGamesListChangeEvent(ServerEvent evt) {
+        Object[] listeners = listenerList.getListenerList();
+        // Each listener occupies two elements - the first is the listener class
+        // and the second is the listener instance
+        for (int i=0; i<listeners.length; i+=2) {
+            if (listeners[i]==ServerEventListener.class) {
+                ((ServerEventListener)listeners[i+1]).updateDisplay(evt);
+            }
+        }
+    }
+
 }
