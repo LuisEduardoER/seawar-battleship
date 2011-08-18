@@ -1,4 +1,7 @@
+package Testes;
 import java.util.UUID;
+
+import modelos.Usuario;
 
 import junit.framework.TestCase;
 
