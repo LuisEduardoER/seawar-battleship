@@ -1,6 +1,8 @@
 package modelos;
 import java.sql.SQLException;
 
+import modelos.BancoDeDados;
+
 import junit.framework.TestCase;
 
 

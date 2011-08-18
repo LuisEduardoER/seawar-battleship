@@ -1,3 +1,5 @@
+package Testes;
+import modelos.Jogador;
 import junit.framework.TestCase;
 
 

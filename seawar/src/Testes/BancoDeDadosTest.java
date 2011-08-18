@@ -1,3 +1,6 @@
+package Testes;
+import modelos.BancoDeDados;
+
 import java.sql.SQLException;
 
 import junit.framework.TestCase;
