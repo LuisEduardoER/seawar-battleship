@@ -9,40 +9,38 @@
 //
 //
 
-
-
-
 public class Conexao {
 	public String sIp_servidor;
+
 	public void conectarJogador(String ip) {
-	
+
 	}
-	
+
 	public void desconectarJogador(Objeto Jogador) {
-	
+
 	}
-	
+
 	public void enviarAtaque(Objeto Celula) {
-	
+
 	}
-	
+
 	public void receberAtaque() {
-	
+
 	}
-	
+
 	public void enviarVitoria(Objeto Jogador) {
-	
+
 	}
-	
+
 	public void receberVitoria() {
-	
+
 	}
-	
+
 	public void enviarAcao(String comando) {
-	
+
 	}
-	
+
 	public void receberAcao() {
-	
+
 	}
 }

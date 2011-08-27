@@ -9,29 +9,27 @@
 //
 //
 
-
-
-
 public class Sons {
 	public String sLocalSom;
 	public boolean bRepetir;
+
 	public void getLocalSom() {
-	
+
 	}
-	
+
 	public void setLocalSom(String localSom) {
-	
+
 	}
-	
+
 	public void getRepetir() {
-	
+
 	}
-	
+
 	public void setRepetir(boolean repetir) {
-	
+
 	}
-	
+
 	public void tocarSom() {
-	
+
 	}
 }

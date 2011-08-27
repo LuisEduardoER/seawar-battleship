@@ -11,50 +11,50 @@
 
 import java.util.*;
 
-
 public class Log {
 	public int iId;
 	public String sTexto;
 	public int iId_jogador;
 	public int iId_jogo;
 	public Date data;
+
 	public void getId() {
-	
+
 	}
-	
+
 	public void setId(int id) {
-	
+
 	}
-	
+
 	public void getTexto() {
-	
+
 	}
-	
+
 	public void setTexto(String texto) {
-	
+
 	}
-	
+
 	public void getId_Jogador() {
-	
+
 	}
-	
+
 	public void setId_Jogador(int idJogador) {
-	
+
 	}
-	
+
 	public void getId_Jogo() {
-	
+
 	}
-	
+
 	public void setId_Jogo(int idJogo) {
-	
+
 	}
-	
+
 	public void getData() {
-	
+
 	}
-	
+
 	public void setData(Date data) {
-	
+
 	}
 }

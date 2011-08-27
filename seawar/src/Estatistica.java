@@ -11,25 +11,24 @@
 
 import java.util.*;
 
-
 public class Estatistica {
 	public void mediaPontuacaoPorJogo() {
-	
+
 	}
-	
+
 	public void cadastrosPeriodo(Date dataIni, Date dataFim) {
-	
+
 	}
-	
+
 	public void usuariosAtivos() {
-	
+
 	}
-	
+
 	public void usuariosPorPais(String pais) {
-	
+
 	}
-	
+
 	public void jogosJogados(int idUsuario) {
-	
+
 	}
 }
