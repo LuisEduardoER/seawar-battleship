@@ -2,13 +2,13 @@ package Testes;
 
 import modelos.*;
 
-public class EmbarcacaoTestes {
+public class EmbarcacaoTest {
 
 	public static void main(String args[]){
 		Tabuleiro tabDef;
 		//Tabuleiro tabAtaq;
 		
-		tabDef = new Tabuleiro(20);
+		tabDef = new Tabuleiro(10);
 		System.out.println("Tabuleiro defesa criado!");
 		System.out.println("------------------------");
 		System.out.println("Copie e veja no excel!");

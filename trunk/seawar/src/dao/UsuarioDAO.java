@@ -1,4 +1,4 @@
-package modelos;
+package dao;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -6,12 +6,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import modelos.Usuario;
+
 public class UsuarioDAO {
 
 	public static Usuario getUsuario(int id)
 	{
 		Usuario objUsuario = new Usuario();
-		BancoDeDados objBD = new BancoDeDados();
+		ConexaoBD objBD = new ConexaoBD();
 		if(objBD.abrirConexao())
 		{
 			try
@@ -22,6 +24,7 @@ public class UsuarioDAO {
 				strSQL.append(" WHERE COD_ID_USUARIO = " + id);
 				ResultSet objRS = objBD.getObjStatement().executeQuery(strSQL.toString());
 				while(objRS.next()){
+					objUsuario.setId_usuario(objRS.getInt("COD_ID_USUARIO"));
 					objUsuario.setLogin(objRS.getString("LOGIN"));
 					objUsuario.setSenha(objRS.getString("SENHA"));
 					objUsuario.setEmail(objRS.getString("EMAIL"));
@@ -43,7 +46,7 @@ public class UsuarioDAO {
 	}
 
 	public static boolean cadastrarUsuario(Usuario objUsuario) {
-		BancoDeDados objBD = new BancoDeDados();
+		ConexaoBD objBD = new ConexaoBD();
 		if(objBD.abrirConexao())
 		{
 			try
@@ -82,7 +85,7 @@ public class UsuarioDAO {
 	}
 
 	public static boolean atualizarUsuario(Usuario objUsuario) {
-		BancoDeDados objBD = new BancoDeDados();
+		ConexaoBD objBD = new ConexaoBD();
 		if(objBD.abrirConexao())
 		{
 			try
@@ -90,11 +93,11 @@ public class UsuarioDAO {
 				//Foi utilizado a classe StringBuilder, que nesse caso realiza a mesma função do que uma
 				//concatenação de strings
 				StringBuilder strSQL = new StringBuilder("UPDATE SEAWAR.USUARIO SET ");
-				strSQL.append("LOGIN = '"+objUsuario.getLogin() +"'," );
+				///strSQL.append("LOGIN = '"+objUsuario.getLogin() +"'," );
 				strSQL.append("SENHA = '"+objUsuario.getSenha() +"'," );
 				strSQL.append("EMAIL = '"+objUsuario.getsEmail()+"'," );
 				strSQL.append("COD_NACIONALIDADE = " +objUsuario.getNacionalidade() +"," );
-				strSQL.append("DT_CADASTRO = '"+objUsuario.getDataCadastro() +"'," );
+				//strSQL.append("DT_CADASTRO = '"+objUsuario.getDataCadastro() +"'," );
 				if (objUsuario.getDataCancelamento() != null){
 					strSQL.append("DT_CANCELAMENTO = '"+objUsuario.getDataCancelamento() +"'," );
 				}
@@ -119,7 +122,7 @@ public class UsuarioDAO {
 
 	public static boolean excluirUsuario(int id)
 	{
-		BancoDeDados objBD = new BancoDeDados();
+		ConexaoBD objBD = new ConexaoBD();
 		if(objBD.abrirConexao())
 		{
 			try
@@ -146,7 +149,7 @@ public class UsuarioDAO {
 
 	public static List<Usuario> getUsuarios(String clausula) {
 		List<Usuario> listaUsuarios = new  ArrayList<Usuario>();
-		BancoDeDados objBD = new BancoDeDados();
+		ConexaoBD objBD = new ConexaoBD();
 		if(objBD.abrirConexao())
 		{
 			try
@@ -158,6 +161,7 @@ public class UsuarioDAO {
 				ResultSet objRS = objBD.getObjStatement().executeQuery(strSQL.toString());
 				while(objRS.next()){
 					Usuario objUsuario = new Usuario();
+					objUsuario.setId_usuario(objRS.getInt("COD_ID_USUARIO"));
 					objUsuario.setLogin(objRS.getString("LOGIN"));
 					objUsuario.setSenha(objRS.getString("SENHA"));
 					objUsuario.setEmail(objRS.getString("EMAIL"));
@@ -178,4 +182,57 @@ public class UsuarioDAO {
 
 		return listaUsuarios;
 	}
+	
+	//Valida o login de um usuario durante uma o processo de login
+	public static int validarUsuario(String strLogin, String strSenha )
+	{
+		ConexaoBD objBD = new ConexaoBD();
+		if(objBD.abrirConexao())
+		{
+
+			try{
+				ResultSet objRS = objBD.getObjStatement().executeQuery("SELECT cod_id_usuario FROM USUARIO WHERE login='"+strLogin+"' AND senha='"+strSenha+"'  ;");
+				
+				if(objRS.next())
+				{
+					return objRS.getInt("COD_ID_USUARIO");
+				}
+				objBD.fecharConexaoBanco(objBD.getObjConn());
+			}
+			catch (SQLException ex)
+            {
+                Logger.getLogger(Usuario.class.getName()).log(Level.SEVERE, null, ex);
+            }
+			
+		}
+		
+		return 0;
+	}
+	
+	//Verifica se o usuario ja existe
+	public static boolean verificarUsuario(String strLogin,String strEmail)
+	{
+		ConexaoBD objBD = new ConexaoBD();
+		if(objBD.abrirConexao())
+		{
+
+			try{
+			ResultSet objRS = objBD.getObjStatement().executeQuery("SELECT login, email FROM USUARIO WHERE login='"+strLogin+"' or email='"+strEmail+"';");
+				
+				if(objRS.next())
+				{
+					return true;
+				}
+				objBD.fecharConexaoBanco(objBD.getObjConn());
+			}
+			catch (SQLException ex)
+            {
+                Logger.getLogger(Usuario.class.getName()).log(Level.SEVERE, null, ex);
+            }
+			
+		}
+		
+		return false;
+	}
+
 }

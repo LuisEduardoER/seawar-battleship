@@ -1,12 +1,13 @@
 package Testes;
-import modelos.BancoDeDados;
-
 import java.sql.SQLException;
+
+import dao.ConexaoBD;
+
 
 import junit.framework.TestCase;
 
 
-public class BancoDeDadosTest extends TestCase {
+public class ConexaoBDTest extends TestCase {
 
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -14,17 +15,17 @@ public class BancoDeDadosTest extends TestCase {
 	}
 	
 	public void testConectarBanco() throws SQLException{
-		BancoDeDados bd = new BancoDeDados();
+		ConexaoBD bd = new ConexaoBD();
 		assertNotNull("Erro ao conectar banco!!",bd.conectarBanco());
 	}
 	
 	public void testAbrirConexao() throws SQLException{
-		BancoDeDados bd = new BancoDeDados();
+		ConexaoBD bd = new ConexaoBD();
 		assertEquals(true,bd.abrirConexao());
 	}
 	
 	public void testFecharConexao() throws SQLException{
-		BancoDeDados bd = new BancoDeDados();
+		ConexaoBD bd = new ConexaoBD();
 		bd.fecharConexaoBanco(bd.conectarBanco());
 		System.out.println("Conexão fechada!");
 	}
