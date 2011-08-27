@@ -7,7 +7,7 @@ import javax.swing.*;
 import java.applet.*;
 
 
-public class Sons extends JApplet{
+public class Som extends JApplet{
 	public String sLocalSom;
 	public boolean bRepetir;
 	public AudioClip agua, explosao, tema, somAtivo;

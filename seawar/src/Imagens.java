@@ -1,6 +1,6 @@
 import java.awt.*;
 //  @ Project : @Seawar
-//  @ File Name : Imagens.java
+//  @ File Name : Imagem.java
 //  @ Date : @06/05/2011
 //  @ Author : @Fernando
 

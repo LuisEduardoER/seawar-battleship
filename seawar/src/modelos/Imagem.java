@@ -5,12 +5,12 @@
    import javax.swing.Icon;
    import javax.swing.ImageIcon;
 //  @ Project : @Seawar
-//  @ File Name : Imagens.java
+//  @ File Name : Imagem.java
 //  @ Date : @06/05/2011
 //  @ Author : @Fernando
 
 
-   public class Imagens{
+   public class Imagem{
       public String sImagem;
    
    		
