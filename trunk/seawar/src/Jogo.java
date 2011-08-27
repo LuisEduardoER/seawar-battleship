@@ -14,20 +14,19 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
 
-
 public class Jogo {
 	public int iCodJogadorVencedor;
 	public Jogador[] aListaJogador;
 	public boolean bJogoEncerrado;
 	public Date DataCriacaoJogo;
-	
-	public Jogo(int numeroJogadores){
+
+	public Jogo(int numeroJogadores) {
 		aListaJogador = new Jogador[numeroJogadores];
 		DataCriacaoJogo = new Date();
 		bJogoEncerrado = false;
 		iCodJogadorVencedor = 0;
 	}
-	
+
 	public int getCodJogadorVencedor() {
 		return iCodJogadorVencedor;
 	}
@@ -61,28 +60,28 @@ public class Jogo {
 	}
 
 	public static Jogo iniciarJogo(Jogador[] jogadores) {
-	
+
 		Jogo jogo = new Jogo(jogadores.length);
 		jogo.setListaJogador(jogadores);
 		jogo.setJogoEncerrado(false);
 		return jogo;
 	}
-	
+
 	public void conectarJogador(Jogador jogador) {
-		
-		for(int i = 0; i < aListaJogador.length; i++){
-			if(aListaJogador[i] == null)
+
+		for (int i = 0; i < aListaJogador.length; i++) {
+			if (aListaJogador[i] == null)
 				aListaJogador[i] = jogador;
 		}
 	}
-	
+
 	public void gerarJogo() {
-		//TODO Verificar o que faz esse método
+		// TODO Verificar o que faz esse método
 	}
-	
+
 	public boolean sePingarJogador(Jogador jogador) {
 		String strIp = jogador.getIpJogador();
-		
+
 		try {
 			Socket sock = new Socket(strIp, 80);
 			return sock.isConnected();
@@ -95,11 +94,11 @@ public class Jogo {
 		}
 		return false;
 	}
-	
+
 	public void encerrarJogo() {
 		this.bJogoEncerrado = true;
 	}
-	
+
 	public void atuarEm(Jogador jogador, Celula celula) {
 		Tabuleiro tabuleiro = jogador.getTabuleiroAtaque();
 	}

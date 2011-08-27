@@ -11,26 +11,23 @@ import java.awt.Point;
 //
 //
 
-
-
-
 public class Celula extends Point {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -3977809244373827326L;
-	
+
 	public TipoCelula aTipoCelula;
-	
+
 	public TipoCelula getTipoCelula() {
 		return this.aTipoCelula;
 	}
-	
+
 	public void setTipoCelula(TipoCelula tipoCelula) {
 		aTipoCelula = tipoCelula;
 	}
-	
+
 	public void carregarImagem(TipoCelula tipoCelula) {
-		//TODO: Rever esta implementação, verificar na doc.
+		// TODO: Rever esta implementação, verificar na doc.
 	}
 }

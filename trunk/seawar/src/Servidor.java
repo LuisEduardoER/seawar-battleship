@@ -14,66 +14,66 @@ import java.util.Scanner;
 //
 //
 
-
-
-
 public class Servidor {
 	public List<Jogo> aListaJogos;
 	public List<Jogador> aListaJogadorOnline;
 	public List<Jogador> aListaJogadorJogando;
+
 	public void getListaJogos() {
-	
+
 	}
-	
+
 	public void setListaJogos(List<Jogo> listaJogos) {
 		aListaJogos = listaJogos;
 	}
-	
+
 	public List<Jogo> getListaJogadorOnline() {
 		return aListaJogos;
 	}
-	
+
 	public void setListaJogadorOnline(List<Jogador> listaJogadorOnlne) {
-	
+
 	}
-	
+
 	public void getListaJogadorJogando() {
-	
+
 	}
-	
+
 	public void setListaJogadorJogando(List<Jogador> listaJogadorJogando) {
-	
+
 	}
-	
+
 	public void adicionarJogo(Jogo objJogo) {
-	
+
 	}
-	
+
 	public void removerJogo() {
-	
+
 	}
-	
+
 	public void registrarLog(String log) {
 		try {
 			Scanner scan = new Scanner(new File("Log.txt"));
-			
+
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
-	//Método deve ser executado em um intervalo determinado
-	//para que o jogador envie um socket para atualizar o tempo dele online
+
+	// Método deve ser executado em um intervalo determinado
+	// para que o jogador envie um socket para atualizar o tempo dele online
 	public void verificarJogador(Jogador objJogador) {
-	
-		if(! objJogador.isOnline()) //Quando não renovar o tempo, ele não deve mais estar jogando
+
+		if (!objJogador.isOnline()) // Quando não renovar o tempo, ele não deve
+									// mais estar jogando
 		{
 			derrubarJogador(objJogador);
 		}
 	}
-	
+
 	public void derrubarJogador(Jogador objJogador) {
-	
+
 	}
 }

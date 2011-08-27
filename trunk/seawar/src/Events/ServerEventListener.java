@@ -9,9 +9,8 @@ import javax.swing.event.EventListenerList;
 //para atualizar a GUI
 public interface ServerEventListener extends EventListener {
 	public void playerListChanged(ServerEvent evt);
-	
+
 	public void gamesListChanged(ServerEvent evt);
-	
+
 	public void updateDisplay(ServerEvent evt);
 }
-

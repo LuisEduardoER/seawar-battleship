@@ -9,11 +9,6 @@
 //
 //
 
-
-
-
 public enum TipoCelula {
-	Embarcacao,
-	Agua,
-	AreaLivre
+	Embarcacao, Agua, AreaLivre
 }

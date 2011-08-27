@@ -1,7 +1,5 @@
 package Events;
 
-public enum TipoEventos{
-	DisplayAtualizado,
-	JogadoresAtualizados,
-	JogosAtualizados
+public enum TipoEventos {
+	DisplayAtualizado, JogadoresAtualizados, JogosAtualizados
 }

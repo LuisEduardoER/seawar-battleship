@@ -12,9 +12,6 @@ import java.util.Stack;
 //
 //
 
-
-
-
 public class Bot extends Jogador {
 	Tabuleiro oTabuleiroVirtual;
 	Celula oUltimaCelulaAtacada;
@@ -22,33 +19,33 @@ public class Bot extends Jogador {
 	boolean bAcertouEmbarcacao = false;
 	boolean bAfundouEmbarcacao = false;
 
-	//pilha de jogadas feitas para fins heuristicos de jogada
+	// pilha de jogadas feitas para fins heuristicos de jogada
 	Stack<Celula> celulasEscolhidas;
-	
+
 	public Tabuleiro getTabuleiroVirtual() {
 		return this.oTabuleiroVirtual;
 	}
-	
+
 	public void setTabuleiroVirtual(Tabuleiro objTabuleiro) {
 		this.oTabuleiroVirtual = objTabuleiro;
 	}
-	
+
 	public Celula getUltimaCelulaAtacada() {
 		return this.oUltimaCelulaAtacada;
 	}
-	
+
 	public void setUltimaCelulaAtacada(Celula objCelula) {
 		this.oUltimaCelulaAtacada = objCelula;
 	}
-	
+
 	public Celula getProximaCelula() {
 		return this.oProximaCelula;
 	}
-	
+
 	public void setProximaCelula(Celula objCelula) {
 		this.oProximaCelula = objCelula;
 	}
-	
+
 	public boolean acertouEmbarcacao() {
 		return bAcertouEmbarcacao;
 	}
@@ -66,50 +63,48 @@ public class Bot extends Jogador {
 	}
 
 	public Celula getUltimaEscolha() {
-		//retira a ultima jogada da pilha
+		// retira a ultima jogada da pilha
 		return celulasEscolhidas.pop();
 	}
 
 	public void setCelulasEscolhida(Celula celulasEscolhida) {
-		//Insere a jogada na pilha
+		// Insere a jogada na pilha
 		this.celulasEscolhidas.push(celulasEscolhida);
 	}
 
 	public void analisarTabuleiro() {
 		if (bAcertouEmbarcacao && !bAfundouEmbarcacao) {
 			Celula atacada = getUltimaCelulaAtacada();
-			//TODO: Pensar no algoritmo do bot para realizar ataques
-			
+			// TODO: Pensar no algoritmo do bot para realizar ataques
+
 		}
 	}
-	
+
 	public void analisarJogada() {
-	
+
 	}
-	
+
 	public Celula atacar() {
 		Celula celulaAtacada = new Celula();
-		
+
 		return celulaAtacada;
 	}
-	
-	//TODO: Associar esta provocação para enviar no chat(se tiver)
+
+	// TODO: Associar esta provocação para enviar no chat(se tiver)
 	public String provocar() {
-	
-		String[] listaProvocacoes = {
-				"Você não é páreo para a minha ira!",
+
+		String[] listaProvocacoes = { "Você não é páreo para a minha ira!",
 				"Não terá trégua este jogo!",
 				"Achei que você seria um oponente formidável... que decepção!",
 				"Erm, acho que você... ah, deixa pra lá.",
 				"Cuidado que eu to chegando!",
 				"Virei, cruzei, atirei e... marquei!",
 				"Os sete mares estão com os dias contados",
-				"Conhece o mar-morto? Foi eu quem ajudou a matar >:)"
-				};
-		
+				"Conhece o mar-morto? Foi eu quem ajudou a matar >:)" };
+
 		Random rand = new Random();
 		int indexProvocacao = rand.nextInt(listaProvocacoes.length);
-		
+
 		return listaProvocacoes[indexProvocacao];
 	}
 }

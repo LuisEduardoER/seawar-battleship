@@ -9,7 +9,6 @@
 //
 //
 
-
 import java.util.*;
 
 public class Usuario {
@@ -88,7 +87,7 @@ public class Usuario {
 	}
 
 	public boolean isUsuarioAtivo() {
-		//return bStatusUsuario;
+		// return bStatusUsuario;
 		return true;
 	}
 
@@ -101,35 +100,32 @@ public class Usuario {
 	}
 
 	public boolean cadastrarUsuario(Usuario objUsuario) {
-		if (UsuarioDAO.cadastrarUsuario(objUsuario)){
+		if (UsuarioDAO.cadastrarUsuario(objUsuario)) {
 			return true;
-		}
-		else{
+		} else {
 			return false;
 		}
 	}
 
 	public boolean atualizarUsuario(Usuario objUsuario) {
-		if(UsuarioDAO.atualizarUsuario(objUsuario)){
+		if (UsuarioDAO.atualizarUsuario(objUsuario)) {
 			return true;
-		}
-		else{
+		} else {
 			return false;
 		}
 	}
 
 	public boolean excluirUsuario(int id_usuario) {
-		if(UsuarioDAO.excluirUsuario(id_usuario)){
+		if (UsuarioDAO.excluirUsuario(id_usuario)) {
 			return true;
-		}
-		else{
+		} else {
 			return false;
 		}
 	}
 
 	public Usuario getUsuario(int id_usuario) {
 
-		//TODO: Implementar o DAO
+		// TODO: Implementar o DAO
 		Usuario user = UsuarioDAO.getUsuario(id_usuario);
 
 		return user;
@@ -137,7 +133,7 @@ public class Usuario {
 
 	public List<Usuario> getUsuarios(String clausula) {
 
-		//TODO: Implementar a logica do DAO
+		// TODO: Implementar a logica do DAO
 		List<Usuario> usuarios = UsuarioDAO.getUsuarios(clausula);
 
 		return usuarios;
