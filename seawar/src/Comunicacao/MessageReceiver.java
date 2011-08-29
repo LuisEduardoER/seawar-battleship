@@ -11,6 +11,7 @@ import modelos.Servidor;
 public class MessageReceiver implements Runnable {
 
 	private BufferedReader input;
+	Socket socket;
 	private String ipRecebido;
 	private IMessageListener messageListener;
 	private boolean continuarOuvindo = true;
@@ -19,9 +20,10 @@ public class MessageReceiver implements Runnable {
 		messageListener = listener;
 
 		try {
+			socket = clientSocket;
 			ipRecebido = clientSocket.getInetAddress().getHostAddress();
 			clientSocket.setSoTimeout(5000);// 5 segundos para timeout
-			input = new BufferedReader(new InputStreamReader(clientSocket
+			input = new BufferedReader(new InputStreamReader(socket
 					.getInputStream()));
 		} catch (IOException ioe) {
 			Log.gravarLog("Erro de leitura de socket: " + ioe.getMessage());
@@ -50,7 +52,8 @@ public class MessageReceiver implements Runnable {
 						.equalsIgnoreCase(Comunicacao.Constantes.DISCONNECT_TOKEN)) {
 					pararDeOuvir();
 				}
-				messageListener.mensagemRecebida(message, ipRecebido);
+				//Executa a mensagem e passa o socket que foi utilizado
+				messageListener.mensagemRecebida(message, this.socket);
 			}// fim if de mensagem
 
 		}// fim do while

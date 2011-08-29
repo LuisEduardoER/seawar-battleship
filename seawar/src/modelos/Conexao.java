@@ -1,6 +1,18 @@
 package modelos;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.Formatter;
+import java.util.StringTokenizer;
+import java.util.concurrent.ExecutorService;
+
 import Comunicacao.Constantes;
+import Comunicacao.DicionarioMensagem;
+import Comunicacao.IMessageListener;
+import Comunicacao.MessageSender;
+import Comunicacao.TipoMensagem;
 
 //
 //
@@ -16,9 +28,13 @@ import Comunicacao.Constantes;
 
 
 
-public class Conexao {
+public class Conexao implements IMessageListener {
 	private String sIp_servidor;
 	private int porta_servidor;
+	
+	ExecutorService executor;
+	Socket socket;
+	Formatter output;
 	Jogador player;
 	
 	
@@ -26,11 +42,26 @@ public class Conexao {
 		player = jogador;
 		sIp_servidor = Constantes.SERVER_ADDRESS;
 		porta_servidor = Constantes.SERVER_PORT;
+		try {
+			socket = new Socket(InetAddress.getByName(sIp_servidor), porta_servidor);
+			
+		} catch (UnknownHostException e) {
+			//TODO: fazer algo se ocorrer exception se host desconhecido
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Fazer algo se não tiver IO
+			e.printStackTrace();
+		}
+	}
+	public Conexao(Jogador jogador, Socket clientSocket) {
+		socket = clientSocket;
+		player = jogador;
 	}
 	public void conectarJogador() {
 		if(player.isOnline())
 			return;
-		
+		MessageSender send = new MessageSender(this.socket, Constantes.CONNECT_TOKEN);
+		send.run();
 	}
 	
 	public void desconectarJogador() {
@@ -39,26 +70,54 @@ public class Conexao {
 	}
 	
 	public void enviarAtaque(Celula celulaAtacada) {
+		if(!player.isOnline())
+			return;
+		
+		try {
+			Formatter output = new Formatter(socket.getOutputStream());
+			String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.AtacarOponente);
+			
+			output.format(mensagem, celulaAtacada.x, celulaAtacada.y);
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 	
 	public void receberAtaque() {
-	
+		if(!player.isOnline())
+			return;
 	}
 	
 	public void enviarVitoria(Jogador jogador) {
-	
+		if(!player.isOnline())
+			return;
 	}
 	
 	public void receberVitoria() {
-	
+		if(!player.isOnline())
+			return;
 	}
 	
 	public void enviarAcao(String comando) {
-	
+		if(!player.isOnline())
+			return;
 	}
 	
 	public void receberAcao() {
-	
+		if(!player.isOnline())
+			return;
+	}
+	@Override
+	public void mensagemRecebida(String mensagem, Socket socketOrigem) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void receberTokensMensagem(StringTokenizer tokens, String ipEnviou) {
+		// TODO Auto-generated method stub
+		
 	}
 }

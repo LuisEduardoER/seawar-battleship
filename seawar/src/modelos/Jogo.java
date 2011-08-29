@@ -31,6 +31,16 @@ public class Jogo {
 		setIdJogo(jogoId);
 	}
 	
+	public void AdicionarJogador(Jogador obj){
+		for(int i = 0; i < aListaJogador.length; i++)
+		{
+			if(aListaJogador[i] == null){
+				aListaJogador[i] = obj;
+				break;
+			}
+		}
+	}
+	
 	public void setIdJogo(int codJogo) {
 		this.codJogo = codJogo;
 	}
@@ -113,5 +123,40 @@ public class Jogo {
 	
 	public void atuarEm(Jogador jogador, Celula celula) {
 		Tabuleiro tabuleiro = jogador.getTabuleiroAtaque();
+	}
+	
+	public Jogador EncontrarJogador(String IP){
+		Jogador jogadorRetorno = null;
+		
+		for(int i = 0; i < aListaJogador.length; i++){
+			if(aListaJogador[i].getIpJogador().equalsIgnoreCase(IP)){
+				jogadorRetorno = aListaJogador[i];
+				break; //Sai do loop quando encontra o jogador pelo IP
+			}
+		}
+		return jogadorRetorno;
+	}
+	public Jogador EncontrarJogador(int id){
+		Jogador jogadorRetorno = null;
+		
+		for(int i = 0; i < aListaJogador.length; i++){
+			if(aListaJogador[i].getId_usuario() == (id)){
+				jogadorRetorno = aListaJogador[i];
+				break; //Sai do loop quando encontra o jogador pelo IP
+			}
+		}
+		return jogadorRetorno;
+	}
+
+	public Jogador EncontrarJogadorAdversario(Jogador jogador) {
+		
+		for(Jogador adv : aListaJogador){
+			if(!adv.getLogin().equals(jogador.getLogin())){
+				return adv;
+			}
+		}
+		
+		return null;
+		
 	}
 }
