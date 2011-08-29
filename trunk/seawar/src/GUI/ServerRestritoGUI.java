@@ -8,24 +8,23 @@ import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JTextArea;
 
+import modelos.Jogador;
+import modelos.Jogo;
+import modelos.ServidorRestrito;
 import Events.ServerEvent;
 import Events.ServerEventListener;
 
-import modelos.Jogador;
-import modelos.Jogo;
-import modelos.Servidor;
+public class ServerRestritoGUI extends JFrame {
 
-public class ServerGUI extends JFrame {
-	
 	private static final long serialVersionUID = 1L;
 	
-	Servidor server;
+	ServidorRestrito server;
 	JList listaJogadores;
 	JList listaJogos;
 	JTextArea displayArea;
 	
 	
-	public ServerGUI(){
+	public ServerRestritoGUI(){
 		super("Server do jogo Batalha Naval");
 		listaJogadores = new JList();
 		listaJogadores.setSize(100, 300);
@@ -38,7 +37,7 @@ public class ServerGUI extends JFrame {
 		add(listaJogos, BorderLayout.EAST);
 		add(displayArea, BorderLayout.CENTER);
 		
-		server = new Servidor();
+		server = new ServidorRestrito();
 		
 		setVisible(true);
 	}
@@ -72,7 +71,7 @@ public class ServerGUI extends JFrame {
 
 	private void AtualizarListaJogadores() {
 		DefaultListModel lista = new DefaultListModel();
-		List<Jogador> jogadores = server.getListaJogadorOnline();
+		List<Jogador> jogadores = server.aListaJogadorJogando;
 		for(Jogador obj : jogadores){
 			lista.addElement(obj.getLogin());
 		}
@@ -82,15 +81,13 @@ public class ServerGUI extends JFrame {
 	
 	private void AtualizarListaJogos() {
 		DefaultListModel lista = new DefaultListModel();
-		List<Jogo> jogos = server.getListaJogos();
-		for(Jogo obj : jogos){
-			lista.addElement(String.format("jogo: %s, #players: %s",obj.getIdJogo(), obj.getListaJogador().length));
-		}
-		
+		Jogo obj = server.jogoCorrente;
+		lista.addElement(String.format("jogo: %s, #players: %s",obj.getIdJogo(), obj.getListaJogador().length));
 		listaJogadores = new JList(lista);			
 	}
 	
 	private void AtualizarDisplay(String mensagem) {
+		displayArea.append("\n");
 		displayArea.append(mensagem);			
 	}
 }

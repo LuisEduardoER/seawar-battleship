@@ -11,9 +11,16 @@ package modelos;
 //
 
 
+import java.io.Serializable;
 import java.util.*;
 
-public class Usuario {
+import dao.UsuarioDAO;
+
+public class Usuario implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public String sLogin;
 	public String sSenha;
 	public int iId_usuario;

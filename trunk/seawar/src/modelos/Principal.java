@@ -5,7 +5,7 @@
    import java.awt.*;
    import java.awt.event.ActionEvent;
    import java.awt.event.ActionListener;
-   import javax.swing.*;
+import javax.swing.*;
 //import javax.swing.border.*;
 
 
@@ -33,7 +33,7 @@
          cons = new GridBagConstraints();
          setSize(500,500);
          cons.fill = GridBagConstraints.HORIZONTAL;
-         Imagens i = new Imagens();
+         Imagem i = new Imagem();
          c.setBackground(i.corBackground());
          cons.insets = new Insets(3,3,3,3);// espaço entre os objetos do layout
                  
@@ -142,7 +142,7 @@
       private void verificaLogin()
       {
          Usuario u = new Usuario();
-         if(u.isUsuarioAtivo() == true)
+         if(u.isUsuarioAtivo())
          {
             labLista.setVisible(true);
             listaJogadores.setVisible(true);
@@ -158,8 +158,7 @@
             tema.loop();              	 
               	 
          }
-           	 
-         if(u.isUsuarioAtivo()== false)
+         else
          {
             labMenssagem.setVisible(true);
          }

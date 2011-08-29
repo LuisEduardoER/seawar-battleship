@@ -1,6 +1,7 @@
 package modelos;
 
 import java.io.Console;
+import java.io.Serializable;
 import java.util.Random;
 //
 //
@@ -16,7 +17,11 @@ import java.util.Random;
 
 
 //Classe relacionada ao Tabuleiro do Jogo.
-public class Tabuleiro {
+public class Tabuleiro implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public Celula[][] mMatrizCelula;
 	public Celula[][] mCelulasAtacadas;
 	public boolean bTravaTabuleiro;
@@ -30,9 +35,21 @@ public class Tabuleiro {
 		mMatrizCelula = new Celula[tamanho][tamanho];
 		mCelulasAtacadas = new Celula[tamanho][tamanho];
 		PreencherTabuleiro(mMatrizCelula);
+		//Por Default, cria o tabuleiro completo com as embarcacoes
 		arrEmbarcacoes = new Embarcacao[QUANTIDADE_EMBARCACOES_POSSIVEIS];
 		criarEmbarcacoes();
 	}
+	
+	public Tabuleiro(int tamanho, boolean preencherComBarcos){
+		mMatrizCelula = new Celula[tamanho][tamanho];
+		mCelulasAtacadas = new Celula[tamanho][tamanho];
+		PreencherTabuleiro(mMatrizCelula);
+		if(preencherComBarcos){
+			arrEmbarcacoes = new Embarcacao[QUANTIDADE_EMBARCACOES_POSSIVEIS];
+			criarEmbarcacoes();
+		}
+	}
+	
 	private void PreencherTabuleiro(Celula[][] celulas) {
 		for(int i = 0; i < celulas.length; i++){
 			for(int j = 0; j < celulas[0].length; j++){

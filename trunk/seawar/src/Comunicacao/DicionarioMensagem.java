@@ -11,6 +11,7 @@ public class DicionarioMensagem {
 			incluirTipo = false;
 			break;
 		case NovoJogadorConectado:
+			mensagem = CriarMensagemParametrizada("nome");
 			break;
 		case JogadorDesconectado:
 			break;

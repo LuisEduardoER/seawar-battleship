@@ -1,5 +1,6 @@
 package modelos;
 import java.awt.Point;
+import java.io.Serializable;
 
 //
 //
@@ -15,11 +16,11 @@ import java.awt.Point;
 
 
 
-public class Celula extends Point {
+public class Celula extends Point implements Serializable{
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -3977809244373827326L;
+	private static final long serialVersionUID = 1L;
 	
 	public Celula(){
 		aTipoCelula = TipoCelula.AreaLivre;
