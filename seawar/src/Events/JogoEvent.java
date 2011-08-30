@@ -2,11 +2,11 @@ package Events;
 
 import java.util.EventObject;
 
-public class ClientEvent extends EventObject {
+public class JogoEvent extends EventObject {
 
 	TipoEvento tipo;
 	
-	public ClientEvent(Object arg0, TipoEvento tipo) {
+	public JogoEvent(Object arg0, TipoEvento tipo) {
 		super(arg0);
 		this.tipo = tipo;
 	}

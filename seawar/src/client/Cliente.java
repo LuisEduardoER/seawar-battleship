@@ -1,10 +1,11 @@
 package client;
 
-import java.applet.Applet;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+
+import javax.swing.event.EventListenerList;
 
 import modelos.Jogador;
 
@@ -12,6 +13,7 @@ import Comunicacao.Constantes;
 import Comunicacao.IMessageListener;
 import Comunicacao.MessageReceiver;
 import Comunicacao.MessageSender;
+import Events.JogoEventListener;
 
 public class Cliente implements IMessageListener {
 
@@ -23,6 +25,8 @@ public class Cliente implements IMessageListener {
 	MessageSender sender;
 	Socket mySocket;
 	Jogador perfil;
+	//Lista de eventos que possui a classe jogo
+	protected EventListenerList listenerList = new EventListenerList();
 	
 	public Cliente(Socket socket){		
 		mySocket = socket;
@@ -151,4 +155,14 @@ public class Cliente implements IMessageListener {
 		perfil.conexaoJogador.conectarJogador();
 	}
 
+
+
+	
+	//Manipuladores de listeners de eventos
+	public void AddClientEventListener(JogoEventListener listener){
+		listenerList.add(JogoEventListener.class, listener);
+	}
+	public void RemoveClientEventListener(JogoEventListener listener){
+		listenerList.remove(JogoEventListener.class, listener);
+	}
 }
