@@ -15,6 +15,12 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.*;
 
+import javax.swing.event.EventListenerList;
+
+import Events.JogoEventListener;
+import Events.JogoEvent;
+import Events.ServerEventListener;
+
 
 public class Jogo {
 	public int iCodJogadorVencedor;
@@ -22,6 +28,8 @@ public class Jogo {
 	public Jogador[] aListaJogador;
 	public boolean bJogoEncerrado;
 	public Date DataCriacaoJogo;
+	//Lista de eventos que possui a classe jogo
+	protected EventListenerList listenerList = new EventListenerList();
 	
 	public Jogo(int jogoId, int numeroJogadores){
 		aListaJogador = new Jogador[numeroJogadores];
@@ -158,5 +166,17 @@ public class Jogo {
 		
 		return null;
 		
+	}
+	
+	
+
+	public void AddClientEventListener(JogoEventListener listener){
+		listenerList.add(JogoEventListener.class, listener);
+	}
+	public void RemoveClientEventListener(JogoEventListener listener){
+		listenerList.remove(JogoEventListener.class, listener);
+	}
+	private void fireConnectedEvent(JogoEvent evt){
+	
 	}
 }
