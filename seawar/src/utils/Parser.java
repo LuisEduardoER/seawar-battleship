@@ -1,8 +1,16 @@
 package utils;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.util.List;
 
+import Comunicacao.Constantes;
+
 import modelos.Celula;
+import modelos.Tabuleiro;
 import modelos.TipoCelula;
 
 public class Parser {
@@ -38,6 +46,37 @@ public class Parser {
 			return null;
 		}
 		return celulaRetorno;
+	}
+
+	public static Tabuleiro ConverteTabuleiro(List<String> lstTokens) {
+		Tabuleiro tab = null;
+		String valorTokenTabuleiro = null;
+		/*for(String token : lstTokens){
+			String[] splitToken = valorTokenTabuleiro.split(Constantes.VALUE_SEPARATOR);
+			if(splitToken[0].equalsIgnoreCase("tabuleiro")){
+				valorTokenTabuleiro = splitToken[1];
+				break;
+			}
+		}*/
+		valorTokenTabuleiro = lstTokens.get(lstTokens.size()-1); //O último objeto é o serializado SEMPRE (tá na classe MessageSender)
+		if(valorTokenTabuleiro != null){
+		InputStream inputStream = new ByteArrayInputStream(valorTokenTabuleiro.getBytes());
+		try {
+			ObjectInputStream objInput = new ObjectInputStream(inputStream);
+			Object objetoVariavel = objInput.readObject();
+			if(objetoVariavel != null){
+				tab = (Tabuleiro)objetoVariavel;				
+			}
+		} catch (IOException e) {
+			// TODO exception de IO invalido
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO exception de classe do objeto não encontrada
+			e.printStackTrace();
+		}
+		
+		}
+		return tab;
 	}
 	
 }

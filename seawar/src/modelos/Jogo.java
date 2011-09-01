@@ -17,6 +17,8 @@ import java.util.*;
 
 import javax.swing.event.EventListenerList;
 
+import exceptions.FullGameException;
+
 import Events.JogoEventListener;
 import Events.JogoEvent;
 import Events.ServerEventListener;
@@ -25,30 +27,47 @@ import Events.ServerEventListener;
 public class Jogo {
 	public int iCodJogadorVencedor;
 	private int codJogo;
-	public Jogador[] aListaJogador;
-	public boolean bJogoEncerrado;
-	public Date DataCriacaoJogo;
+	private int capacidadeJogo;
+	List<Jogador> aListaJogador;
+	boolean bJogoEncerrado;
+	boolean bAceitaNovosJogadores;
+	Date DataCriacaoJogo;
 	//Lista de eventos que possui a classe jogo
 	protected EventListenerList listenerList = new EventListenerList();
 	
 	public Jogo(int jogoId, int numeroJogadores){
-		aListaJogador = new Jogador[numeroJogadores];
+		aListaJogador = new ArrayList<Jogador>();//[numeroJogadores];
+		capacidadeJogo = numeroJogadores;
 		DataCriacaoJogo = new Date();
 		bJogoEncerrado = false;
+		bAceitaNovosJogadores = true;
 		iCodJogadorVencedor = 0;		
 		setIdJogo(jogoId);
 	}
 	
-	public void AdicionarJogador(Jogador obj){
-		for(int i = 0; i < aListaJogador.length; i++)
-		{
-			if(aListaJogador[i] == null){
-				aListaJogador[i] = obj;
-				break;
-			}
+	public void AdicionarJogador(Jogador obj) throws FullGameException{
+		//Verifica se o jogo não está lotado e se aceita novos jogadores ainda
+		if(!isLotado() && aceitaNovosJogadores()){
+			aListaJogador.add(obj);
+		}
+		else{
+			throw new FullGameException("Este jogo está lotado e não pode receber mais jogadores");
 		}
 	}
-	
+	public void removerJogador(Jogador obj){
+		if(this.aListaJogador.size() > 0){
+			this.aListaJogador.remove(obj);
+		}
+	}
+	public boolean isVazio(){
+		return this.aListaJogador.size() == 0;
+	}
+	public boolean aceitaNovosJogadores(){
+		return bAceitaNovosJogadores;
+	}
+	public boolean isLotado(){
+		return this.aListaJogador.size() == capacidadeJogo;
+	}
 	public void setIdJogo(int codJogo) {
 		this.codJogo = codJogo;
 	}
@@ -65,11 +84,11 @@ public class Jogo {
 		this.iCodJogadorVencedor = iCodJogadorVencedor;
 	}
 
-	public Jogador[] getListaJogador() {
+	public List<Jogador> getListaJogador() {
 		return aListaJogador;
 	}
 
-	public void setListaJogador(Jogador[] aListaJogador) {
+	public void setListaJogador(List<Jogador> aListaJogador) {
 		this.aListaJogador = aListaJogador;
 	}
 
@@ -89,21 +108,28 @@ public class Jogo {
 		DataCriacaoJogo = dataCriacaoJogo;
 	}
 
-	public static Jogo iniciarJogo(int jogoId, Jogador[] jogadores) {
+	public static Jogo iniciarJogo(int jogoId, List<Jogador> jogadores) {
 	
-		Jogo jogo = new Jogo(jogoId,jogadores.length);
+		Jogo jogo = new Jogo(jogoId,jogadores.size());
 		jogo.setListaJogador(jogadores);
 		jogo.setJogoEncerrado(false);
 		return jogo;
 	}
 	
-	public void conectarJogador(Jogador jogador) {
-		
-		for(int i = 0; i < aListaJogador.length; i++){
-			if(aListaJogador[i] == null)
-				aListaJogador[i] = jogador;
-		}
-	}
+
+	/**
+	 * Não utilizar este método, para conectar o jogador utilize AdicionarJogador()
+	 * PS: Acho que terá que mudar na documentação também, no diagrama de classe
+	 * pq esse método faz sentido no servidor e não no jogo
+	 */
+//	public void conectarJogador(Jogador jogador) {		
+//		try {
+//			AdicionarJogador(jogador);
+//		} catch (FullGameException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//	}
 	
 	public void gerarJogo() {
 		//TODO Verificar o que faz esse método
@@ -136,9 +162,9 @@ public class Jogo {
 	public Jogador EncontrarJogador(String IP){
 		Jogador jogadorRetorno = null;
 		
-		for(int i = 0; i < aListaJogador.length; i++){
-			if(aListaJogador[i].getIpJogador().equalsIgnoreCase(IP)){
-				jogadorRetorno = aListaJogador[i];
+		for(int i = 0; i < aListaJogador.size(); i++){
+			if(aListaJogador.get(i).getIpJogador().equalsIgnoreCase(IP)){
+				jogadorRetorno = aListaJogador.get(i);
 				break; //Sai do loop quando encontra o jogador pelo IP
 			}
 		}
@@ -147,9 +173,9 @@ public class Jogo {
 	public Jogador EncontrarJogador(int id){
 		Jogador jogadorRetorno = null;
 		
-		for(int i = 0; i < aListaJogador.length; i++){
-			if(aListaJogador[i].getId_usuario() == (id)){
-				jogadorRetorno = aListaJogador[i];
+		for(int i = 0; i < aListaJogador.size(); i++){
+			if(aListaJogador.get(i).getId_usuario() == (id)){
+				jogadorRetorno = aListaJogador.get(i);
 				break; //Sai do loop quando encontra o jogador pelo IP
 			}
 		}
@@ -177,6 +203,59 @@ public class Jogo {
 		listenerList.remove(JogoEventListener.class, listener);
 	}
 	private void fireConnectedEvent(JogoEvent evt){
-	
+		Object[] listeners = listenerList.getListenerList();
+        // Each listener occupies two elements - the first is the listener class
+        // and the second is the listener instance
+        for (int i=0; i<listeners.length; i+=2) {
+            if (listeners[i]==ServerEventListener.class) {
+                ((JogoEventListener)listeners[i+1]).JogadorConectado(evt.getSource(), evt);
+            }
+        }
 	}
+	private void fireDisconnectedEvent(JogoEvent evt){
+		Object[] listeners = listenerList.getListenerList();
+        // Each listener occupies two elements - the first is the listener class
+        // and the second is the listener instance
+        for (int i=0; i<listeners.length; i+=2) {
+            if (listeners[i]==ServerEventListener.class) {
+                ((JogoEventListener)listeners[i+1]).JogadorDesconectado(evt.getSource(), evt);
+            }
+        }
+	}
+	private void fireAttackedEvent(JogoEvent evt){
+		Object[] listeners = listenerList.getListenerList();
+        // Each listener occupies two elements - the first is the listener class
+        // and the second is the listener instance
+        for (int i=0; i<listeners.length; i+=2) {
+            if (listeners[i]==ServerEventListener.class) {
+                ((JogoEventListener)listeners[i+1]).JogadorAtacado(evt.getSource(), evt);
+            }
+        }
+	}
+
+	/*
+	 * Inicia a partida do jogo (a fase de posicionamento de frota é uma anterior) 
+	 */
+	public void IniciarPartida() {
+		if(this.isVazio()){
+			return; //implementar uma exception, talvez
+		}
+		int i = 0;
+		Jogador jogadorFirst;
+		do{
+			jogadorFirst = this.aListaJogador.get(i);
+			i++;
+		}
+		while((jogadorFirst != null && jogadorFirst.isBot()) && i <= this.aListaJogador.size());
+		
+		if(jogadorFirst == null && i == this.aListaJogador.size()){
+			//Se caiu aqui, significa que apenas jogadores BOTS estão nesse jogo... então remove todos
+			this.aListaJogador.removeAll(aListaJogador);
+			//TODO: Atirar uma exception aqui
+		}
+		
+		//indica que o jogador que conectou primeiro começará a partida
+		jogadorFirst.setVez(true);		
+	}
+	
 }

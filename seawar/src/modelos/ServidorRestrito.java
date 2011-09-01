@@ -8,10 +8,13 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.swing.event.EventListenerList;
+
+import exceptions.FullGameException;
 
 import utils.Parser;
 
@@ -30,6 +33,7 @@ public class ServidorRestrito implements IMessageListener {
 		private ExecutorService serverExecutor;
 		private boolean continuarRecebendoConexoes;
 		int capacidade = 2;
+		int tamanhoTabuleiro = 20;
 		//Define uma lista de eventos para a classe Servidor
 		protected EventListenerList listenerList = new EventListenerList();
 
@@ -70,8 +74,8 @@ public class ServidorRestrito implements IMessageListener {
 				
 				//Cria um tabuleiro para cada jogador
 				for(Jogador jogador : aListaJogadorJogando){
-					jogador.setTabuleiroDefesa(new Tabuleiro(20));
-					jogador.setTabuleiroAtaque(new Tabuleiro(20, false));
+					jogador.setTabuleiroDefesa(new Tabuleiro(tamanhoTabuleiro));
+					jogador.setTabuleiroAtaque(new Tabuleiro(tamanhoTabuleiro, false));
 					jogador.setJogoId(jogoCorrente.getIdJogo());
 					jogoCorrente.AdicionarJogador(jogador);
 					
@@ -107,9 +111,52 @@ public class ServidorRestrito implements IMessageListener {
 		private void ConectarJogadorNovo(List<String> lstTokens, String ipEnviou) {
 			Jogador obj = new Jogador();//TODO: Trocar para pgar o objeto pelo DAO
 			obj.setIpJogador(ipEnviou);		
+			//obj.setOnline();
+			
+			try {
+				if(!this.jogoCorrente.isVazio()){
+					//Se o jogo não estiver vazio, envia mensagem para os jogadores de plantão que mais 1 jogador entrou no jogo
+					for(Jogador jogadorAguardando : this.jogoCorrente.getListaJogador()){
+						String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.EntrarJogo);
+						String mensagemEnviar = String.format(mensagem, this.jogoCorrente.getIdJogo(), obj.getLogin());
+						MessageSender sender = new MessageSender(jogadorAguardando.getConexao().getSocket(), mensagem);
+						serverExecutor.execute(sender);
+					}
+				}
+				this.jogoCorrente.AdicionarJogador(obj);
+				//Adiciona o jogador à lista de quem tá jogando, apenas se o jogador for adicionado no jogo antes
+				aListaJogadorJogando.add(obj);
+				
+			} catch (FullGameException e) {
+				String mensagem = String.format("Não foi possível conectar o jogador %s ao jogo(%s)\nMotivo:%s", obj.getLogin(), this.jogoCorrente.getIdJogo(), e.getMessage()); 
+				Log.gravarLog(mensagem);				
+				fireDisplayChangeEvent(new ServerEvent(mensagem, TipoEvento.DisplayAtualizado));
+				return; //cai fora do método se o jogo estiver cheio
+			}catch(Exception e){
+				Log.gravarLog(e.getMessage());
+			}
+			
+			//Se o jogo está lotado agora, envia o comando para os jogadores que podem iniciar o posicionamento ou o jogo
+			if(this.jogoCorrente.isLotado()){				
+				this.iniciarPartida(this.jogoCorrente);
+			}
+			
 		}
 
-		private Jogador EncontrarJogadorPorIpEmJogo(Jogo jogo, String ipJogador){
+		private void iniciarPartida(Jogo jogoIniciar) {
+			for(Jogador jogador : aListaJogadorJogando){
+				String mensagemIniciar = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.IniciarJogo);
+				//Mensagem do tipo iniciar jogo, apenas recebe o jogoId
+				String mensagemFormatada = String.format(mensagemIniciar, jogoIniciar.getIdJogo());
+				
+				MessageSender enviador = new MessageSender(jogador.getConexao().getSocket(), mensagemFormatada);
+				//Envia a mensagem para o jogador que está aguardando o inicio da partida
+				serverExecutor.execute(enviador);
+			}			
+			jogoIniciar.IniciarPartida();
+		}
+
+		private Jogador encontrarJogadorPorIpEmJogo(Jogo jogo, String ipJogador){
 			Jogador retorno = null;
 					
 			for(Jogador obj : jogo.aListaJogador){
@@ -123,14 +170,14 @@ public class ServidorRestrito implements IMessageListener {
 			
 		}		
 		
-		public void AddServerEventListener(ServerEventListener listener){
+		public void addServerEventListener(ServerEventListener listener){
 			listenerList.add(ServerEventListener.class, listener);
 		}
-		public void RemoveServerEventListener(ServerEventListener listener){
+		public void removeServerEventListener(ServerEventListener listener){
 			listenerList.remove(ServerEventListener.class, listener);
 		}
 
-		private Jogador EncontrarJogadorPorIp(String ipJogador){
+		private Jogador encontrarJogadorPorIp(String ipJogador){
 			Jogador retorno = null;
 					
 			for(Jogador obj : aListaJogadorJogando){
@@ -143,7 +190,7 @@ public class ServidorRestrito implements IMessageListener {
 			return retorno;
 			
 		}
-		private Jogo EncontrarJogoPorId(int idJogo){
+		private Jogo encontrarJogoPorId(int idJogo){
 			//Como só é um servidor de 1 jogo, retona este jogo
 			return jogoCorrente;
 		}
@@ -238,7 +285,7 @@ public class ServidorRestrito implements IMessageListener {
 				//DesbilitarJogoParaNovasConexoes(lstTokens, ipEnviou);			
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.BarcosPosicionados.toString())){
-				//CarregarBarcosDoJogadorNoJogo(lstTokens, ipEnviou);
+				CarregarBarcosDoJogadorNoJogo(lstTokens, ipEnviou);
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.AtacarOponente.toString())){
 				ProcessarAtaque(lstTokens, ipEnviou);
@@ -275,44 +322,200 @@ public class ServidorRestrito implements IMessageListener {
 			}
 		}
 
+		private void CarregarBarcosDoJogadorNoJogo(List<String> lstTokens,
+				String ipEnviou) {
+
+			int jogoId = -1;
+			for(String token : lstTokens){
+				String[] split = token.split(Constantes.VALUE_SEPARATOR);
+				if(split[0].equalsIgnoreCase("jogoid")){
+					jogoId = Integer.parseInt(split[1]);
+				}
+			}
+			Jogo jogo = this.encontrarJogoPorId(jogoId);
+			if(jogo != null){
+				Jogador jogador = jogo.EncontrarJogador(ipEnviou);
+				if(jogador != null){
+					Tabuleiro tabuleiro = Parser.ConverteTabuleiro(lstTokens);
+					jogador.setTabuleiroDefesa(tabuleiro);
+					fireDisplayChangeEvent(
+							new ServerEvent(String.format("Recebido tabuleiro de %s", jogador.getLogin()), TipoEvento.DisplayAtualizado)
+							);
+				}
+			}
+			
+		}
+
 		private void AtivarBotComoOponenteParaJogador(List<String> lstTokens,
 				String ipEnviou) {
-			// TODO Auto-generated method stub
+			int jogoId = -1;
+			for(String token : lstTokens){
+				String[] split = token.split(Constantes.VALUE_SEPARATOR);
+				if(split[0].equalsIgnoreCase("jogoid")){
+					jogoId = Integer.parseInt(split[1]);
+				}
+			}
+			
+			Jogo jogo = this.encontrarJogoPorId(jogoId);
+			if(jogo != null){
+				Jogador jogador = jogo.EncontrarJogador(ipEnviou);
+				if(jogador != null){
+					//Define o adversário do jogador como um bot
+					Jogador bot = jogo.EncontrarJogadorAdversario(jogador);
+					bot.setOffline();
+					bot.setIsBot(true);
+					fireDisplayChangeEvent(
+							new ServerEvent(String.format("Jogador %s ativou o bot no lugar do jogador %s", jogador.getLogin(), bot.getLogin()), TipoEvento.DisplayAtualizado)
+							);
+				}
+			}
 			
 		}
 
+		/*
+		 * Declara o jogador que enviou a mensagem como um perdedor 
+		 */
 		private void DefinirJogadorComoPerdedor(List<String> lstTokens,
 				String ipEnviou) {
-			// TODO Auto-generated method stub
+			int jogoId = -1;
+			for(String token : lstTokens){
+				String[] split = token.split(":");
+				if(split[0].equalsIgnoreCase("jogoid")){
+					jogoId = Integer.parseInt(split[1]);
+				}
+			}
+			
+			Jogo jogo = this.encontrarJogoPorId(jogoId);
+			if(jogo != null){
+				Jogador jogador = jogo.EncontrarJogador(ipEnviou);
+				if(jogador != null){
+					//Atualiza a pontuação do cara (200 pontos por perder?)
+					int pontos = 0;
+					//Verifica quantos barcos ele afundou
+					for(Embarcacao barco : jogador.getTabuleiroAtaque().getArrEmbarcacoes()){
+						if(barco.getNaufragado()){
+							//pontua pelo valor do barco
+							pontos += barco.getValorEmbarcacao();
+						}else {
+							for(Celula celulaBarco : barco.getListaCelulas()){							
+								//Pontua de acordo com as células que ele acertou
+								pontos += (celulaBarco.getTipoCelula() == TipoCelula.Embarcacao) ? barco.getValorEmbarcacao()/barco.getTamanho() : 0;
+							}
+						}
+					}
+					jogador.setPontuacao(pontos);
+					
+					
+					Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
+					this.declararVencedor(jogo, adversario);
+					this.declararPerdedor(jogo, jogador);
+					
+					fireDisplayChangeEvent(
+							new ServerEvent(String.format("%s ganhou do %s no jogo %s", adversario.getLogin(), jogador.getLogin(), jogo.getIdJogo()), TipoEvento.DisplayAtualizado)
+							);
+				}
+			}
 			
 		}
 
+		/*
+		 * Declara o jogador que enviou a mensagem como um vencedor 
+		 */
 		private void DefinirJogadorComoVencedor(List<String> lstTokens,
 				String ipEnviou) {
-			// TODO Auto-generated method stub
+			int jogoId = -1;
+			for(String token : lstTokens){
+				String[] split = token.split(Constantes.VALUE_SEPARATOR);
+				if(split[0].equalsIgnoreCase("jogoid")){
+					jogoId = Integer.parseInt(split[1]);
+				}
+			}
 			
+			Jogo jogo = this.encontrarJogoPorId(jogoId);
+			if(jogo != null){
+				Jogador jogador = jogo.EncontrarJogador(ipEnviou);
+				if(jogador != null){
+					//Atualiza a pontuação do cara (200 pontos por perder?)
+					int pontos = 0;
+					//Verifica quantos barcos ele afundou
+					for(Embarcacao barco : jogador.getTabuleiroAtaque().getArrEmbarcacoes()){
+						if(barco.getNaufragado()){
+							//pontua pelo valor do barco
+							pontos += barco.getValorEmbarcacao();
+						}else {
+							for(Celula celulaBarco : barco.getListaCelulas()){							
+								//Pontua de acordo com as células que ele acertou
+								pontos += (celulaBarco.getTipoCelula() == TipoCelula.Embarcacao) ? barco.getValorEmbarcacao()/barco.getTamanho() : 0;
+							}
+						}
+					}
+					jogador.setPontuacao(pontos);
+					
+					
+					Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
+					this.declararVencedor(jogo, jogador);
+					this.declararPerdedor(jogo, adversario);
+					fireDisplayChangeEvent(
+							new ServerEvent(String.format("%s ganhou do %s no jogo %s", jogador.getLogin(), adversario.getLogin(), jogo.getIdJogo()), TipoEvento.DisplayAtualizado)
+							);
+				}
+			}
+			
+		}
+
+		private void declararVencedor(Jogo jogo,Jogador vencedor) {
+			//Define o vencedor no id do usuário
+			//this.jogoCorrente.declaraJogadorVencedor(vencedor.getId_usuario());
+			this.jogoCorrente.encerrarJogo();
+			
+			//Envia para o usuário que ele venceu o jogo
+			String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.GanhouJogo);
+			String mensagemEnviar = String.format(mensagem, jogo.getIdJogo(), vencedor.getLogin());
+			MessageSender sender = new MessageSender(vencedor.getConexao().getSocket(), mensagem);
+			serverExecutor.execute(sender);			
+		}
+
+		private void declararPerdedor(Jogo jogo, Jogador perdedor) {
+			//Define o vencedor no id do usuário
+			this.jogoCorrente.encerrarJogo();
+			
+			//Envia para o usuário que ele venceu o jogo
+			String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.PerdeuJogo);
+			String mensagemEnviar = String.format(mensagem, jogo.getIdJogo(), perdedor.getLogin());
+			MessageSender sender = new MessageSender(perdedor.getConexao().getSocket(), mensagem);
+			serverExecutor.execute(sender);	
 		}
 
 		private void ProcessarAtaque(List<String> lstTokens, String ipEnviou) {
 						
 			Celula celula = Parser.ConverteCelula(lstTokens);
 			if(celula != null){
-				Jogador jogador = EncontrarJogadorPorIpEmJogo(jogoCorrente, ipEnviou);
-				Jogador adversario = EncontrarAdversarioEmJogo(jogoCorrente, jogador);
+				Jogador jogador = encontrarJogadorPorIpEmJogo(jogoCorrente, ipEnviou);				
+			
+				Jogador adversario = encontrarAdversarioEmJogo(jogoCorrente, jogador);
 				celula = adversario.getTabuleiroDefesa().atacar(celula.x, celula.y);
-
+				
 				//Envia ataque para o cliente que foi atacado
-				Socket clientSocketAtacado = adversario.getConexao().socket;
+				Socket clientSocketAtacado = adversario.getConexao().getSocket();
 				String mensagemOriginal = "";
 				for(String token : lstTokens){
 					mensagemOriginal += Constantes.TOKEN_SEPARATOR + token;
 				}
 				serverExecutor.execute(new MessageSender(clientSocketAtacado, mensagemOriginal));
-				
+
+				if(jogador.bIsBot){
+					//TODO: Implementar a lógica de ataque do bot aqui
+				}
+				else{
+				//Se o jogador não for bot:
 				//Envia resposta para o cliente que atacou
 				String mensagemResposta = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.RespostaAtaque);
-				Socket clientSocket = jogador.getConexao().socket;
-				serverExecutor.execute(new MessageSender(clientSocket, mensagemResposta));
+				String mensagemFormatada = String.format(mensagemResposta,jogoCorrente.getIdJogo(), celula.x, celula.y, celula.getTipoCelula().toString(), 0); 
+				//ordem 0 pq eu não sei ainda como reconhecer qual parte do barco ele acertou
+				Socket clientSocket = jogador.getConexao().getSocket();
+				
+				serverExecutor.execute(new MessageSender(clientSocket, mensagemFormatada));
+				}
 			}
 			
 			
@@ -332,7 +535,7 @@ public class ServidorRestrito implements IMessageListener {
 			return retorno;
 		}
 
-		private Jogador EncontrarAdversarioEmJogo(Jogo jogo, Jogador jogador) {
+		private Jogador encontrarAdversarioEmJogo(Jogo jogo, Jogador jogador) {
 
 			Jogador adversario = null;
 			if(jogador != null && jogo != null){

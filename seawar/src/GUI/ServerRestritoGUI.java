@@ -44,7 +44,7 @@ public class ServerRestritoGUI extends JFrame {
 	
 	public void IniciarServidor(){
 		//adiciona os listeners
-		server.AddServerEventListener(new ServerEventListener() {
+		server.addServerEventListener(new ServerEventListener() {
 			
 			@Override
 			public void updateDisplay(ServerEvent evt) {
@@ -82,7 +82,7 @@ public class ServerRestritoGUI extends JFrame {
 	private void AtualizarListaJogos() {
 		DefaultListModel lista = new DefaultListModel();
 		Jogo obj = server.jogoCorrente;
-		lista.addElement(String.format("jogo: %s, #players: %s",obj.getIdJogo(), obj.getListaJogador().length));
+		lista.addElement(String.format("jogo: %s, #players: %s",obj.getIdJogo(), obj.getListaJogador().size()));
 		listaJogadores = new JList(lista);			
 	}
 	
