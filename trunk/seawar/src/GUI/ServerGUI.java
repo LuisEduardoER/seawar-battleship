@@ -84,7 +84,7 @@ public class ServerGUI extends JFrame {
 		DefaultListModel lista = new DefaultListModel();
 		List<Jogo> jogos = server.getListaJogos();
 		for(Jogo obj : jogos){
-			lista.addElement(String.format("jogo: %s, #players: %s",obj.getIdJogo(), obj.getListaJogador().length));
+			lista.addElement(String.format("jogo: %s, #players: %s",obj.getIdJogo(), obj.getListaJogador().size()));
 		}
 		
 		listaJogadores = new JList(lista);			

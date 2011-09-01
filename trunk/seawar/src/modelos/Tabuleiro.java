@@ -142,6 +142,8 @@ public class Tabuleiro implements Serializable{
 			break;
 		}
 		 
+		
+		
 		return celAtacada;
 	}
 	private void acertarEmbarcacao(Celula celula) {

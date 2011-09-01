@@ -32,7 +32,7 @@ public class Jogador extends Usuario {
 	public Conexao conexaoJogador;
 	private int jogoId; //Variavel para saber qual o id do jogo q ele está jogando
 	boolean online = false;
-	
+	boolean myTurn = false;
 	public Jogador(){
 		conexaoJogador = new Conexao(this);
 	}
@@ -51,12 +51,17 @@ public class Jogador extends Usuario {
 	public void setIpJogador(String ipJogador) {
 		sIpJogador = ipJogador;
 	}
-	
+	public boolean estaNaVez(){
+		return myTurn;
+	}
+	public void setVez(boolean isSuaVez){
+		myTurn = isSuaVez;
+	}
 	public boolean isBot() {
 		return bIsBot;
 	}
 	
-	private void setIsBot(boolean value) {
+	public void setIsBot(boolean value) {
 		bIsBot = value;
 	}
 	

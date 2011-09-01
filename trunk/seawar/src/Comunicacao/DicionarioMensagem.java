@@ -32,22 +32,22 @@ public class DicionarioMensagem {
 			mensagem = CriarMensagemParametrizada("listaJogadores");
 			break;
 		case CriarJogo:
-			mensagem = CriarMensagemParametrizada("jogoid", "jogador1");
+			mensagem = CriarMensagemParametrizada("jogoid", "nomeCriador");
 			break;
 		case JogoCriado:
-			mensagem = CriarMensagemParametrizada("jogoid", "jogador1");
+			mensagem = CriarMensagemParametrizada("jogoid", "nomeCriador");
 			break;
 		case ChamarJogador:
-			mensagem = CriarMensagemParametrizada("jogoid", "jogador1");
+			mensagem = CriarMensagemParametrizada("jogoid", "nomeChamou");
 			break;
 		case SerChamadoPorJogador:
-			mensagem = CriarMensagemParametrizada("jogoid", "jogador1");
+			mensagem = CriarMensagemParametrizada("jogoid", "nomeChamou");
 			break;
 		case EntrarJogo:
-			mensagem = CriarMensagemParametrizada("jogoid", "jogador2");
+			mensagem = CriarMensagemParametrizada("jogoid", "nomeEntrou");
 			break;
 		case OponenteEntrou:
-			mensagem = CriarMensagemParametrizada("jogoid", "jogador2");
+			mensagem = CriarMensagemParametrizada("jogoid", "nomeEntrou");
 			break;
 		case IniciarJogo:
 			mensagem = CriarMensagemParametrizada("jogoid");

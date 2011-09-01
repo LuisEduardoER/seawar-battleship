@@ -57,6 +57,9 @@ public class Conexao implements IMessageListener {
 		socket = clientSocket;
 		player = jogador;
 	}
+	public Socket getSocket(){
+		return this.socket;
+	}
 	public void conectarJogador() {
 		if(player.isOnline())
 			return;
@@ -84,6 +87,15 @@ public class Conexao implements IMessageListener {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	public void enviarTabuleiro(Tabuleiro tabuleiro){
+		if(!player.isOnline()){
+			return;
+		}
+		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.BarcosPosicionados);
+		MessageSender send = new MessageSender(this.socket, mensagem, tabuleiro );
+		executor.execute(send);
 	}
 	
 	public void receberAtaque() {
