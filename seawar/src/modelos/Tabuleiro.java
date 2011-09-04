@@ -29,7 +29,7 @@ public class Tabuleiro implements Serializable{
 	public Jogador oJogador;
 	public Embarcacao[] arrEmbarcacoes;
 	
-	private final int QUANTIDADE_EMBARCACOES_POSSIVEIS = 7; 
+	private final int QUANTIDADE_EMBARCACOES_POSSIVEIS = 5; 
 	
 	public Tabuleiro(int tamanho){
 		mMatrizCelula = new Celula[tamanho][tamanho];
@@ -262,5 +262,38 @@ public class Tabuleiro implements Serializable{
 		obj.setNomeEmbarcacao("Barco " + tamanho);
 		obj.setPosicao(posx, posy);
 		return obj;
+	}
+	
+	//TODO Método criado apenas para testes de visualização no console
+	//excluir após interface do jogo estar pronta
+	public void pintarTabuleiro(){
+		int index = 0;
+		Celula[][] celulasDef = this.getMatrizCelula();
+		System.out.print("      ");
+		for (int i = 1; i <= celulasDef.length; i++)
+			System.out.print(i + "     ");
+
+		System.out.print("\n");
+
+		for (int i = 0; i < celulasDef.length; i++) {
+			System.out.print((char) (index + 'A') + "   ");
+			index++;
+
+			for (int j = 0; j < celulasDef[0].length; j++) {
+				if (celulasDef[i][j].aTipoCelula.name() == "Embarcacao")
+					System.out.print("  @  |");
+				if (celulasDef[i][j].aTipoCelula.name() == "Embarcacao" && this.seCelulaAtacada(celulasDef[i][j]))
+					System.out.print("  X  |");
+				if (celulasDef[i][j].aTipoCelula.name() == "Agua")
+					System.out.print("  O  |");
+				if (celulasDef[i][j].aTipoCelula.name() == "AreaLivre")
+					System.out.print("     |");
+			}
+			System.out.print("\n    ");
+
+			for (int k = 0; k < celulasDef.length; k++)
+				System.out.print("-----+");
+			System.out.print("\n");
+		}
 	}
 }
