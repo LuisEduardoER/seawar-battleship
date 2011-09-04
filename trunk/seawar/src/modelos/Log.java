@@ -61,5 +61,6 @@ public class Log {
 	
 	public static void gravarLog(String mensagem){
 		//TODO: Implementar a  gravação de log utilizando um objeto da classe LOG com implementações
+		System.out.println(mensagem);
 	}
 }

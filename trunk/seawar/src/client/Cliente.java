@@ -36,12 +36,12 @@ public class Cliente implements IMessageListener {
 	@Override
 	public void mensagemRecebida(String mensagem, Socket socketOrigem) {
 		StringTokenizer tokens = new StringTokenizer(mensagem, Constantes.TOKEN_SEPARATOR);
-		receberTokensMensagem(tokens, socketOrigem.getInetAddress().getHostAddress());
+		receberTokensMensagem(tokens, socketOrigem);
 
 	}
 
 	@Override
-	public void receberTokensMensagem(StringTokenizer tokens, String ipEnviou) {
+	public void receberTokensMensagem(StringTokenizer tokens, Socket socketOrigem) {
 		List<String> lstTokens = new ArrayList<String>();
 		
 		
@@ -53,23 +53,23 @@ public class Cliente implements IMessageListener {
 			}
 		}//fim da adatapcao da lista de tokens		
 		
-		TratarTokens(lstTokens, ipEnviou);
+		TratarTokens(lstTokens, socketOrigem.getInetAddress().getHostAddress(), socketOrigem);
 	}
 
-	private void TratarTokens(List<String> lstTokens, String ipEnviou) {
+	private void TratarTokens(List<String> lstTokens, String ipEnviou, Socket socket) {
 		// TODO Auto-generated method stub
 		if(lstTokens == null || lstTokens.isEmpty())
 			return;
 		
 		String header = lstTokens.get(0);
 		//Aqui são a lista de ações para cada tipo de mensagem RECEBIDA (não confunda com enviada)
-		if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.ConectarServidor.toString())){
+		if(header.equalsIgnoreCase(Constantes.CONNECT_TOKEN)){
 			DefinirJogador(lstTokens, ipEnviou);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.EnviarListaJogadores.toString())){
 			//EnviarListaJogadores(lstTokens, ipEnviou);
 		}
-		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.DesconectarServidor.toString())){
+		else if(header.equalsIgnoreCase(Constantes.DISCONNECT_TOKEN)){
 			//DesconectarJogador(lstTokens, ipEnviou);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.SerChamadoPorJogador.toString())){
@@ -87,7 +87,7 @@ public class Cliente implements IMessageListener {
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.ChamarJogador.toString())){
 			//ChamarJogadorParaJogar(lstTokens, ipEnviou);
 		}
-		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.Ping.toString())){
+		else if(header.equalsIgnoreCase(Constantes.PING_TOKEN)){
 			//AtualizaUltimoPingJogador(lstTokens, ipEnviou);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.JogadorDesconectado.toString())){

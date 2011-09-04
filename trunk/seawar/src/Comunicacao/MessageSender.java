@@ -1,8 +1,19 @@
 package Comunicacao;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.Socket;
 import java.util.Formatter;
+
+import utils.Parser;
+
+import encoder.Base64Coder;
 
 import modelos.Log;
 
@@ -10,13 +21,13 @@ public class MessageSender implements Runnable {
 
 	Socket clientSocket;
 	String messageToSend;
-	Object objectToSend;
+	Serializable objectToSend;
 	
 	public MessageSender(Socket socketClient, String mensagem) {
 		clientSocket = socketClient;
 		messageToSend = mensagem;
 	}
-	public MessageSender(Socket socketClient, String mensagem, Object objectToSerialize) {
+	public MessageSender(Socket socketClient, String mensagem, Serializable objectToSerialize) {
 		clientSocket = socketClient;
 		messageToSend = mensagem;
 		objectToSend = objectToSerialize;
@@ -26,20 +37,19 @@ public class MessageSender implements Runnable {
 	public void run() {
 
 		try {
-			
-			if(objectToSend != null){
-				ObjectOutputStream outObj = new ObjectOutputStream(clientSocket.getOutputStream());
-				
-				outObj.writeChars(messageToSend + Constantes.TOKEN_SEPARATOR);
-				//coloca o objeto serializado como o ultimo elemento da mensagem
-				outObj.writeObject(objectToSend);
-				outObj.flush();//Envia a mensagem
-			}
-			else{
 				Formatter output = new Formatter(clientSocket.getOutputStream());
-				output.format("%s", messageToSend); // Envia a mensagem
-				output.flush();// Esvazia a saída de mensagem
-			}
+				if(objectToSend != null){
+					output.format("%s%s%s\n", messageToSend, Constantes.TOKEN_SEPARATOR, Parser.ObjetoParaString(objectToSend)); // Formata a mensagem com o objetoSerializado
+				}
+				else{
+					output.format("%s\n", messageToSend); // Formata a mensagem
+				}
+//				DatagramPacket pacote = new DatagramPacket(messageToSend.getBytes(), messageToSend.getBytes().length);
+//				pacote.setSocketAddress(clientSocket.getRemoteSocketAddress());
+//				DatagramSocket socketData = new DatagramSocket();
+//				socketData.send(pacote);
+				output.flush();// Envia a mensagem e esvazia o output
+			
 		} catch (Exception ex) {
 			Log.gravarLog(String.format(
 					"Erro ao enviar a mensagem para %s: %s", clientSocket
@@ -47,5 +57,6 @@ public class MessageSender implements Runnable {
 		}
 
 	}
+	
 
 }

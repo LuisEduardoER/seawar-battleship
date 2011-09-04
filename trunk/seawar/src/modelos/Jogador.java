@@ -27,6 +27,7 @@ public class Jogador extends Usuario {
 	private static final long serialVersionUID = 1L;
 	public String sIpJogador;
 	public boolean bIsBot;
+	public boolean bPronto;
 	public Tabuleiro oTabuleiroAtaque;
 	public Tabuleiro oTabuleiroDefesa;
 	public Conexao conexaoJogador;
@@ -65,6 +66,14 @@ public class Jogador extends Usuario {
 		bIsBot = value;
 	}
 	
+	public boolean isPronto() {
+		return bPronto;
+	}
+
+	public void setPronto(boolean bPronto) {
+		this.bPronto = bPronto;
+	}
+
 	public Tabuleiro getTabuleiroAtaque() {
 		return oTabuleiroAtaque;
 	}
@@ -127,5 +136,14 @@ public class Jogador extends Usuario {
 	public void Atacar(int x, int y){
 		Celula cel = getTabuleiroAtaque().encontrarCelula(x, y);
 		this.conexaoJogador.enviarAtaque(cel);
+	}
+
+	public void desconectar() {
+		this.conexaoJogador.desconectarJogador();		
+	}
+
+	public void conectar() {
+		this.conexaoJogador.conectarJogador();
+		
 	}
 }

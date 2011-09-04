@@ -22,6 +22,7 @@ import exceptions.FullGameException;
 import Events.JogoEventListener;
 import Events.JogoEvent;
 import Events.ServerEventListener;
+import Events.TipoEvento;
 
 
 public class Jogo {
@@ -207,7 +208,7 @@ public class Jogo {
         // Each listener occupies two elements - the first is the listener class
         // and the second is the listener instance
         for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i]==ServerEventListener.class) {
+            if (listeners[i]==JogoEventListener.class) {
                 ((JogoEventListener)listeners[i+1]).JogadorConectado(evt.getSource(), evt);
             }
         }
@@ -217,7 +218,7 @@ public class Jogo {
         // Each listener occupies two elements - the first is the listener class
         // and the second is the listener instance
         for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i]==ServerEventListener.class) {
+            if (listeners[i]==JogoEventListener.class) {
                 ((JogoEventListener)listeners[i+1]).JogadorDesconectado(evt.getSource(), evt);
             }
         }
@@ -227,12 +228,33 @@ public class Jogo {
         // Each listener occupies two elements - the first is the listener class
         // and the second is the listener instance
         for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i]==ServerEventListener.class) {
+            if (listeners[i]==JogoEventListener.class) {
                 ((JogoEventListener)listeners[i+1]).JogadorAtacado(evt.getSource(), evt);
             }
         }
 	}
 
+	private void fireGameStartedEvent(JogoEvent evt) {
+		Object[] listeners = listenerList.getListenerList();
+        // Each listener occupies two elements - the first is the listener class
+        // and the second is the listener instance
+        for (int i=0; i<listeners.length; i+=2) {
+            if (listeners[i]==JogoEventListener.class) {
+                ((JogoEventListener)listeners[i+1]).JogoIniciado(evt.getSource(), evt);
+            }
+        }
+	}
+
+	private void fireGameOverEvent(JogoEvent evt) {
+		Object[] listeners = listenerList.getListenerList();
+        // Each listener occupies two elements - the first is the listener class
+        // and the second is the listener instance
+        for (int i=0; i<listeners.length; i+=2) {
+            if (listeners[i]==JogoEventListener.class) {
+                ((JogoEventListener)listeners[i+1]).JogoTerminado(evt.getSource(), evt);
+            }
+        }
+	}
 	/*
 	 * Inicia a partida do jogo (a fase de posicionamento de frota é uma anterior) 
 	 */
@@ -256,6 +278,21 @@ public class Jogo {
 		
 		//indica que o jogador que conectou primeiro começará a partida
 		jogadorFirst.setVez(true);		
+		
+		fireGameStartedEvent(new JogoEvent(new Object(), TipoEvento.JogoIniciado));
+		
 	}
+
+	public boolean jogadoresProntos() {
+		int qtdProntos = 0;
+		for (Jogador jogador : aListaJogador) {
+			if(jogador.isPronto()){
+				qtdProntos++;
+			}
+		}
+		//Se todos os jogares estão prontos, retorna true
+		return qtdProntos == aListaJogador.size();
+	}
+
 	
 }
