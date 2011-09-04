@@ -53,13 +53,11 @@ public class DicionarioMensagem {
 			mensagem = CriarMensagemParametrizada("jogoid");
 			break;
 		case BarcosPosicionados:
-			mensagem = CriarMensagemParametrizada("jogoid", "tabuleiro",
-					"status"); // Envia o tabuleiro serializado para o servidor
+			mensagem = CriarMensagemParametrizada("jogoid", "tabuleiro", "status"); // Envia o tabuleiro serializado (como string) para o servidor
 								// saber onde marcar os barcos
 			break;
 		case BarcosOponentePosicionados:
-			mensagem = CriarMensagemParametrizada("jogoid", "oponente",
-					"status"); // Não envia o tabuleiro do inimigo, apenas se
+			mensagem = CriarMensagemParametrizada("jogoid", "oponente", "status"); // Não envia o tabuleiro do inimigo, apenas se
 								// ele já fez ou não o posicionamento
 			break;
 		case ReceberTabuleiroOponente:
@@ -242,8 +240,7 @@ public class DicionarioMensagem {
 		String msgParametrized = "";
 
 		for (int i = 0; i < args.length; i++) {
-			msgParametrized = "$" + args[i].toString()
-					+ Constantes.VALUE_SEPARATOR + "%s";
+			msgParametrized += "$" + args[i].toString() + Constantes.VALUE_SEPARATOR + "%s";
 		}
 
 		return msgParametrized;
@@ -254,8 +251,7 @@ public class DicionarioMensagem {
 		String msgParametrized = "";
 
 		for (int i = 0; i < args.length; i++) {
-			msgParametrized = "$" + args[i].toString()
-					+ Constantes.VALUE_SEPARATOR + "%s";
+			msgParametrized += "$" + args[i].toString() + Constantes.VALUE_SEPARATOR + "%s";
 		}
 
 		return String.format(msgParametrized, values);

@@ -2,10 +2,15 @@ package utils;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.List;
+
+import encoder.Base64Coder;
 
 import Comunicacao.Constantes;
 
@@ -51,14 +56,15 @@ public class Parser {
 	public static Tabuleiro ConverteTabuleiro(List<String> lstTokens) {
 		Tabuleiro tab = null;
 		String valorTokenTabuleiro = null;
-		/*for(String token : lstTokens){
+		
+		for(String token : lstTokens){
 			String[] splitToken = valorTokenTabuleiro.split(Constantes.VALUE_SEPARATOR);
 			if(splitToken[0].equalsIgnoreCase("tabuleiro")){
 				valorTokenTabuleiro = splitToken[1];
 				break;
 			}
-		}*/
-		valorTokenTabuleiro = lstTokens.get(lstTokens.size()-1); //O último objeto é o serializado SEMPRE (tá na classe MessageSender)
+		}
+		//valorTokenTabuleiro = lstTokens.get(lstTokens.size()-1); //O último objeto é o serializado SEMPRE (tá na classe MessageSender)
 		if(valorTokenTabuleiro != null){
 		InputStream inputStream = new ByteArrayInputStream(valorTokenTabuleiro.getBytes());
 		try {
@@ -79,4 +85,23 @@ public class Parser {
 		return tab;
 	}
 	
+	/** Read the object from Base64 string. */
+    public static Object StringParaObjeto( String s ) throws IOException ,
+                                                        ClassNotFoundException {
+        byte [] data = Base64Coder.decode( s );
+        ObjectInputStream ois = new ObjectInputStream( 
+                                        new ByteArrayInputStream(  data ) );
+        Object o  = ois.readObject();
+        ois.close();
+        return o;
+    }
+
+    /** Write the object to a Base64 string. */
+    public static String ObjetoParaString( Serializable o ) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream( baos );
+        oos.writeObject( o );
+        oos.close();
+        return new String( Base64Coder.encode( baos.toByteArray() ) );
+    }
 }

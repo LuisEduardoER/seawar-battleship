@@ -5,26 +5,31 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.StringTokenizer;
 
+import encoder.Base64Coder;
+
 import modelos.Log;
 import modelos.Servidor;
 
 public class MessageReceiver implements Runnable {
 
 	private BufferedReader input;
+	InputStreamReader streamReader;
 	Socket socket;
 	private String ipRecebido;
 	private IMessageListener messageListener;
 	private boolean continuarOuvindo = true;
-
+	
+	
 	public MessageReceiver(IMessageListener listener, Socket clientSocket) {
 		messageListener = listener;
 
 		try {
 			socket = clientSocket;
 			ipRecebido = clientSocket.getInetAddress().getHostAddress();
-			clientSocket.setSoTimeout(5000);// 5 segundos para timeout
-			input = new BufferedReader(new InputStreamReader(socket
-					.getInputStream()));
+			clientSocket.setSoTimeout(10000);// 10 segundos para timeout
+			
+			streamReader = new InputStreamReader(socket.getInputStream());
+			input = new BufferedReader(streamReader);
 		} catch (IOException ioe) {
 			Log.gravarLog("Erro de leitura de socket: " + ioe.getMessage());
 		}
@@ -32,12 +37,20 @@ public class MessageReceiver implements Runnable {
 
 	@Override
 	public void run() {
-		String message; // String para receber as mensagens que chegam pelo
+		String message = null; // String para receber as mensagens que chegam pelo
 						// socket
 
 		while (continuarOuvindo) {
 			try {
-				message = input.readLine();
+				
+				message = input.readLine();	
+				//TODO: Verificar se pode mesmo deixar assim ou se remove isso
+				//pode ter problema de ficar com a thread em loop infinito matando a performance
+
+				//Enquanto tiver mensagem no buffer do socket, vai lendo
+//				while(input.ready()){		
+//					message += input.readLine();							
+//				}
 			} catch (SocketTimeoutException timeoutEx) {
 				continue; // Se der timeout na leitura do socket,
 				// continua a iteração pra poder ouvir proximas mensagens
@@ -47,13 +60,13 @@ public class MessageReceiver implements Runnable {
 						// leitor de sockets
 			}// fim do try-catch
 
-			if (message != null) {
-				if (message
-						.equalsIgnoreCase(Comunicacao.Constantes.DISCONNECT_TOKEN)) {
+			if (message != null && !message.isEmpty()) {
+				if (message.equalsIgnoreCase(Comunicacao.Constantes.DISCONNECT_TOKEN)) {
 					pararDeOuvir();
 				}
 				//Executa a mensagem e passa o socket que foi utilizado
 				messageListener.mensagemRecebida(message, this.socket);
+				message=null;
 			}// fim if de mensagem
 
 		}// fim do while
@@ -69,5 +82,4 @@ public class MessageReceiver implements Runnable {
 	private void pararDeOuvir() {
 		this.continuarOuvindo = false;
 	}
-
 }

@@ -169,7 +169,7 @@ public class Servidor implements IMessageListener {
 		else{
 			//Senão, divide a mensagem em tokens e trata ela para depois enviar apenas para o destinatario correto
 			StringTokenizer tokens = new StringTokenizer(mensagem, Constantes.TOKEN_SEPARATOR);
-			receberTokensMensagem(tokens, socketOrigem.getInetAddress().getHostAddress());
+			receberTokensMensagem(tokens, socketOrigem);
 		}
 	}
 
@@ -199,7 +199,7 @@ public class Servidor implements IMessageListener {
 	}
 
 	@Override
-	public void receberTokensMensagem(StringTokenizer tokens,String ipEnviou) {
+	public void receberTokensMensagem(StringTokenizer tokens, Socket socketOrigem) {
 		List<String> lstTokens = new ArrayList<String>();
 		
 		
@@ -211,24 +211,24 @@ public class Servidor implements IMessageListener {
 			}
 		}//fim da adatapcao da lista de tokens		
 		
-		TratarTokens(lstTokens, ipEnviou);
+		TratarTokens(lstTokens, socketOrigem.getInetAddress().getHostAddress(),  socketOrigem);
 	}
 
 
 	
-	private void TratarTokens(List<String> lstTokens, String ipEnviou) {
+	private void TratarTokens(List<String> lstTokens, String ipEnviou, Socket socket) {
 		// TODO Completar a implementação dos métodos da comunicação
 		if(lstTokens == null || lstTokens.isEmpty())
 			return;
 		
 		String header = lstTokens.get(0);
-		if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.ConectarServidor.toString())){
-			ConectarJogadorNovo(lstTokens, ipEnviou);
+		if(header.equalsIgnoreCase(Constantes.CONNECT_TOKEN)){
+			ConectarJogadorNovo(lstTokens, socket);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.EnviarListaJogadores.toString())){
 			EnviarListaJogadores(lstTokens, ipEnviou);
 		}
-		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.DesconectarServidor.toString())){
+		else if(header.equalsIgnoreCase(Constantes.DISCONNECT_TOKEN)){
 			DesconectarJogador(lstTokens, ipEnviou);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.SerChamadoPorJogador.toString())){
@@ -416,9 +416,9 @@ public class Servidor implements IMessageListener {
 		
 	}
 
-	private void ConectarJogadorNovo(List<String> lstTokens, String ipEnviou) {
-		Jogador obj = new Jogador();//TODO: Trocar para pgar o objeto pelo DAO
-		obj.setIpJogador(ipEnviou);		
+	private void ConectarJogadorNovo(List<String> lstTokens, Socket socket) {
+		Jogador obj = new Jogador(socket);//TODO: Trocar para pgar o objeto pelo DAO
+		//obj.setIpJogador(ipEnviou);		
 	}
 
 	private Jogador EncontrarJogadorPorIpEmJogo(Jogo jogo, String ipJogador){
