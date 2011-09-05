@@ -47,19 +47,19 @@ public class Conexao implements IMessageListener {
 	
 	public Conexao(Jogador jogador){
 		player = jogador;
-		executor = Executors.newCachedThreadPool();
-		sIp_servidor = Constantes.SERVER_ADDRESS;
-		porta_servidor = Constantes.SERVER_PORT;
-		try {
-			socket = new Socket(InetAddress.getByName(sIp_servidor), porta_servidor);
-			
-		} catch (UnknownHostException e) {
-			//TODO: fazer algo se ocorrer exception se host desconhecido
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Fazer algo se não tiver IO
-			e.printStackTrace();
-		}
+		//executor = Executors.newCachedThreadPool();
+//		sIp_servidor = Constantes.SERVER_ADDRESS;
+//		porta_servidor = Constantes.SERVER_PORT;
+//		try {
+//			socket = new Socket(InetAddress.getByName(sIp_servidor), porta_servidor);
+//			
+//		} catch (UnknownHostException e) {
+//			//TODO: fazer algo se ocorrer exception se host desconhecido
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			// TODO Fazer algo se não tiver IO
+//			e.printStackTrace();
+//		}
 	}
 	public Conexao(Jogador jogador, Socket clientSocket) {
 		socket = clientSocket;
@@ -77,9 +77,9 @@ public class Conexao implements IMessageListener {
 		send.run();
 	}
 	
-	public void desconectarJogador() {
+	public boolean desconectarJogador() {
 		if(!player.isOnline())
-			return;
+			return false;
 		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.DesconectarServidor);
 		Runnable send = new MessageSender(this.socket, mensagem);
 		try {
@@ -87,17 +87,17 @@ public class Conexao implements IMessageListener {
 			Future futuro = executor.submit(send);
 			futuro.get();
 			
+			//Fecha o socket que envia informação
 			this.socket.close();
+			return true;
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ExecutionException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return false;
 	}
 	
 	public void enviarAtaque(Celula celulaAtacada) {

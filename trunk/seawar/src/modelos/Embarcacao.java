@@ -59,12 +59,18 @@ public class Embarcacao implements Serializable {
 	}
 	
 	public boolean getNaufragado() {
-		return bNaufragado;
+		
+		for (Celula celulaBarco : this.aListaCelulas) {
+			if(!celulaBarco.isAtirada())
+				return false;
+		}
+		
+		return true;
 	}
 	
-	public void setNaufragado(boolean naufragado) {
-		bNaufragado = naufragado;
-	}
+//	public void setNaufragado(boolean naufragado) {
+//		bNaufragado = naufragado;
+//	}
 
 	public int getTamanho() {
 		return tamanho;
@@ -73,16 +79,17 @@ public class Embarcacao implements Serializable {
 		return bVertical;
 	}
 	public Celula getCelulaAtacada(Celula celula) {
-		Celula objRetorno = null;
+		return getCelula(celula.x, celula.y);
+	}
+	public Celula getCelula(int x, int y){
 		for(int i = 0; i < aListaCelulas.length; i++){
 			Celula celulaBarco = aListaCelulas[i];
-			if(celulaBarco != null && celula.x == celulaBarco.x && celula.y == celulaBarco.y){
-				objRetorno = celulaBarco;
+			if(celulaBarco != null && x == celulaBarco.x && y == celulaBarco.y){
+				return celulaBarco;
 			}
 		}
-		return objRetorno;
+		return null;
 	}
-
 	public void setVertical(boolean makeVertical) {
 		bVertical = makeVertical;
 		ordenarCelulas();

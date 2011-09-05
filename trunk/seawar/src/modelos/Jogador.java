@@ -34,6 +34,9 @@ public class Jogador extends Usuario {
 	private int jogoId; //Variavel para saber qual o id do jogo q ele está jogando
 	boolean online = false;
 	boolean myTurn = false;
+	
+	//Método utilizado apenas para criar oponentes DUMMIES
+	//Esse tipo de oponente deve ser criado apenas no CLIENTE
 	public Jogador(){
 		conexaoJogador = new Conexao(this);
 	}
@@ -52,10 +55,10 @@ public class Jogador extends Usuario {
 	public void setIpJogador(String ipJogador) {
 		sIpJogador = ipJogador;
 	}
-	public boolean estaNaVez(){
+	public boolean isMinhaVez(){
 		return myTurn;
 	}
-	public void setVez(boolean isSuaVez){
+	public void setMinhaVez(boolean isSuaVez){
 		myTurn = isSuaVez;
 	}
 	public boolean isBot() {
@@ -138,8 +141,8 @@ public class Jogador extends Usuario {
 		this.conexaoJogador.enviarAtaque(cel);
 	}
 
-	public void desconectar() {
-		this.conexaoJogador.desconectarJogador();		
+	public boolean desconectar() {
+		return this.conexaoJogador.desconectarJogador();		
 	}
 
 	public void conectar() {

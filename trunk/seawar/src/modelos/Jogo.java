@@ -18,6 +18,7 @@ import java.util.*;
 import javax.swing.event.EventListenerList;
 
 import exceptions.FullGameException;
+import exceptions.GameException;
 
 import Events.JogoEventListener;
 import Events.JogoEvent;
@@ -50,6 +51,17 @@ public class Jogo {
 		//Verifica se o jogo não está lotado e se aceita novos jogadores ainda
 		if(!isLotado() && aceitaNovosJogadores()){
 			aListaJogador.add(obj);
+			fireConnectedEvent(new JogoEvent(obj, TipoEvento.JogadorConectado));
+		}
+		else{
+			throw new FullGameException("Este jogo está lotado e não pode receber mais jogadores");
+		}
+	}
+	public void AdicionarJogador(Jogador obj, int index) throws FullGameException{
+		//Verifica se o jogo não está lotado e se aceita novos jogadores ainda
+		if(!isLotado() && aceitaNovosJogadores()){
+			aListaJogador.add(index, obj);
+			fireConnectedEvent(new JogoEvent(obj, TipoEvento.JogadorConectado));
 		}
 		else{
 			throw new FullGameException("Este jogo está lotado e não pode receber mais jogadores");
@@ -58,6 +70,7 @@ public class Jogo {
 	public void removerJogador(Jogador obj){
 		if(this.aListaJogador.size() > 0){
 			this.aListaJogador.remove(obj);
+			fireDisconnectedEvent(new JogoEvent(obj, TipoEvento.JogadorDesconectado));
 		}
 	}
 	public boolean isVazio(){
@@ -154,8 +167,16 @@ public class Jogo {
 	
 	public void encerrarJogo() {
 		this.bJogoEncerrado = true;
+		fireGameOverEvent(new JogoEvent(getJogadorVencedor(), TipoEvento.EncerrouJogo));
 	}
 	
+	private Object getJogadorVencedor() {
+		for (Jogador jogador : this.aListaJogador) {
+			
+		}
+		return null;
+	}
+
 	public void atuarEm(Jogador jogador, Celula celula) {
 		Tabuleiro tabuleiro = jogador.getTabuleiroAtaque();
 	}
@@ -223,16 +244,17 @@ public class Jogo {
             }
         }
 	}
-	private void fireAttackedEvent(JogoEvent evt){
-		Object[] listeners = listenerList.getListenerList();
-        // Each listener occupies two elements - the first is the listener class
-        // and the second is the listener instance
-        for (int i=0; i<listeners.length; i+=2) {
-            if (listeners[i]==JogoEventListener.class) {
-                ((JogoEventListener)listeners[i+1]).JogadorAtacado(evt.getSource(), evt);
-            }
-        }
-	}
+	//Método será utilizado apenas na classe Cliente, esta não precisa deste método
+//	private void fireAttackedEvent(JogoEvent evt){
+//		Object[] listeners = listenerList.getListenerList();
+//        // Each listener occupies two elements - the first is the listener class
+//        // and the second is the listener instance
+//        for (int i=0; i<listeners.length; i+=2) {
+//            if (listeners[i]==JogoEventListener.class) {
+//                ((JogoEventListener)listeners[i+1]).JogadorAtacado(evt.getSource(), evt);
+//            }
+//        }
+//	}
 
 	private void fireGameStartedEvent(JogoEvent evt) {
 		Object[] listeners = listenerList.getListenerList();
@@ -258,7 +280,7 @@ public class Jogo {
 	/*
 	 * Inicia a partida do jogo (a fase de posicionamento de frota é uma anterior) 
 	 */
-	public void IniciarPartida() {
+	public void IniciarPartida() throws GameException {
 		if(this.isVazio()){
 			return; //implementar uma exception, talvez
 		}
@@ -274,12 +296,13 @@ public class Jogo {
 			//Se caiu aqui, significa que apenas jogadores BOTS estão nesse jogo... então remove todos
 			this.aListaJogador.removeAll(aListaJogador);
 			//TODO: Atirar uma exception aqui
+			throw new GameException("Jogo apenas com bots");
 		}
 		
 		//indica que o jogador que conectou primeiro começará a partida
-		jogadorFirst.setVez(true);		
+		jogadorFirst.setMinhaVez(true);		
 		
-		fireGameStartedEvent(new JogoEvent(new Object(), TipoEvento.JogoIniciado));
+		fireGameStartedEvent(new JogoEvent(this, TipoEvento.JogoIniciado));
 		
 	}
 
@@ -292,6 +315,17 @@ public class Jogo {
 		}
 		//Se todos os jogares estão prontos, retorna true
 		return qtdProntos == aListaJogador.size();
+	}
+
+	public void setBot(Jogador jogador) {
+		String loginName = jogador.getLogin();
+		jogador.setLogin(String.format("%s (BOT)",loginName));
+		
+	}
+
+	public void setVencedor(Jogador vencedor) {
+		this.setCodJogadorVencedor(vencedor.getId_usuario());
+		fireGameOverEvent(new JogoEvent(vencedor, TipoEvento.EncerrouJogo));		
 	}
 
 	

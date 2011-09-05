@@ -13,5 +13,6 @@ public interface Constantes {
 	public static final String DISCONNECT_TOKEN = "$disconnect";
 	public static final String CONNECT_TOKEN = "$connect";
 	public static final String PING_TOKEN = "$ping";
+	public static final int TAMANHO_TABULEIRO = 10;
 
 }

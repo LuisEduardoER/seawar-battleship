@@ -11,10 +11,12 @@ import java.util.StringTokenizer;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.swing.event.EventListenerList;
 
 import exceptions.FullGameException;
+import exceptions.GameException;
 
 import utils.Parser;
 
@@ -33,10 +35,11 @@ import Events.TipoEvento;
 //apenas a interface do cliente precisa necessariamente implementá-los
 
 public class ServidorRestrito implements IMessageListener {
-		private ExecutorService serverExecutor;
-		private boolean continuarRecebendoConexoes;
-		int capacidade = 2;
-		int tamanhoTabuleiro = 10;
+		private ExecutorService serverExecutor; //Executor de comandos em threads paralelas
+		ServerSocket serversocket; // Socket do servidor
+		private boolean continuarRecebendoConexoes; //flag para receber ou não conexões novas
+		int capacidade = 2; //quantidade de jogadores possiveis em um jogo
+		int tamanhoTabuleiro = Constantes.TAMANHO_TABULEIRO; //numero de células do tabuleiro
 		//Define uma lista de eventos para a classe Servidor
 		protected EventListenerList listenerList = new EventListenerList();
 
@@ -53,7 +56,7 @@ public class ServidorRestrito implements IMessageListener {
 		public void IniciarServidor(){			
 			
 			try{
-				//Cria socket para ouvir uma porta e conseguir manter até 100 conexões
+				//Cria socket para ouvir uma porta e conseguir manter até 100 conexões				
 				ServerSocket serversocket = new ServerSocket(Comunicacao.Constantes.SERVER_PORT, 100);
 				
 				//Aguarda os 2 jogadores conectarem no servidor
@@ -103,22 +106,35 @@ public class ServidorRestrito implements IMessageListener {
 			Jogador obj = new Jogador(socket);
 			try {
 				if(!this.jogoCorrente.isVazio()){
-					//Se o jogo não estiver vazio, envia mensagem para os jogadores de plantão que mais 1 jogador entrou no jogo
+					//Se o jogo não estiver vazio, envia mensagem para os jogadores de plantão que mais 1 jogador entrou no jogo na última posição
 					for(Jogador jogadorAguardando : this.jogoCorrente.getListaJogador()){
-						String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.EntrarJogo);
-						String mensagemEnviar = String.format(mensagem, this.jogoCorrente.getIdJogo(), obj.getLogin());
-						MessageSender sender = new MessageSender(jogadorAguardando.getConexao().getSocket(), mensagem);
+						String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.OponenteEntrou);
+						String mensagemEnviar = String.format(mensagem, this.jogoCorrente.getIdJogo(), obj.getLogin(), aListaJogadorJogando.size());
+						MessageSender sender = new MessageSender(jogadorAguardando.getConexao().getSocket(), mensagemEnviar);
 						serverExecutor.execute(sender);
 					}
 				}
 				obj.setOnline();
-				obj.setLogin("Player"+aListaJogadorJogando.size()+1);
+				obj.setLogin("Player"+(aListaJogadorJogando.size()+1));
 				this.jogoCorrente.AdicionarJogador(obj); //Esta adição causa exception se o jogo estiver lotado
 				
 				//Adiciona o jogador à lista de quem tá jogando, apenas se o jogador for adicionado no jogo antes
 				aListaJogadorJogando.add(obj);
 				//Dispara o evento que informa o que deve-se imprimir na tela
 				fireDisplayChangeEvent(new ServerEvent(String.format("%s adicionado ao jogo(%s)", obj.getLogin(), this.jogoCorrente.getIdJogo()), TipoEvento.DisplayAtualizado));
+				
+				//informa o jogador que ele foi conectado com sucesso!
+				String msgConectado = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.ConectarServidor);
+				MessageSender send = new MessageSender(obj.getConexao().getSocket(), msgConectado);
+				//Espera enviar a mensagem para que continue a execução
+				Future futuro = serverExecutor.submit(send);
+				futuro.get(); 				
+				
+				//também informa o jogador qual a posição dele na lista de jogadores 
+				String msgEntrouJogo = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.EntrarJogo);
+				String msgEntrouJogoEnviar = String.format(msgEntrouJogo, this.jogoCorrente.getIdJogo(), obj.getLogin(), aListaJogadorJogando.indexOf(obj));
+				MessageSender sender = new MessageSender(obj.getConexao().getSocket(), msgEntrouJogoEnviar);
+				serverExecutor.execute(sender);
 				
 			} catch (FullGameException e) {
 				//Dispara o evento para imprimir na tela do servidor quando houver problemas
@@ -168,7 +184,15 @@ public class ServidorRestrito implements IMessageListener {
 				serverExecutor.execute(enviador);
 			}			
 			fireDisplayChangeEvent(new ServerEvent("Iniciando a partida do jogo",TipoEvento.DisplayAtualizado));
-			jogoIniciar.IniciarPartida();
+			try{
+				jogoIniciar.IniciarPartida();
+			}	
+			catch(GameException e)
+			{
+				String mensagem = String.format("Erro:%s\nReiniciando jogo",e.getMessage());
+				fireDisplayChangeEvent(new ServerEvent(mensagem, TipoEvento.DisplayAtualizado));
+				
+			}
 		}
 
 		private Jogador encontrarJogadorPorIpEmJogo(Jogo jogo, String ipJogador){
@@ -483,8 +507,7 @@ public class ServidorRestrito implements IMessageListener {
 		/*
 		 * Declara o jogador que enviou a mensagem como um vencedor 
 		 */
-		private void DefinirJogadorComoVencedor(List<String> lstTokens,
-				String ipEnviou) {
+		private void DefinirJogadorComoVencedor(List<String> lstTokens, String ipEnviou) {
 			int jogoId = -1;
 			for(String token : lstTokens){
 				String[] split = token.split(Constantes.VALUE_SEPARATOR);
@@ -533,7 +556,7 @@ public class ServidorRestrito implements IMessageListener {
 			//Envia para o usuário que ele venceu o jogo
 			String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.GanhouJogo);
 			String mensagemEnviar = String.format(mensagem, jogo.getIdJogo(), vencedor.getLogin());
-			MessageSender sender = new MessageSender(vencedor.getConexao().getSocket(), mensagem);
+			MessageSender sender = new MessageSender(vencedor.getConexao().getSocket(), mensagemEnviar);
 			serverExecutor.execute(sender);			
 		}
 
@@ -544,17 +567,25 @@ public class ServidorRestrito implements IMessageListener {
 			//Envia para o usuário que ele venceu o jogo
 			String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.PerdeuJogo);
 			String mensagemEnviar = String.format(mensagem, jogo.getIdJogo(), perdedor.getLogin());
-			MessageSender sender = new MessageSender(perdedor.getConexao().getSocket(), mensagem);
+			MessageSender sender = new MessageSender(perdedor.getConexao().getSocket(), mensagemEnviar);
 			serverExecutor.execute(sender);	
 		}
 
 		private void ProcessarAtaque(List<String> lstTokens, String ipEnviou) {
-						
+			boolean venceuJogo = false;	
+			int jogoId = -1;
+			for (String token : lstTokens) {
+				String[] split = token.split(Constantes.VALUE_SEPARATOR);
+				if(split[0].equalsIgnoreCase("jogoid")){
+					jogoId = Integer.parseInt(split[1]);
+				}
+			}
 			Celula celula = Parser.ConverteCelula(lstTokens);
+			Jogo jogo = this.encontrarJogoPorId(jogoId);
 			if(celula != null){
-				Jogador jogador = encontrarJogadorPorIpEmJogo(jogoCorrente, ipEnviou);				
+				Jogador jogador = encontrarJogadorPorIpEmJogo(jogo, ipEnviou);				
 			
-				Jogador adversario = encontrarAdversarioEmJogo(jogoCorrente, jogador);
+				Jogador adversario = encontrarAdversarioEmJogo(jogo, jogador);
 				celula = adversario.getTabuleiroDefesa().atacar(celula.x, celula.y);
 				
 				//Envia ataque para o cliente que foi atacado
@@ -564,37 +595,35 @@ public class ServidorRestrito implements IMessageListener {
 					mensagemOriginal += Constantes.TOKEN_SEPARATOR + token;
 				}
 				serverExecutor.execute(new MessageSender(clientSocketAtacado, mensagemOriginal));
-
-				if(jogador.bIsBot){
+				
+				venceuJogo = adversario.getTabuleiroDefesa().isTodosBarcosAfundados();
+				
+				if(jogador.bIsBot && !venceuJogo){
 					//TODO: Implementar a lógica de ataque do bot aqui
 				}
 				else{
 				//Se o jogador não for bot:
 				//Envia resposta para o cliente que atacou
 				String mensagemResposta = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.RespostaAtaque);
-				String mensagemFormatada = String.format(mensagemResposta,jogoCorrente.getIdJogo(), celula.x, celula.y, celula.getTipoCelula().toString(), 0); 
+				String mensagemFormatada = String.format(mensagemResposta,jogo.getIdJogo(), celula.x, celula.y, celula.getTipoCelula().toString(), 0); 
 				//ordem 0 pq eu não sei ainda como reconhecer qual parte do barco ele acertou
 				Socket clientSocket = jogador.getConexao().getSocket();
 				
 				serverExecutor.execute(new MessageSender(clientSocket, mensagemFormatada));
 				}
-			}
-			
-			
-		}
 
-		private Socket MontarSocket(String ipJogador) {
-			Socket retorno = null;
-			try {
-				retorno = new Socket(InetAddress.getByName(ipJogador), Constantes.SERVER_PORT);
-			} catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				//Se o jogador venceu o jogo com esse ataque, informa os 2 jogadores
+				if(venceuJogo){
+					//Limpa os tokens recebidos e adiciona apenas o que interessa
+					//para que a mensagem de vencedor seja procesada
+					lstTokens.clear();
+					lstTokens.add(String.format("%s%s%s", "jogoid", Constantes.VALUE_SEPARATOR, jogo.getIdJogo()));
+					//Define o jogador atacante como vencedor da partida
+					DefinirJogadorComoVencedor(lstTokens, ipEnviou);
+				}
 			}
-			return retorno;
+			
+			
 		}
 
 		private Jogador encontrarAdversarioEmJogo(Jogo jogo, Jogador jogador) {
@@ -617,8 +646,8 @@ public class ServidorRestrito implements IMessageListener {
 				//informa o adversário sobre a saída do oponente
 				Jogador adversario = this.jogoCorrente.EncontrarJogadorAdversario(jogador);
 				if(adversario != null){				
-					String msg = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.GanhouJogo);
-					String msgFormatada = String.format(msg, this.jogoCorrente.getIdJogo(), adversario.getLogin());
+					String msg = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.JogadorDesconectado);
+					String msgFormatada = String.format(msg, this.jogoCorrente.getIdJogo(), jogador.getLogin(), jogador.getId_usuario());
 					MessageSender enviador = new MessageSender(adversario.getConexao().getSocket(), msgFormatada);
 					serverExecutor.execute(enviador);
 				}
@@ -630,6 +659,5 @@ public class ServidorRestrito implements IMessageListener {
 			
 			return this.jogoCorrente.EncontrarJogador(ipJogador);
 		}
-		
 		
 }

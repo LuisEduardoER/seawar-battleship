@@ -1,6 +1,6 @@
 package modelos;
 
-import java.io.Console;
+
 import java.io.Serializable;
 import java.util.Random;
 //
@@ -120,7 +120,7 @@ public class Tabuleiro implements Serializable{
 		return  false;
 	}
 	
-	public Celula encontrarCelula(int x, int y) {
+	public Celula encontrarCelula(int x, int y) throws IndexOutOfBoundsException {
 			Celula objCelula = mMatrizCelula[x][y];
 			return objCelula;
 	}
@@ -182,6 +182,7 @@ public class Tabuleiro implements Serializable{
 			Embarcacao barco = gerarEmbarcacao(posx, posy, i+1);
 			
 			if(ValidarPosicaoEmbarcacao(barco, posx, posy)){
+				barco.setPosicao(posx, posy);
 				arrEmbarcacoes[i] = barco;
 			}		
 			else{
@@ -189,6 +190,7 @@ public class Tabuleiro implements Serializable{
 				barco.setVertical(!barco.estaVertical());
 				//tenta validar de novo
 				if(ValidarPosicaoEmbarcacao(barco, posx, posy)){
+					barco.setPosicao(posx, posy);
 					arrEmbarcacoes[i] = barco;
 				}
 				else{
@@ -208,43 +210,31 @@ public class Tabuleiro implements Serializable{
 			posy = randNum.nextInt(this.mMatrizCelula[0].length);
 		}
 		
-		//Agora atribui cada célula da embarcacao nas celulas
-		for(int i = 0; i < arrEmbarcacoes.length; i++){
-			Embarcacao barco = arrEmbarcacoes[i];
-			Celula[] celulasBarco = barco.getListaCelulas();
-			for(int j = 0; j < celulasBarco.length; j++){
-				int x = celulasBarco[j].x;
-				int y = celulasBarco[j].y;
-				mMatrizCelula[x][y] = celulasBarco[j];				
-			}
-		}
+		repintarTabuleiro();
 	}
-	private boolean ValidarPosicaoEmbarcacao(Embarcacao barco, int x, int y) {
-
+	
+	//Valida se a nova posição para o barco é válida (Se não está fora do tabuleiro ou sobrepondo de outro barco)
+	public boolean ValidarPosicaoEmbarcacao(Embarcacao barco, int x, int y) {
+		//incrementadores da posição que será validada para a embarcação
+		int xInc = x;
+		int yInc = y;
 		try{
 			Celula[] celulas = barco.getListaCelulas();
-			//Seta a posição da frente do barco
-			barco.setPosicao(x, y);
 			//Verifica se as posições estão válidas
 			for(int i = 0; i < celulas.length; i++){
-				Celula celulaBarco = celulas[i];
-				Celula celulaTabuleiro = this.encontrarCelula(celulaBarco.x, celulaBarco.y);
+				//Pega a embarcação daquela posição em verificação
+				Embarcacao barcoDaCelula = this.getEmbarcacao(xInc, yInc);
+				//Se tem algum barco naquela célula e não for o barco que estou movendo, retorna falso
+				if(barcoDaCelula != null && !barcoDaCelula.equals(barco)){
+					return false;
+				}
 				
-				//Valida a posição de acordo com a rotação do barco
-				//Caso conflite com alguma outra embarcação, retorna falso o método
-				//pois a posição será inválida
-				if(barco.estaVertical()){
-					if(celulaTabuleiro.getTipoCelula() == TipoCelula.Embarcacao){
-						return false;
-					}
-					y++;
-				}
-				else{
-					if(celulaTabuleiro.getTipoCelula() == TipoCelula.Embarcacao){
-						return false;
-					}
-					x++;
-				}
+				//Se o barco está na vertical, aumenta o Y para verificar a proxima celula vertical
+				//senão aumenta o X para verificar a proxima celula horizontal
+				if(barco.estaVertical())
+				{ y++; }
+				else
+				{ x++; }
 			}
 		}
 		catch(IndexOutOfBoundsException ex){
@@ -253,6 +243,10 @@ public class Tabuleiro implements Serializable{
 			//throw ex;
 			return false;
 		}
+		
+
+		//Seta a posição da frente do barco apenas se tiver válido
+		//barco.setPosicao(x, y);
 		//Só retorna TRUE se passar por toda a validação e não sair do método com alguma posição falsa
 		return true;
 	}
@@ -262,6 +256,51 @@ public class Tabuleiro implements Serializable{
 		obj.setNomeEmbarcacao("Barco " + tamanho);
 		obj.setPosicao(posx, posy);
 		return obj;
+	}
+
+	public boolean isTodosBarcosAfundados() {
+		
+		for (Embarcacao barco : this.arrEmbarcacoes) {
+			//se pelo menos 1 barco não estiver naufragado, retorna falso
+			if(!barco.getNaufragado()){
+				return false;
+			}
+		}
+		
+		return true;
+	}
+
+	public Embarcacao getEmbarcacao(int x, int y) {
+		//Percorre as embarcações em busca das célula na posição esperada
+		for(Embarcacao barco:this.arrEmbarcacoes){
+			Celula celula = barco.getCelula(x,y);
+			//Se encontrar a célula em um barco, retorna este barco
+			if(celula != null){
+				return barco;
+			}
+		}
+		return null;
+	}
+	
+	public void repintarTabuleiro(){
+		//Limpa todas as células do tabuleiro (marca-as como água)
+		for(int i = 0; i < this.mMatrizCelula.length; i++){
+			for(int j = 0; j < this.mMatrizCelula[0].length; j++){
+				this.mMatrizCelula[i][j].limpar();
+			}
+		}
+		
+		//Atribui cada célula da embarcacao nas celulas do tabuleiro (definitivas)
+		//Essa "pintura" é importante para imprimir no cliente e enviar o tabuleiro serializado
+		for(int i = 0; i < arrEmbarcacoes.length; i++){
+			Embarcacao barco = arrEmbarcacoes[i];
+			Celula[] celulasBarco = barco.getListaCelulas();
+			for(int j = 0; j < celulasBarco.length; j++){
+				int x = celulasBarco[j].x;
+				int y = celulasBarco[j].y;
+				mMatrizCelula[x][y] = celulasBarco[j];				
+			}
+		}
 	}
 	
 	//TODO Método criado apenas para testes de visualização no console

@@ -23,7 +23,7 @@ public class ServerClientTest {
 			jogador.conectar();
 						
 			int segundos = 0;
-			jogador.setTabuleiroDefesa(new Tabuleiro(10));
+			jogador.setTabuleiroDefesa(new Tabuleiro(Constantes.TAMANHO_TABULEIRO));
 			//Envia o tabuleiro para o servidor
 			if(jogador.getConexao().getSocket().isConnected()){
 				jogador.setOnline();
