@@ -14,6 +14,7 @@ public class DicionarioMensagem {
 			mensagem = CriarMensagemParametrizada("nome");
 			break;
 		case JogadorDesconectado:
+			mensagem = CriarMensagemParametrizada("jogoid", "nome", "usuarioid");
 			break;
 		case DesconectarServidor:
 			mensagem = Constantes.DISCONNECT_TOKEN;
@@ -44,10 +45,10 @@ public class DicionarioMensagem {
 			mensagem = CriarMensagemParametrizada("jogoid", "nomeChamou");
 			break;
 		case EntrarJogo:
-			mensagem = CriarMensagemParametrizada("jogoid", "nomeEntrou");
+			mensagem = CriarMensagemParametrizada("jogoid", "nomeEntrou", "posicao");
 			break;
 		case OponenteEntrou:
-			mensagem = CriarMensagemParametrizada("jogoid", "nomeEntrou");
+			mensagem = CriarMensagemParametrizada("jogoid", "nomeEntrou", "posicao");
 			break;
 		case IniciarJogo:
 			mensagem = CriarMensagemParametrizada("jogoid");
@@ -70,8 +71,7 @@ public class DicionarioMensagem {
 			mensagem = CriarMensagemParametrizada("jogoid", "x", "y");
 			break;
 		case RespostaAtaque:
-			mensagem = CriarMensagemParametrizada("jogoid", "x", "y",
-					"tipoCelula", "ordem");
+			mensagem = CriarMensagemParametrizada("jogoid", "x", "y", "tipoCelula", "ordem");
 			break;
 		case EnviarMensagemOponente:
 			mensagem = CriarMensagemParametrizada("jogoid", "mensagem");
@@ -90,7 +90,7 @@ public class DicionarioMensagem {
 			incluirTipo = false;
 			break;
 		case JogadorTimeout:
-			mensagem = CriarMensagemParametrizada("jogoid");
+			mensagem = CriarMensagemParametrizada("jogoid", "nome", "usuarioid");
 			break;
 		case JogarComBot:
 			mensagem = CriarMensagemParametrizada("jogoid");

@@ -46,4 +46,9 @@ public class Celula extends Point implements Serializable{
 	public void carregarImagem(TipoCelula tipoCelula) {
 		//TODO: Rever esta implementação, verificar na doc.
 	}
+
+	public void limpar() {
+		this.aTipoCelula = TipoCelula.Agua;
+		this.acertada = false;
+	}
 }
