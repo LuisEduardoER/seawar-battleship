@@ -229,12 +229,16 @@ public class Tabuleiro implements Serializable{
 					return false;
 				}
 				
+				if(this.mMatrizCelula[xInc][yInc] == null)
+					return false;
+				if(xInc >= this.mMatrizCelula.length || yInc >= this.mMatrizCelula[0].length)
+					return false;
 				//Se o barco está na vertical, aumenta o Y para verificar a proxima celula vertical
 				//senão aumenta o X para verificar a proxima celula horizontal
 				if(barco.estaVertical())
-				{ y++; }
+				{ yInc++; }
 				else
-				{ x++; }
+				{ xInc++; }
 			}
 		}
 		catch(IndexOutOfBoundsException ex){
@@ -273,11 +277,14 @@ public class Tabuleiro implements Serializable{
 	public Embarcacao getEmbarcacao(int x, int y) {
 		//Percorre as embarcações em busca das célula na posição esperada
 		for(Embarcacao barco:this.arrEmbarcacoes){
-			Celula celula = barco.getCelula(x,y);
-			//Se encontrar a célula em um barco, retorna este barco
-			if(celula != null){
-				return barco;
+			if(barco != null){
+				Celula celula = barco.getCelula(x,y);
+				//Se encontrar a célula em um barco, retorna este barco
+				if(celula != null){
+					return barco;
+				}
 			}
+			
 		}
 		return null;
 	}
@@ -319,13 +326,13 @@ public class Tabuleiro implements Serializable{
 			index++;
 
 			for (int j = 0; j < celulasDef[0].length; j++) {
-				if (celulasDef[i][j].aTipoCelula.name() == "Embarcacao")
+				if (celulasDef[i][j].getTipoCelula() == TipoCelula.Embarcacao && !this.seCelulaAtacada(celulasDef[i][j]))
 					System.out.print("  @  |");
-				if (celulasDef[i][j].aTipoCelula.name() == "Embarcacao" && this.seCelulaAtacada(celulasDef[i][j]))
+				if (celulasDef[i][j].getTipoCelula() == TipoCelula.Embarcacao && this.seCelulaAtacada(celulasDef[i][j]))
 					System.out.print("  X  |");
-				if (celulasDef[i][j].aTipoCelula.name() == "Agua")
+				if (celulasDef[i][j].getTipoCelula() == TipoCelula.Agua)
 					System.out.print("  O  |");
-				if (celulasDef[i][j].aTipoCelula.name() == "AreaLivre")
+				if (celulasDef[i][j].getTipoCelula() == TipoCelula.AreaLivre)
 					System.out.print("     |");
 			}
 			System.out.print("\n    ");
