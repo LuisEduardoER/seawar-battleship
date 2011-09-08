@@ -6,6 +6,7 @@ import java.util.List;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import modelos.Jogador;
@@ -28,14 +29,16 @@ public class ServerRestritoGUI extends JFrame {
 		super("Server do jogo Batalha Naval");
 		listaJogadores = new JList();
 		listaJogadores.setSize(100, 300);
-		listaJogos = new JList();
-		listaJogos.setSize(100,300);
+		//listaJogos = new JList();
+		//listaJogos.setSize(100,300);
 		displayArea = new JTextArea();
 		displayArea.setSize(400, 300);
-		setSize(600, 300);		
+		//scrollpane para rolar automaticamente as mensagens quando forem imprimidas
+		JScrollPane scrollable = new JScrollPane(displayArea);
+		this.setSize(600, 300);		
 		add(listaJogadores, BorderLayout.WEST);
-		add(listaJogos, BorderLayout.EAST);
-		add(displayArea, BorderLayout.CENTER);
+		//add(listaJogos, BorderLayout.EAST);
+		add(scrollable, BorderLayout.CENTER);
 		
 		server = new ServidorRestrito();
 		

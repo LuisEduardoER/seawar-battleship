@@ -15,7 +15,6 @@ public class MessageReceiver implements Runnable {
 	private BufferedReader input;
 	InputStreamReader streamReader;
 	Socket socket;
-	private String ipRecebido;
 	private IMessageListener messageListener;
 	private boolean continuarOuvindo = true;
 	
@@ -25,7 +24,7 @@ public class MessageReceiver implements Runnable {
 
 		try {
 			socket = clientSocket;
-			ipRecebido = clientSocket.getInetAddress().getHostAddress();
+			clientSocket.getInetAddress().getHostAddress();
 			clientSocket.setSoTimeout(10000);// 10 segundos para timeout
 			
 			streamReader = new InputStreamReader(socket.getInputStream());
@@ -44,6 +43,7 @@ public class MessageReceiver implements Runnable {
 			try {
 				
 				message = input.readLine();	
+				//System.out.println(message);
 				//TODO: Verificar se pode mesmo deixar assim ou se remove isso
 				//pode ter problema de ficar com a thread em loop infinito matando a performance
 

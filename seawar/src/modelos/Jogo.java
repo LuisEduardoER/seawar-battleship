@@ -181,11 +181,11 @@ public class Jogo {
 		Tabuleiro tabuleiro = jogador.getTabuleiroAtaque();
 	}
 	
-	public Jogador EncontrarJogador(String IP){
+	public Jogador EncontrarJogador(Socket socketJogador){
 		Jogador jogadorRetorno = null;
 		
 		for(int i = 0; i < aListaJogador.size(); i++){
-			if(aListaJogador.get(i).getIpJogador().equalsIgnoreCase(IP)){
+			if(aListaJogador.get(i).getConexao().getSocket().equals(socketJogador)){
 				jogadorRetorno = aListaJogador.get(i);
 				break; //Sai do loop quando encontra o jogador pelo IP
 			}

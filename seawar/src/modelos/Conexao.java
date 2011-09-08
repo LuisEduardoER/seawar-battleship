@@ -73,7 +73,8 @@ public class Conexao implements IMessageListener {
 		if(player.isOnline())
 			return;
 		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.ConectarServidor);
-		MessageSender send = new MessageSender(this.socket, mensagem);
+		String mensagemEnviar = String.format(mensagem, this.player.getLogin(), this.player.getSenha());
+		MessageSender send = new MessageSender(this.socket, mensagemEnviar);
 		send.run();
 	}
 	
@@ -100,20 +101,16 @@ public class Conexao implements IMessageListener {
 		return false;
 	}
 	
-	public void enviarAtaque(Celula celulaAtacada) {
+	public void enviarAtaque(int jogoId, Celula celulaAtacada) {
 		if(!player.isOnline())
 			return;
 		
-		try {
-			Formatter output = new Formatter(socket.getOutputStream());
+			//Formatter output = new Formatter(socket.getOutputStream());
 			String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.AtacarOponente);
+			mensagem = String.format(mensagem, jogoId, celulaAtacada.x, celulaAtacada.y);
+			MessageSender send = new MessageSender(this.socket, mensagem);
+			executor.execute(send);
 			
-			output.format(mensagem, celulaAtacada.x, celulaAtacada.y);
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		
 	}
 	

@@ -17,6 +17,10 @@ import java.io.Serializable;
 
 
 public class Embarcacao implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8L;
 	private Celula[] aListaCelulas;
 	private String sNomeEmbarcacao;
 	private int iValorEmbarcacao;

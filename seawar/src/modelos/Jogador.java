@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 
 import dao.JogadorDAO;
+import exceptions.TabuleiroIOException;
 
 
 //
@@ -137,8 +138,13 @@ public class Jogador extends Usuario {
 	}
 	
 	public void Atacar(int x, int y){
-		Celula cel = getTabuleiroAtaque().encontrarCelula(x, y);
-		this.conexaoJogador.enviarAtaque(cel);
+		//Tabuleiro tabuleiroAtaque = getTabuleiroAtaque();		
+		//Celula cel = tabuleiroAtaque.encontrarCelula(x, y);
+		
+		//Como a célula não é processada aqui, pode-se jogar uma célula DUMMIE com apenas o X e o Y do local atacado
+		Celula cel = new Celula(); 
+		cel.setLocation(x,y);
+		this.conexaoJogador.enviarAtaque(this.jogoId,cel);
 	}
 
 	public boolean desconectar() {
@@ -148,5 +154,16 @@ public class Jogador extends Usuario {
 	public void conectar() {
 		this.conexaoJogador.conectarJogador();
 		
+	}
+
+	public boolean enviarTabuleiroAtaque() {
+		try {
+			this.conexaoJogador.enviarTabuleiro(oTabuleiroAtaque);
+			return true;
+		} catch (TabuleiroIOException e) {
+			Log.gravarLog(e.getMessage());
+			e.printStackTrace();
+		}
+		return false;
 	}
 }

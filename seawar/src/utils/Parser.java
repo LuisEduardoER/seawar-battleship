@@ -1,13 +1,17 @@
 package utils;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
+import java.util.Formatter;
 import java.util.List;
 
 import encoder.Base64Coder;
@@ -28,20 +32,20 @@ public class Parser {
 			for(int i = 0; i < tokens.size(); i++){
 				String token = tokens.get(i);
 				//Recupera os parametros que virão no tipo -> chave:valor
-				String[] aux = token.split(":");
+				String[] split = token.split(Constantes.VALUE_SEPARATOR);
 
 				//Comparo a chave (que é o mesmo que o parametro que recebe na DicionarioMensagem)
 				//e recupero só a parte de valor, assim converto para o que precisa e preencho o objeto
-				if(aux[1].equalsIgnoreCase("x")){
-					int xCel = Integer.parseInt(aux[1]);
+				if(split[0].equalsIgnoreCase("x")){
+					int xCel = Integer.parseInt(split[1]);
 					celulaRetorno.x = xCel;
 				}
-				else if (aux[1].equalsIgnoreCase("y")){
-					int yCel = Integer.parseInt(aux[1]);
+				else if (split[0].equalsIgnoreCase("y")){
+					int yCel = Integer.parseInt(split[1]);
 					celulaRetorno.y = yCel;
 				}
-				else if (aux[1].equalsIgnoreCase("tipocelula")){
-					TipoCelula tipo = TipoCelula.valueOf(aux[1]);
+				else if (split[0].equalsIgnoreCase("tipocelula")){
+					TipoCelula tipo = TipoCelula.valueOf(split[1]);
 					celulaRetorno.setTipoCelula(tipo);
 				}				
 			}					
@@ -104,4 +108,37 @@ public class Parser {
         oos.close();
         return new String( Base64Coder.encode( baos.toByteArray() ) );
     }
+    
+//    public static String ObjetoParaString(Serializable obj) throws IOException{
+//    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//        	ObjectOutputStream oos = new ObjectOutputStream( baos );
+//			oos.writeObject( obj );
+//			oos.close();
+//        
+//        ByteArrayInputStream inputStream = new ByteArrayInputStream(baos.toByteArray());
+//        BufferedReader buff = new BufferedReader(new InputStreamReader(inputStream));
+//        
+//        String retorno = buff.readLine();
+//        while(buff.ready()){
+//        	retorno += buff.readLine();
+//        }
+//        
+//    	return retorno;
+//    }
+//    
+//    public static Object StringParaObjeto(String mensagem) throws IOException{
+//    	 ObjectInputStream ois = new ObjectInputStream( 
+//                 new ByteArrayInputStream(  mensagem.getBytes() ) );
+//		
+//    	Object o = null;
+//		try {
+//			o = ois.readObject();
+//		} catch (ClassNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		ois.close();
+//		return o;
+//    	
+//    }
 }
