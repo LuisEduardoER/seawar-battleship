@@ -1,4 +1,6 @@
 package modelos;
+import java.awt.Point;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.Stack;
 
@@ -22,9 +24,18 @@ public class Bot extends Jogador {
 	Celula oProximaCelula;
 	boolean bAcertouEmbarcacao = false;
 	boolean bAfundouEmbarcacao = false;
-
 	//pilha de jogadas feitas para fins heuristicos de jogada
-	Stack<Celula> celulasEscolhidas;
+	ArrayList<Celula> celulasEscolhidas = new ArrayList<Celula>();
+	
+	public Bot(){
+		
+	}
+	
+	public Bot(Jogador objJogador){
+		this.setTabuleiroAtaque(objJogador.getTabuleiroAtaque());
+		this.setTabuleiroDefesa(objJogador.getTabuleiroDefesa());
+		this.conexaoJogador = objJogador.getConexao();
+	}
 	
 	public Tabuleiro getTabuleiroVirtual() {
 		return this.oTabuleiroVirtual;
@@ -43,7 +54,32 @@ public class Bot extends Jogador {
 	}
 	
 	public Celula getProximaCelula() {
-		return this.oProximaCelula;
+		//return this.oProximaCelula;
+		int x = getUltimaEscolha().x;
+		int y = getUltimaEscolha().y;
+		Celula p = getUltimaEscolha();
+		//p = getTabuleiroAtaque().encontrarCelula(p.x, (p.y - 1)); //Ataca na célula acima
+		p.x = x;
+		p.y = y-1;
+		if (seJogadaValida(p) && seCapazAtirar(p)) {
+			return p;
+		}
+		p.x = x;
+		p.y = y+1; //Ataca na célula abaixo
+		if (seJogadaValida(p) && seCapazAtirar(p)) {
+			return p;
+		}
+		p.y = y;
+		p.x = x+1; //Ataca na célula à direita
+		if (seJogadaValida(p) && seCapazAtirar(p)) {
+			return p;
+		}
+		p.y = y;
+		p.x = x-1; //Ataca na célula à esquerda
+		if (seJogadaValida(p) && seCapazAtirar(p)) {
+			return p;
+		}
+		return null;
 	}
 	
 	public void setProximaCelula(Celula objCelula) {
@@ -68,31 +104,148 @@ public class Bot extends Jogador {
 
 	public Celula getUltimaEscolha() {
 		//retira a ultima jogada da pilha
-		return celulasEscolhidas.pop();
+		if(!celulasEscolhidas.isEmpty())
+			return celulasEscolhidas.get(celulasEscolhidas.size()-1);
+		else{
+			return null;
+		}
 	}
 
 	public void setCelulasEscolhida(Celula celulasEscolhida) {
 		//Insere a jogada na pilha
-		this.celulasEscolhidas.push(celulasEscolhida);
+		this.celulasEscolhidas.add(celulasEscolhida);
 	}
 
 	public void analisarTabuleiro() {
+		Celula atacada = null;
 		if (bAcertouEmbarcacao && !bAfundouEmbarcacao) {
-			Celula atacada = getUltimaCelulaAtacada();
 			//TODO: Pensar no algoritmo do bot para realizar ataques
-			
+			//Retorna para a pilha a UltimaCelulaAtacada
+			//setCelulasEscolhida(atacada);
+			//setar a próxima célula a ser atacada
+			atacada = getProximaCelula();
+			if(atacada !=null && atacada.getTipoCelula() == TipoCelula.Embarcacao){
+				bAcertouEmbarcacao = true;
+				if(getTabuleiroAtaque().getEmbarcacao(atacada.x, atacada.y) != null){					
+					bAfundouEmbarcacao = getTabuleiroAtaque().getEmbarcacao(atacada.x, atacada.y).getNaufragado();
+				}
+				setCelulasEscolhida(atacada);
+			}
+			else if (atacada !=null){
+				atacada = null;
+				atacada = getCelula();
+				if(atacada.getTipoCelula() == TipoCelula.Embarcacao){
+					bAcertouEmbarcacao = true;
+					if(getTabuleiroAtaque().getEmbarcacao(atacada.x, atacada.y) != null){					
+						bAfundouEmbarcacao = getTabuleiroAtaque().getEmbarcacao(atacada.x, atacada.y).getNaufragado();
+					}
+					setCelulasEscolhida(atacada);
+				}
+				else{
+					bAfundouEmbarcacao = false;
+					bAcertouEmbarcacao = false;
+				}
+			}
+				
+		}
+		else{
+				atacada = new Celula();
+				atacada.x = coordRandom();
+				atacada.y = coordRandom();
+				if(seJogadaValida(atacada) && seCapazAtirar(atacada)){
+					atacada.acertar();
+					setCelulasEscolhida(atacada);
+					if(atacada.getTipoCelula() == TipoCelula.Embarcacao){
+						bAcertouEmbarcacao = true;
+					}
+					else{
+						bAcertouEmbarcacao  = false;
+					}
+					if(getTabuleiroAtaque().getEmbarcacao(atacada.x, atacada.y) != null){					
+						bAfundouEmbarcacao = getTabuleiroAtaque().getEmbarcacao(atacada.x, atacada.y).getNaufragado();
+					}
+				}
+		}
+;	}
+
+	
+	public void analisarJogada() {
+		//TODO Analisar se a celula a ser atacada é válida
+	}
+	public boolean seJogadaValida(Celula objCelula){
+		//Verifica se a próxima célula que será atacada é válida nas coordenadas disponíveis, ou seja
+		//não excede os limites da matriz do tabuleiro, e não é menor que zero
+		return (getTabuleiroAtaque().getMatrizCelula().length > objCelula.x && 
+				getTabuleiroAtaque().getMatrizCelula()[0].length > objCelula.y &&
+				objCelula.x >= 0 &&
+				objCelula.y >= 0);
+	}
+	private boolean seCapazAtirar(Celula objCelula){
+		return	getTabuleiroAtaque().seCelulaAtacada(objCelula) == false && 
+				getTabuleiroAtaque().encontrarCelula(objCelula.x, objCelula.y).isAtirada() == false;
+	}
+	
+	public void atacar() {
+		analisarTabuleiro();
+		Celula celulaAtacar = getUltimaEscolha();
+		int i = 0;
+		while(celulaAtacar != null && i==0){
+			i = 1;
+			System.out.print((char) ((celulaAtacar.x) + 'A'));
+			//System.out.print(atacada.x-1);
+			System.out.print(celulaAtacar.y+1);
+			System.out.println("");
+			this.setCelulasEscolhida(celulaAtacar);
+			getTabuleiroAtaque().mMatrizCelula[celulaAtacar.x][celulaAtacar.y] = getTabuleiroAtaque().atacar(celulaAtacar.x,celulaAtacar.y);	
+			//Envia o ataque chamando da classe conexao do método na classe Jogador
+			this.Atacar(celulaAtacar.x,celulaAtacar.y);
+			if(getTabuleiroAtaque().mMatrizCelula[celulaAtacar.x][celulaAtacar.y].getTipoCelula() == TipoCelula.Embarcacao){
+				bAcertouEmbarcacao = true;
+			}
+			else{
+				bAcertouEmbarcacao = false;
+			}
+		}
+		
+		
+	}
+	
+	private Celula getCelula() {
+		if (direcaoAtaque()) {
+			Celula p = getUltimaEscolha();
+			p.y -= 1;
+			if (seJogadaValida(p) && seCapazAtirar(p)) {
+				//setCelulasEscolhida(p);
+				return p;
+			} else {
+				p = celulasEscolhidas.get(celulasEscolhidas.size() - 1);
+				p.y += 1;
+				if (seJogadaValida(p) && seCapazAtirar(p)) {
+					//setCelulasEscolhida(p);
+					return p;
+				} else {
+					return null;
+				}
+			}
+		} else {
+			Celula p = getUltimaEscolha();
+			p.x -= 1;
+			if (seJogadaValida(p) && seCapazAtirar(p)) {
+				//setCelulasEscolhida(p);
+				return p;
+			} else {
+				p = celulasEscolhidas.get(celulasEscolhidas.size() - 1);
+				p.x += 1;
+				if (seJogadaValida(p) && seCapazAtirar(p)) {
+					//setCelulasEscolhida(p);
+					return p;
+				} else {
+					return null;
+				}
+			}
 		}
 	}
 	
-	public void analisarJogada() {
-	
-	}
-	
-	public Celula atacar() {
-		Celula celulaAtacada = new Celula();
-		
-		return celulaAtacada;
-	}
 	
 	//TODO: Associar esta provocação para enviar no chat(se tiver)
 	public String provocar() {
@@ -112,5 +265,14 @@ public class Bot extends Jogador {
 		int indexProvocacao = rand.nextInt(listaProvocacoes.length);
 		
 		return listaProvocacoes[indexProvocacao];
+	}
+	
+	private int coordRandom(){
+		Random random = new Random();
+		return random.nextInt(getTabuleiroAtaque().getMatrizCelula().length);
+	}
+	
+	private boolean direcaoAtaque(){
+		return  (celulasEscolhidas.get(celulasEscolhidas.size()-1).x == celulasEscolhidas.get(celulasEscolhidas.size()-2).x);
 	}
 }
