@@ -21,7 +21,7 @@ public class Tabuleiro implements Serializable{
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 78L;
 	public Celula[][] mMatrizCelula;
 	public Celula[][] mCelulasAtacadas;
 	public boolean bTravaTabuleiro;
@@ -110,12 +110,12 @@ public class Tabuleiro implements Serializable{
 	}
 	
 	public boolean seCelulaAtacada(Celula celula) {
-		Celula obj = mCelulasAtacadas[celula.x][celula.y];
+		Celula obj = mMatrizCelula[celula.x][celula.y];
 		if(obj != null)
 		{
 			//Celula celulaDefesa = mMatrizCelula[celula.x][celula.y];
 			//return celulaDefesa.aTipoCelula != TipoCelula.AreaLivre; 
-			return obj.aTipoCelula != TipoCelula.AreaLivre;
+			return obj.isAtirada();
 		}
 		return  false;
 	}
@@ -127,7 +127,8 @@ public class Tabuleiro implements Serializable{
 	
 	public Celula atacar(int x, int y){
 		Celula celAtacada = encontrarCelula(x,y);
-		mCelulasAtacadas[x][y] = celAtacada;
+		
+		//mCelulasAtacadas[x][y] = celAtacada;
 		
 		switch(celAtacada.getTipoCelula())
 		{
@@ -141,8 +142,8 @@ public class Tabuleiro implements Serializable{
 			acertarEmbarcacao(celAtacada);
 			break;
 		}
-		 
-		
+		//marca a célula como acertada pelo tiro
+		celAtacada.acertar();
 		
 		return celAtacada;
 	}
@@ -153,6 +154,7 @@ public class Tabuleiro implements Serializable{
 			Celula parteBarco = barco.getCelulaAtacada(celula);
 			if(parteBarco != null){
 				// TODO Fazer a lógica para quando um barco é acertado
+				parteBarco.acertar();
 			}
 		}
 	}
@@ -265,9 +267,11 @@ public class Tabuleiro implements Serializable{
 	public boolean isTodosBarcosAfundados() {
 		
 		for (Embarcacao barco : this.arrEmbarcacoes) {
-			//se pelo menos 1 barco não estiver naufragado, retorna falso
-			if(!barco.getNaufragado()){
-				return false;
+			if(barco != null){
+				//se pelo menos 1 barco não estiver naufragado, retorna falso
+				if(!barco.getNaufragado()){
+					return false;
+				}
 			}
 		}
 		
@@ -341,5 +345,10 @@ public class Tabuleiro implements Serializable{
 				System.out.print("-----+");
 			System.out.print("\n");
 		}
+	}
+
+	public Celula getCelula(int i, int j) throws IndexOutOfBoundsException {
+		
+		return this.mMatrizCelula[i][j];
 	}
 }

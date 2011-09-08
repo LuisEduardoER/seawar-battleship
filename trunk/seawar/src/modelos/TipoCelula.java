@@ -16,7 +16,14 @@ import java.io.Serializable;
 
 
 public enum TipoCelula implements Serializable {
-	Embarcacao,
-	Agua,
-	AreaLivre
+	Embarcacao(1),
+	Agua(2),
+	AreaLivre(3);
+	
+	private static final long serialVersionUID = 9L;
+	
+	private int value;
+	TipoCelula(int valor){
+		this.value = valor;
+	}
 }

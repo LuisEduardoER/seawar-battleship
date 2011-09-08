@@ -4,11 +4,14 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.swing.JOptionPane;
 import javax.swing.event.EventListenerList;
 
 import exceptions.FullGameException;
+import exceptions.GameException;
 
 import modelos.Celula;
 import modelos.Embarcacao;
@@ -40,6 +43,7 @@ public class Cliente implements IMessageListener {
 	private static final long serialVersionUID = 1L;
 	MessageReceiver recebedor; //Objeto responsável por receber as mensagens por socket
 	MessageSender sender; //Objeto responsável por enviar as mensagens via socket
+	ExecutorService executor;
 	Socket mySocket; //socket do jogador
 	Jogador perfil; //perfil do jogador
 	Jogo jogo; //jogo na instancia do cliente
@@ -48,12 +52,18 @@ public class Cliente implements IMessageListener {
 	protected EventListenerList listenerList = new EventListenerList();
 	
 	public Cliente(Socket socket){		
+		//Cria um executador, para classes que precisam de execução paralela
+		executor = Executors.newCachedThreadPool();
+		//Atribui o socket a variavel correta
 		mySocket = socket;
-		recebedor = new MessageReceiver(this, mySocket);		
+		//Instancia um recebedor de mensagem socket e executa-o para ficar escutando o socket
+		recebedor = new MessageReceiver(this, mySocket);
+		executor.execute(recebedor);
+		//Instancia um Jogador
 		perfil = new Jogador(mySocket);
 	}
 	
-	public void Atacar(int x, int y){
+	public boolean Atacar(int x, int y){
 		//Verifica se o jogo existe antes de enviar um ataque
 		//Também verifica se o jogo ainda não foi encerrado
 		if(this.jogo != null && !this.jogo.isJogoEncerrado()){
@@ -64,11 +74,15 @@ public class Cliente implements IMessageListener {
 				//Altera a flag do jogador para ele não poder jogar de novo
 				//antes do outro jogador jogar
 				this.perfil.setMinhaVez(false);
+				//Retorna true para informar que foi possivel fazer o ataque
+				return true;
 			}
 			else{
 				fireMensagemAlertaEvent("Não é sua vez de jogar");
 			}
 		}
+		//Retorna falso se não for a vez da pessoa jogar ou se for impossivel fazer um ataque
+		return false;
 	}
 	
 	public void TrocarBarcoPosicao(int fromX, int fromY, int toX, int toY ){
@@ -123,6 +137,9 @@ public class Cliente implements IMessageListener {
 	
 	@Override
 	public void mensagemRecebida(String mensagem, Socket socketOrigem) {
+		
+		System.out.println("Mensagem recebida");
+		System.out.println(mensagem);
 		StringTokenizer tokens = new StringTokenizer(mensagem, Constantes.TOKEN_SEPARATOR);
 		receberTokensMensagem(tokens, socketOrigem);
 
@@ -145,19 +162,18 @@ public class Cliente implements IMessageListener {
 	}
 
 	private void TratarTokens(List<String> lstTokens, String ipEnviou, Socket socket) {
-		// TODO Auto-generated method stub
 		if(lstTokens == null || lstTokens.isEmpty())
 			return;
 		
 		String header = lstTokens.get(0);
 		//Aqui são a lista de ações para cada tipo de mensagem RECEBIDA (não confunda com enviada)
-		if(header.equalsIgnoreCase(Constantes.CONNECT_TOKEN)){
+		if((Constantes.TOKEN_SEPARATOR+header).equalsIgnoreCase(Constantes.CONNECT_TOKEN)){
 			jogadorConectado(lstTokens, ipEnviou);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.EnviarListaJogadores.toString())){
 			//EnviarListaJogadores(lstTokens, ipEnviou);
 		}
-		else if(header.equalsIgnoreCase(Constantes.DISCONNECT_TOKEN)){
+		else if((Constantes.TOKEN_SEPARATOR+header).equalsIgnoreCase(Constantes.DISCONNECT_TOKEN)){
 			//DesconectarJogador(lstTokens, ipEnviou);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.SerChamadoPorJogador.toString())){
@@ -176,7 +192,7 @@ public class Cliente implements IMessageListener {
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.ChamarJogador.toString())){
 			//ChamarJogadorParaJogar(lstTokens, ipEnviou);
 		}
-		else if(header.equalsIgnoreCase(Constantes.PING_TOKEN)){
+		else if(("$"+header).equalsIgnoreCase(Constantes.PING_TOKEN)){
 			//AtualizaUltimoPingJogador(lstTokens, ipEnviou);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.JogadorDesconectado.toString())){
@@ -352,19 +368,19 @@ public class Cliente implements IMessageListener {
 	}
 
 	private void BarcosOponenteCarregados(List<String> lstTokens, String ipEnviou) {
-		int jogoId = -1;
+		//int jogoId = -1;
 		String nomeAdv = "";
-		String status = "";
+		//String status = "";
 		for (String token : lstTokens) {
 			String[] split = token.split(Constantes.VALUE_SEPARATOR);
 			if(split[0].equalsIgnoreCase("jogoid")){
-				jogoId = Integer.parseInt(split[1]);
+				//jogoId = Integer.parseInt(split[1]);
 			} 
 			else if(split[0].equalsIgnoreCase("oponente")){
 				nomeAdv = split[1];
 			} 
 			else if(split[0].equalsIgnoreCase("status")){
-				status = split[1];
+				//status = split[1];
 			} 
 		}
 		
@@ -388,7 +404,7 @@ public class Cliente implements IMessageListener {
 			fireFalhaGenericaEvent(this.perfil, new Exception("Você perdeu!"));
 		}
 	}
-	//Método acessado quando o opoentente conectar no servidor
+	//Método acessado quando eu conectar no servidor
 	private void ConectarJogadorEmJogo(List<String> lstTokens, String ipEnviou){
 		String posicaoString = "";//lstTokens.get(2);
 		int jogoId = -1;
@@ -412,14 +428,18 @@ public class Cliente implements IMessageListener {
 					Jogador adv = new Jogador();
 					adv.setLogin("Player"+(i+1));
 					this.jogo.AdicionarJogador(adv);
-					fireJogadorConectado(adv);
+					//Evento já disparado pela classe Jogo, capturado e redisparado por esta, não há necessidade de redundancia
+					//fireJogadorConectado(adv);
 				}
+				//Cria os tabuleiros para o jogador
+				this.perfil.setTabuleiroAtaque(new Tabuleiro(Constantes.TAMANHO_TABULEIRO, false));
+				this.perfil.setTabuleiroDefesa(new Tabuleiro(Constantes.TAMANHO_TABULEIRO));	
 				//Adiciona o jogador
 				this.jogo.AdicionarJogador(perfil, posicao);
-				//Cria os tabuleiros para o jogador
-				this.perfil.setTabuleiroAtaque(new Tabuleiro(Constantes.TAMANHO_TABULEIRO));
-				this.perfil.setTabuleiroDefesa(new Tabuleiro(Constantes.TAMANHO_TABULEIRO));		
-				fireJogadorConectado(perfil);
+				//Será a vez do jogador se ele foi o primeiro a entrar
+				this.perfil.setMinhaVez((posicao == 0));
+				//Evento já disparado pela classe Jogo, capturado e redisparado por esta, não há necessidade de redundancia
+				//fireJogadorConectado(perfil);//TODO: Rever
 			} catch (FullGameException e) {
 				//Grava no log caso haja alguma falha
 				Log.gravarLog(e.getMessage());
@@ -455,7 +475,8 @@ public class Cliente implements IMessageListener {
 		if(posicao >= 0){
 			try {
 				this.jogo.AdicionarJogador(novo, posicao);
-				fireJogadorConectado(novo);
+				//Evento abaixo já é disparado automaticamente pela classe Jogo, tornando esta chamada redundante
+				//fireJogadorConectado(novo);
 			} catch (FullGameException e) {
 				Log.gravarLog(e.getMessage());
 				fireFalhaGenericaEvent("Houve um erro ao tentar conectar oponente no jogo.", e);
@@ -463,11 +484,12 @@ public class Cliente implements IMessageListener {
 		}		
 	}
 
-	//Método acessado quando EU conecto no jogo
+	//Método acessado quando EU conecto no servidor
 	private void jogadorConectado(List<String> lstTokens, String ipEnviou) {
 
 		CriarJogoLocal();
 		fireCarregarTelaJogo(this.jogo);
+		this.perfil.setOnline();
 		
 	}
 
@@ -479,10 +501,20 @@ public class Cliente implements IMessageListener {
 	public void conectar(String login, String senha) {
 		perfil.setLogin(login);
 		perfil.setSenha(senha);
-		
+		//TODO: Enviar login e senha para validação no servidor
 		perfil.conexaoJogador.conectarJogador();
 	}
 
+	public void desconectar(){
+		if(perfil.desconectar()){
+			fireJogadorDesconectado(perfil);
+		}
+		else{
+			String erro = "Não foi possivel desconectar o jogador";
+			fireFalhaGenericaEvent(erro, new GameException(erro));
+		}
+	}
+	
 	//Ações que terá a classe Cliente para cada evento disparado pela classe Jogo
 	private void DefinirListenersJogo() {
 		jogo.AddClientEventListener(new JogoEventListener() {
@@ -632,6 +664,14 @@ public class Cliente implements IMessageListener {
 	    		 ((ClientEventListener)listeners[i+1]).exibeMensagem(mensagem);
 	    	 }
 	     }
+	}
+
+	public Jogador getPerfil() {		
+		return this.perfil;
+	}
+
+	public boolean enviarTabuleiro() {
+		return this.perfil.enviarTabuleiroAtaque();		
 	}
 	
 //	private void fireTurnoAlterado(Object src){

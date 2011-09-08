@@ -7,7 +7,7 @@ public class DicionarioMensagem {
 		boolean incluirTipo = true;
 		switch (tipo) {
 		case ConectarServidor:
-			mensagem = Constantes.CONNECT_TOKEN;
+			mensagem = Constantes.CONNECT_TOKEN + CriarMensagemParametrizada("login","senha");
 			incluirTipo = false;
 			break;
 		case NovoJogadorConectado:

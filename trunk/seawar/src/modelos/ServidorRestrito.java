@@ -57,7 +57,7 @@ public class ServidorRestrito implements IMessageListener {
 			
 			try{
 				//Cria socket para ouvir uma porta e conseguir manter até 100 conexões				
-				ServerSocket serversocket = new ServerSocket(Comunicacao.Constantes.SERVER_PORT, 100);
+				ServerSocket serversocket = new ServerSocket(Comunicacao.Constantes.SERVER_PORT, 100, InetAddress.getByName(Constantes.SERVER_ADDRESS));
 				
 				//Aguarda os 2 jogadores conectarem no servidor
 				while(aListaJogadorJogando.size() < capacidade){
@@ -66,14 +66,14 @@ public class ServidorRestrito implements IMessageListener {
 					
 					//aguarda a conexão de um client (chamada bloqueadora)
 					Socket clientSocket = serversocket.accept();
-					//Cria um recebedor pra cada usuário que conectar
+					//Cria um recebedor pra cada usuário que conectar NO SERVIDOR (antes de fazer o login)
 					serverExecutor.execute(new MessageReceiver(this, clientSocket));
 					
 					fireDisplayChangeEvent(new ServerEvent(String.format("Usuario conectado (%s)", clientSocket.getInetAddress().getHostAddress()),TipoEvento.DisplayAtualizado));
 					
 				}
 				//fecha a conexão do socket servidor para não aceitar mais conexões
-				serversocket.close();
+				//serversocket.close();
 				//Cria um jogo para quando os 2 jogadores tiverem conectados
 				
 
@@ -84,7 +84,18 @@ public class ServidorRestrito implements IMessageListener {
 			}
 			
 		}
-		
+
+		private void firePlayerListChangedEvent(ServerEvent serverEvent) {
+			Object[] listeners = listenerList.getListenerList();
+	        // Each listener occupies two elements - the first is the listener class
+	        // and the second is the listener instance
+	        for (int i=0; i<listeners.length; i+=2) {
+	            if (listeners[i]==ServerEventListener.class) {
+	                ((ServerEventListener)listeners[i+1]).playerListChanged(serverEvent);
+	            }
+	        }
+			
+		}
 		private void fireDisplayChangeEvent(ServerEvent evt) {
 	        Object[] listeners = listenerList.getListenerList();
 	        // Each listener occupies two elements - the first is the listener class
@@ -104,6 +115,15 @@ public class ServidorRestrito implements IMessageListener {
 
 		private void ConectarJogadorNovo(List<String> lstTokens, String ipEnviou, Socket socket) {
 			Jogador obj = new Jogador(socket);
+			for (String token : lstTokens) {
+				String[] split = token.split(Constantes.VALUE_SEPARATOR);
+				if(split[0].equalsIgnoreCase("login")){					
+					obj.setLogin(split[1]);
+				}
+				else if(split[0].equalsIgnoreCase("senha")){
+					obj.setSenha(split[1]);
+				}
+			}
 			try {
 				if(!this.jogoCorrente.isVazio()){
 					//Se o jogo não estiver vazio, envia mensagem para os jogadores de plantão que mais 1 jogador entrou no jogo na última posição
@@ -115,16 +135,20 @@ public class ServidorRestrito implements IMessageListener {
 					}
 				}
 				obj.setOnline();
-				obj.setLogin("Player"+(aListaJogadorJogando.size()+1));
+				//Se o jogador não tiver nome, utilizará "Player" e a posição dele na lista como identificador
+				if(obj.getLogin().isEmpty())
+					obj.setLogin("Player"+(aListaJogadorJogando.size()+1));
+				
 				this.jogoCorrente.AdicionarJogador(obj); //Esta adição causa exception se o jogo estiver lotado
 				
 				//Adiciona o jogador à lista de quem tá jogando, apenas se o jogador for adicionado no jogo antes
 				aListaJogadorJogando.add(obj);
 				//Dispara o evento que informa o que deve-se imprimir na tela
 				fireDisplayChangeEvent(new ServerEvent(String.format("%s adicionado ao jogo(%s)", obj.getLogin(), this.jogoCorrente.getIdJogo()), TipoEvento.DisplayAtualizado));
-				
+				//firePlayerListChangedEvent(new ServerEvent(obj,TipoEvento.JogadoresAtualizados));
 				//informa o jogador que ele foi conectado com sucesso!
 				String msgConectado = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.ConectarServidor);
+				msgConectado = String.format(msgConectado, obj.getLogin(), ""); //Não repassa a senha para o outro lado
 				MessageSender send = new MessageSender(obj.getConexao().getSocket(), msgConectado);
 				//Espera enviar a mensagem para que continue a execução
 				Future futuro = serverExecutor.submit(send);
@@ -161,6 +185,7 @@ public class ServidorRestrito implements IMessageListener {
 			
 		}
 
+
 		//Permite que os jogadores possam posicionar suas embarcações
 		private void iniciarPosicionamentos(Jogo jogo) {
 			fireDisplayChangeEvent(new ServerEvent("Jogo criado, aguardando posicionamento de frotas",TipoEvento.DisplayAtualizado));
@@ -195,16 +220,12 @@ public class ServidorRestrito implements IMessageListener {
 			}
 		}
 
-		private Jogador encontrarJogadorPorIpEmJogo(Jogo jogo, String ipJogador){
+		private Jogador encontrarJogadorPorIpEmJogo(Jogo jogo, Socket socketJogador){
 			Jogador retorno = null;
 					
-			for(Jogador obj : jogo.aListaJogador){
-				if(obj.getIpJogador().equalsIgnoreCase(ipJogador)){
-					retorno = obj;
-					break;
-				}
-			}
-			
+			//Procura o jogador no jogo selecionado
+			retorno = jogo.EncontrarJogador(socketJogador);
+						
 			return retorno;
 			
 		}		
@@ -248,15 +269,6 @@ public class ServidorRestrito implements IMessageListener {
 				
 			}*/
 			List<String> lstTokens = new ArrayList<String>();
-			if(mensagem.equalsIgnoreCase(Constantes.CONNECT_TOKEN)){
-				lstTokens.add(mensagem); //adiciona a mensagem como ela deve vir
-				ConectarJogadorNovo(lstTokens, socketOrigem.getInetAddress().getHostAddress(), socketOrigem);
-			}
-			else if (mensagem.equalsIgnoreCase(Constantes.DISCONNECT_TOKEN)){
-				lstTokens.add(mensagem); //adiciona a mensagem como ela deve vir
-				DesconectarJogador(lstTokens, socketOrigem.getInetAddress().getHostAddress());
-			}
-			
 			StringTokenizer tokens = new StringTokenizer(mensagem, Constantes.TOKEN_SEPARATOR);
 			receberTokensMensagem(tokens, socketOrigem);
 		}
@@ -277,18 +289,25 @@ public class ServidorRestrito implements IMessageListener {
 				}
 			}//fim da adatapcao da lista de tokens		
 			
-			TratarTokens(lstTokens, socket.getInetAddress().getHostAddress().toString(), socket);
+			TratarTokens(lstTokens, socket);
 		}
 
 
 		
-		private void TratarTokens(List<String> lstTokens, String ipEnviou, Socket socket) {
+		private void TratarTokens(List<String> lstTokens, Socket socket) {
 			// TODO Completar a implementação dos métodos da comunicação
 			if(lstTokens == null || lstTokens.isEmpty())
 				return;
 			
 			String header = lstTokens.get(0);
-			if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.EnviarListaJogadores.toString())){
+
+			if((Constantes.TOKEN_SEPARATOR+header).equalsIgnoreCase(Constantes.CONNECT_TOKEN)){
+				ConectarJogadorNovo(lstTokens, socket.getInetAddress().getHostAddress(), socket);
+			}
+			else if((Constantes.TOKEN_SEPARATOR+header).equalsIgnoreCase(Constantes.DISCONNECT_TOKEN)){
+				DesconectarJogador(lstTokens, socket);
+			}
+			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.EnviarListaJogadores.toString())){
 				//EnviarListaJogadores(lstTokens, ipEnviou);
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.SerChamadoPorJogador.toString())){
@@ -310,10 +329,10 @@ public class ServidorRestrito implements IMessageListener {
 				//AtualizaUltimoPingJogador(lstTokens, ipEnviou);
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.JogadorDesconectado.toString())){
-				DesconectarJogador(lstTokens, ipEnviou);
+				DesconectarJogador(lstTokens, socket);
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.JogadorTimeout.toString())){
-				DesconectarJogador(lstTokens, ipEnviou);
+				DesconectarJogador(lstTokens, socket);
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.JogoCriado.toString())){
 				//AtualizarListaJogos(lstTokens, ipEnviou);
@@ -328,10 +347,10 @@ public class ServidorRestrito implements IMessageListener {
 				//DesbilitarJogoParaNovasConexoes(lstTokens, ipEnviou);			
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.BarcosPosicionados.toString())){
-				CarregarBarcosDoJogadorNoJogo(lstTokens, ipEnviou);
+				CarregarBarcosDoJogadorNoJogo(lstTokens, socket);
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.AtacarOponente.toString())){
-				ProcessarAtaque(lstTokens, ipEnviou);
+				ProcessarAtaque(lstTokens, socket);
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.RespostaAtaque.toString())){
 				//É uma mensagem que apenas o jogador receberá como feedback do ataque que realizou
@@ -346,13 +365,13 @@ public class ServidorRestrito implements IMessageListener {
 				//É uma mensagem que apenas o jogador receberá quando o oponente enviar uma mensagem
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.GanhouJogo.toString())){
-				DefinirJogadorComoVencedor(lstTokens, ipEnviou);
+				DefinirJogadorComoVencedor(lstTokens, socket);
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.PerdeuJogo.toString())){
-				DefinirJogadorComoPerdedor(lstTokens, ipEnviou);
+				DefinirJogadorComoPerdedor(lstTokens, socket);
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.JogarComBot.toString())){
-				AtivarBotComoOponenteParaJogador(lstTokens, ipEnviou);
+				AtivarBotComoOponenteParaJogador(lstTokens, socket);
 			}
 			else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.ReceberListaJogadores.toString())){
 				//Para Cliente receber e popular a lista de jogadores na tela dele
@@ -365,8 +384,7 @@ public class ServidorRestrito implements IMessageListener {
 			}
 		}
 
-		private void CarregarBarcosDoJogadorNoJogo(List<String> lstTokens,
-				String ipEnviou) {
+		private void CarregarBarcosDoJogadorNoJogo(List<String> lstTokens,Socket socketEnviou) {
 
 			int jogoId = -1;
 			Object tabuleiroObject = null;
@@ -382,8 +400,8 @@ public class ServidorRestrito implements IMessageListener {
 						e.printStackTrace();
 						fireDisplayChangeEvent(new ServerEvent("Não foi recebido uma string válida", TipoEvento.DisplayAtualizado));
 					} catch (ClassNotFoundException e) {
+						// TODO Auto-generated catch block
 						e.printStackTrace();
-						fireDisplayChangeEvent(new ServerEvent("Não foi recebido uma string com objeto", TipoEvento.DisplayAtualizado));
 					}
 				}
 			}
@@ -391,12 +409,14 @@ public class ServidorRestrito implements IMessageListener {
 			Jogo jogo = this.encontrarJogoPorId(jogoId);
 			if(jogo != null){
 				//Encontra o jogador que enviou o socket
-				Jogador jogador = jogo.EncontrarJogador(ipEnviou);
+				Jogador jogador = jogo.EncontrarJogador(socketEnviou);
 				if(jogador != null){
 					//Converte o tabuleiro serializado em um tabuleiro no servidor
 					Tabuleiro tabuleiro = (Tabuleiro)tabuleiroObject;  //Parser.ConverteTabuleiro(lstTokens);
+//					Embarcacao[] barcos = (Embarcacao[])tabuleiroObject;
 					//Carrega este tabuleiro como o tabuleiro de defesa deste jogador
 					jogador.setTabuleiroDefesa(tabuleiro);
+//					jogador.getTabuleiroDefesa().setArrEmbarcacoes(barcos);
 					//dispara o evento que envia a mensagem que o tabuleiro foi recebido
 					fireDisplayChangeEvent(
 							new ServerEvent(String.format("Recebido tabuleiro de %s", jogador.getLogin()), TipoEvento.DisplayAtualizado)
@@ -429,8 +449,7 @@ public class ServidorRestrito implements IMessageListener {
 			}
 		}
 
-		private void AtivarBotComoOponenteParaJogador(List<String> lstTokens,
-				String ipEnviou) {
+		private void AtivarBotComoOponenteParaJogador(List<String> lstTokens,Socket socketEnviou) {
 			int jogoId = -1;
 			for(String token : lstTokens){
 				String[] split = token.split(Constantes.VALUE_SEPARATOR);
@@ -442,7 +461,7 @@ public class ServidorRestrito implements IMessageListener {
 			Jogo jogo = this.encontrarJogoPorId(jogoId);
 			if(jogo != null){
 				//Encontra o jogador que solicitou o bot
-				Jogador jogador = jogo.EncontrarJogador(ipEnviou);
+				Jogador jogador = jogo.EncontrarJogador(socketEnviou);
 				if(jogador != null){
 					//Define o adversário do jogador como um bot
 					Jogador bot = jogo.EncontrarJogadorAdversario(jogador);
@@ -458,8 +477,7 @@ public class ServidorRestrito implements IMessageListener {
 		/*
 		 * Declara o jogador que enviou a mensagem como um perdedor 
 		 */
-		private void DefinirJogadorComoPerdedor(List<String> lstTokens,
-				String ipEnviou) {
+		private void DefinirJogadorComoPerdedor(List<String> lstTokens, Socket socketEnviou) {
 			int jogoId = -1;
 			for(String token : lstTokens){
 				String[] split = token.split(Constantes.VALUE_SEPARATOR);
@@ -471,7 +489,7 @@ public class ServidorRestrito implements IMessageListener {
 			Jogo jogo = this.encontrarJogoPorId(jogoId);
 			if(jogo != null){
 				//Recupera o jogador que perdeu o jogo
-				Jogador jogador = jogo.EncontrarJogador(ipEnviou);
+				Jogador jogador = jogo.EncontrarJogador(socketEnviou);
 				if(jogador != null){
 					//Atualiza a pontuação do cara (200 pontos por perder?)
 					int pontos = 0;
@@ -507,7 +525,7 @@ public class ServidorRestrito implements IMessageListener {
 		/*
 		 * Declara o jogador que enviou a mensagem como um vencedor 
 		 */
-		private void DefinirJogadorComoVencedor(List<String> lstTokens, String ipEnviou) {
+		private void DefinirJogadorComoVencedor(List<String> lstTokens, Socket socketEnviou) {
 			int jogoId = -1;
 			for(String token : lstTokens){
 				String[] split = token.split(Constantes.VALUE_SEPARATOR);
@@ -518,7 +536,7 @@ public class ServidorRestrito implements IMessageListener {
 			
 			Jogo jogo = this.encontrarJogoPorId(jogoId);
 			if(jogo != null){
-				Jogador jogador = jogo.EncontrarJogador(ipEnviou);
+				Jogador jogador = jogo.EncontrarJogador(socketEnviou);
 				if(jogador != null){
 					//Atualiza a pontuação do cara (200 pontos por perder?)
 					int pontos = 0;
@@ -571,7 +589,7 @@ public class ServidorRestrito implements IMessageListener {
 			serverExecutor.execute(sender);	
 		}
 
-		private void ProcessarAtaque(List<String> lstTokens, String ipEnviou) {
+		private void ProcessarAtaque(List<String> lstTokens, Socket socketEnviou) {
 			boolean venceuJogo = false;	
 			int jogoId = -1;
 			for (String token : lstTokens) {
@@ -583,18 +601,19 @@ public class ServidorRestrito implements IMessageListener {
 			Celula celula = Parser.ConverteCelula(lstTokens);
 			Jogo jogo = this.encontrarJogoPorId(jogoId);
 			if(celula != null){
-				Jogador jogador = encontrarJogadorPorIpEmJogo(jogo, ipEnviou);				
+				Jogador jogador = encontrarJogadorPorIpEmJogo(jogo, socketEnviou);				
 			
 				Jogador adversario = encontrarAdversarioEmJogo(jogo, jogador);
 				celula = adversario.getTabuleiroDefesa().atacar(celula.x, celula.y);
 				
 				//Envia ataque para o cliente que foi atacado
 				Socket clientSocketAtacado = adversario.getConexao().getSocket();
-				String mensagemOriginal = "";
-				for(String token : lstTokens){
-					mensagemOriginal += Constantes.TOKEN_SEPARATOR + token;
-				}
-				serverExecutor.execute(new MessageSender(clientSocketAtacado, mensagemOriginal));
+				String mensagemOriginal = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.ReceberAtaque);
+//				for(String token : lstTokens){
+//					mensagemOriginal += Constantes.TOKEN_SEPARATOR + token;
+//				}
+				String mensagemAtaque = String.format(mensagemOriginal, jogoId, celula.x, celula.y);
+				serverExecutor.execute(new MessageSender(clientSocketAtacado, mensagemAtaque));
 				
 				venceuJogo = adversario.getTabuleiroDefesa().isTodosBarcosAfundados();
 				
@@ -619,7 +638,7 @@ public class ServidorRestrito implements IMessageListener {
 					lstTokens.clear();
 					lstTokens.add(String.format("%s%s%s", "jogoid", Constantes.VALUE_SEPARATOR, jogo.getIdJogo()));
 					//Define o jogador atacante como vencedor da partida
-					DefinirJogadorComoVencedor(lstTokens, ipEnviou);
+					DefinirJogadorComoVencedor(lstTokens, socketEnviou);
 				}
 			}
 			
@@ -635,13 +654,13 @@ public class ServidorRestrito implements IMessageListener {
 			return adversario;
 		}
 
-		private void DesconectarJogador(List<String> lstTokens, String ipEnviou) {
-			Jogador jogador = this.encontrarJogadorPorIPNoServidoreJogos(ipEnviou);
+		private void DesconectarJogador(List<String> lstTokens, Socket socketEnviou) {
+			Jogador jogador = this.encontrarJogadorPorIPNoServidoreJogos(socketEnviou);
 			if(jogador != null){
 				this.jogoCorrente.removerJogador(jogador);				
 				aListaJogadorJogando.remove(jogador);
 				jogador.setOffline();
-				fireDisplayChangeEvent(new ServerEvent(String.format("%s disconectado", jogador.getLogin()),TipoEvento.DisplayAtualizado));
+				fireDisplayChangeEvent(new ServerEvent(String.format("%s desconectado", jogador.getLogin()),TipoEvento.DisplayAtualizado));
 				
 				//informa o adversário sobre a saída do oponente
 				Jogador adversario = this.jogoCorrente.EncontrarJogadorAdversario(jogador);
@@ -654,10 +673,10 @@ public class ServidorRestrito implements IMessageListener {
 			}
 		}
 
-		private Jogador encontrarJogadorPorIPNoServidoreJogos(String ipJogador) {
+		private Jogador encontrarJogadorPorIPNoServidoreJogos(Socket socketJogador) {
 			//TODO: Adaptar para fazer loop na lista de jogos quando for mais de 1 jogo rodando no servidor
 			
-			return this.jogoCorrente.EncontrarJogador(ipJogador);
+			return this.jogoCorrente.EncontrarJogador(socketJogador);
 		}
 		
 }
