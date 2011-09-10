@@ -28,7 +28,7 @@ public class Parser {
 		
 		Celula celulaRetorno = null;
 		try{
-			celulaRetorno = new Celula();
+			celulaRetorno = new Celula(0,0);
 			for(int i = 0; i < tokens.size(); i++){
 				String token = tokens.get(i);
 				//Recupera os parametros que virão no tipo -> chave:valor

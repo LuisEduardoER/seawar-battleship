@@ -53,7 +53,7 @@ public class Tabuleiro implements Serializable{
 	private void PreencherTabuleiro(Celula[][] celulas) {
 		for(int i = 0; i < celulas.length; i++){
 			for(int j = 0; j < celulas[0].length; j++){
-				celulas[i][j] = new Celula();
+				celulas[i][j] = new Celula(i,j);
 			}
 		}
 	}

@@ -26,9 +26,11 @@ public class Celula extends Point implements Serializable{
 	boolean acertada;
 	Icon icone;
 	
-	public Celula(){
+	public Celula(int x,int y){
+		super(x,y);
 		aTipoCelula = TipoCelula.Agua;
 		acertada = false;
+		
 	}
 	
 	public TipoCelula aTipoCelula;

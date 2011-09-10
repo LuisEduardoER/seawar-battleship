@@ -58,7 +58,7 @@ public class Bot extends Jogador {
 		int x = getUltimaEscolha().x;
 		int y = getUltimaEscolha().y;
 		Celula p = getUltimaEscolha();
-		//p = getTabuleiroAtaque().encontrarCelula(p.x, (p.y - 1)); //Ataca na célula acima
+		//Ataca na célula acima
 		p.x = x;
 		p.y = y-1;
 		if (seJogadaValida(p) && seCapazAtirar(p)) {
@@ -149,7 +149,7 @@ public class Bot extends Jogador {
 				
 		}
 		else{
-				atacada = new Celula();
+				atacada = new Celula(0,0);
 				atacada.x = coordRandom();
 				atacada.y = coordRandom();
 				if(seJogadaValida(atacada) && seCapazAtirar(atacada)){
@@ -181,8 +181,7 @@ public class Bot extends Jogador {
 				objCelula.y >= 0);
 	}
 	private boolean seCapazAtirar(Celula objCelula){
-		return	getTabuleiroAtaque().seCelulaAtacada(objCelula) == false && 
-				getTabuleiroAtaque().encontrarCelula(objCelula.x, objCelula.y).isAtirada() == false;
+		return	!getTabuleiroAtaque().seCelulaAtacada(objCelula);
 	}
 	
 	public void atacar() {

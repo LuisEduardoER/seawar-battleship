@@ -121,7 +121,7 @@ public class Embarcacao implements Serializable {
 	//Gera as celulas da embarcação
 	private void gerarCelulas() {
 		for(int i = 0; i < tamanho; i++){
-			Celula celula = new Celula();
+			Celula celula = new Celula(0,i);
 			celula.setTipoCelula(TipoCelula.Embarcacao);
 			aListaCelulas[i] = celula; 
 		}
