@@ -304,7 +304,7 @@ public class Cliente implements IMessageListener {
 	//Qando eu RECEBO um ataque
 	private void ReceberAtaque(List<String> lstTokens, String ipEnviou) {
 		//instancia uma célula para enviar ao evento
-		Celula celulaAtacada = new Celula();
+		Celula celulaAtacada = new Celula(0,0);
 		//Preenche a célula de acordo com os valores dos tokens
 		for (String string : lstTokens) {
 			String[] split = string.split(Constantes.VALUE_SEPARATOR);
@@ -341,7 +341,7 @@ public class Cliente implements IMessageListener {
 	//Quando eu processo a resposta do MEU ataque
 	private void ProcessarRespostaAtaque(List<String> lstTokens, String ipEnviou) {
 		//instancia uma célula para enviar ao evento
-		Celula celulaAtacou = new Celula();
+		Celula celulaAtacou = new Celula(0,0);
 		//Preenche a célula de acordo com os valores dos tokens
 		for (String string : lstTokens) {
 			String[] split = string.split(Constantes.VALUE_SEPARATOR);

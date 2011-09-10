@@ -142,8 +142,7 @@ public class Jogador extends Usuario {
 		//Celula cel = tabuleiroAtaque.encontrarCelula(x, y);
 		
 		//Como a célula não é processada aqui, pode-se jogar uma célula DUMMIE com apenas o X e o Y do local atacado
-		Celula cel = new Celula(); 
-		cel.setLocation(x,y);
+		Celula cel = new Celula(x,y);
 		this.conexaoJogador.enviarAtaque(this.jogoId,cel);
 	}
 
@@ -158,7 +157,7 @@ public class Jogador extends Usuario {
 
 	public boolean enviarTabuleiroAtaque() {
 		try {
-			this.conexaoJogador.enviarTabuleiro(oTabuleiroAtaque);
+			this.conexaoJogador.enviarTabuleiro(oTabuleiroDefesa);
 			return true;
 		} catch (TabuleiroIOException e) {
 			Log.gravarLog(e.getMessage());
