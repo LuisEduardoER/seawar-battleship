@@ -127,13 +127,22 @@ public class Bot extends Jogador {
 			 */
 		} else {
 			if(!naviosNaoAfundados.empty()){
+				bAcertouEmbarcacao = true;
 				bAfundouEmbarcacao = false;
 				atacada = popNaviosNaoAfundados();
+				setCelulasEscolhida(atacada);
+				//TODO:aqui ocorre um nulo quando há 3 barcos junto e acerta 2 sem afundá-los
+				//talvez resolve remontando a pilha a afundar
+				if(getUltimaCelulaAtacadaEmbarcacao() != null){
+					pushNaviosNaoAfundados(getUltimaCelulaAtacadaEmbarcacao());
+					celulasAtacadasEmbarcacao.clear();
+				}
 				setCelulaAtacadaEmbarcacao(atacada);
 				analisarJogada();
 			}
 			else{
 			// Realiza tiro aleatório até acertar um navio
+			bAfundouEmbarcacao = false;	
 			bAcertouEmbarcacao = false;
 			atacada = new Celula(0, 0);
 			atacada.x = coordRandom();
@@ -152,7 +161,7 @@ public class Bot extends Jogador {
 	public void analisarJogada() {
 		Celula atacada = null;
 		// Realiza ataque após acertar a primeira célula de um navio
-		if (celulasAtacadasEmbarcacao.size() < 2) {
+		if (celulasAtacadasEmbarcacao.size() == 1) {
 			atacada = getProximaCelula();
 			if (atacada != null) {
 				atacada.acertar();
@@ -201,13 +210,11 @@ public class Bot extends Jogador {
 				tamanhoSegundoNavioAtacado = getTabuleiroAtaque().getEmbarcacao(celulaAtacar.x, celulaAtacar.y).getTamanho();
 				tamanhoPrimeiroNavioAtacado = getTabuleiroAtaque().getEmbarcacao(getUltimaCelulaAtacadaEmbarcacao().x,getUltimaCelulaAtacadaEmbarcacao().y).getTamanho();
 				}
-				if ((tamanhoPrimeiroNavioAtacado != tamanhoSegundoNavioAtacado) && tamanhoSegundoNavioAtacado > 1 ) {
+				if ((tamanhoPrimeiroNavioAtacado != tamanhoSegundoNavioAtacado) && tamanhoSegundoNavioAtacado > 1) {
 					pushNaviosNaoAfundados(celulaAtacar);
 				} 
 				else {
-					//if(getTabuleiroAtaque().getEmbarcacao(celulaAtacar.x, celulaAtacar.y).getTamanho() != 1){
-						setCelulaAtacadaEmbarcacao(celulaAtacar);
-					//}
+					setCelulaAtacadaEmbarcacao(celulaAtacar);
 				}
 				bAcertouEmbarcacao = true;
 			}
@@ -217,7 +224,7 @@ public class Bot extends Jogador {
 					// Limpo minha lista de celulasAtacadasEmbarcacao para
 					// quando acertar outra embarcação
 					// o bot saber onde jogar
-					celulasAtacadasEmbarcacao.clear();
+					checarRemover(getTabuleiroAtaque().getEmbarcacao(celulaAtacar.x, celulaAtacar.y).getListaCelulas());
 					System.out.println("Você afundou o " + getTabuleiroAtaque().getEmbarcacao(celulaAtacar.x, celulaAtacar.y).getNomeEmbarcacao());
 					System.out.println(provocar());
 				}
@@ -288,6 +295,11 @@ public class Bot extends Jogador {
 					return null;
 				}
 			}
+		}
+	}
+	public void checarRemover(Celula[] arrCelulas){
+		for (int i = 0; i < arrCelulas.length; i++) {
+			celulasAtacadasEmbarcacao.remove(arrCelulas[i]);
 		}
 	}
 

@@ -16,7 +16,7 @@ public class JogoTest {
 	public static void main(String[] args) throws FullGameException {		
 		// TODO Auto-generated method stub
 		int jogos = 0;
-		while(jogos <= 100){
+		while(jogos < 1000){
 			Jogo jogo = new Jogo(10, 2);
 			Jogador p1 = new Jogador();
 			Jogador p2 = new Jogador();
@@ -51,6 +51,7 @@ public class JogoTest {
 			}
 			jogos++;
 		}
+		System.out.println(jogos + " testes realizados pelo BOT");
 	}
 
 }
