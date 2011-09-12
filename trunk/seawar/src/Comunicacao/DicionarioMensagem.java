@@ -71,7 +71,7 @@ public class DicionarioMensagem {
 			mensagem = CriarMensagemParametrizada("jogoid", "x", "y");
 			break;
 		case RespostaAtaque:
-			mensagem = CriarMensagemParametrizada("jogoid", "x", "y", "tipoCelula", "ordem");
+			mensagem = CriarMensagemParametrizada("jogoid", "x", "y", "tipoCelula", "ordem", "barco", "afundou");
 			break;
 		case EnviarMensagemOponente:
 			mensagem = CriarMensagemParametrizada("jogoid", "mensagem");

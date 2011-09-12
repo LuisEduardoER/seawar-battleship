@@ -342,6 +342,8 @@ public class Cliente implements IMessageListener {
 	private void ProcessarRespostaAtaque(List<String> lstTokens, String ipEnviou) {
 		//instancia uma célula para enviar ao evento
 		Celula celulaAtacou = new Celula(0,0);
+		//define a celula como acertada
+		celulaAtacou.acertar();
 		//Preenche a célula de acordo com os valores dos tokens
 		for (String string : lstTokens) {
 			String[] split = string.split(Constantes.VALUE_SEPARATOR);
@@ -361,7 +363,6 @@ public class Cliente implements IMessageListener {
 				this.jogo.setIdJogo(jogoId);
 			}
 		}
-
 		//Dispara o evento que informa o que era a célula atacada pelo jogador		
 		fireRespostaAtaque(lstTokens, celulaAtacou);
 		
@@ -408,6 +409,8 @@ public class Cliente implements IMessageListener {
 	private void ConectarJogadorEmJogo(List<String> lstTokens, String ipEnviou){
 		String posicaoString = "";//lstTokens.get(2);
 		int jogoId = -1;
+		
+		List<Jogador> jogadores = new ArrayList<Jogador>();
 		for (String string : lstTokens) {
 			String[] split = string.split(Constantes.VALUE_SEPARATOR);
 			if(split[0].equalsIgnoreCase("posicao")){
@@ -418,18 +421,27 @@ public class Cliente implements IMessageListener {
 				jogoId = Integer.parseInt(split[1]);
 				this.jogo.setIdJogo(jogoId);
 			}
+
+			else if(split[0].equalsIgnoreCase("jogador")){			
+				Jogador adv = new Jogador();
+				adv.setLogin(split[1]);
+				jogadores.add(adv);
+			}
 		}		
 		int posicao = Integer.parseInt(posicaoString);
 		//Se a posição for válida, adiciona-o na lista de jogadores do jogo
 		if(posicao >= 0){
 			try {
 				//Enquanto a posição não for a 0, preenche as outras com jogadores dummies (sem reação), pois o tratamento é feito no servidor
-				for(int i = 0; i < posicao; i++){					
-					Jogador adv = new Jogador();
-					adv.setLogin("Player"+(i+1));
-					this.jogo.AdicionarJogador(adv);
-					//Evento já disparado pela classe Jogo, capturado e redisparado por esta, não há necessidade de redundancia
-					//fireJogadorConectado(adv);
+//				for(int i = 0; i < posicao; i++){					
+//					Jogador adv = new Jogador();
+//					adv.setLogin("Player"+(i+1));
+//					this.jogo.AdicionarJogador(adv);
+//					//Evento já disparado pela classe Jogo, capturado e redisparado por esta, não há necessidade de redundancia
+//					//fireJogadorConectado(adv);
+//				}
+				for(Jogador jogador : jogadores){
+					this.jogo.AdicionarJogador(jogador);
 				}
 				//Cria os tabuleiros para o jogador
 				this.perfil.setTabuleiroAtaque(new Tabuleiro(Constantes.TAMANHO_TABULEIRO, false));
