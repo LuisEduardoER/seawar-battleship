@@ -170,9 +170,11 @@ public class Jogo {
 		fireGameOverEvent(new JogoEvent(getJogadorVencedor(), TipoEvento.EncerrouJogo));
 	}
 	
-	private Object getJogadorVencedor() {
+	private Jogador getJogadorVencedor() {
 		for (Jogador jogador : this.aListaJogador) {
-			
+			if(jogador.getId_usuario() == this.iCodJogadorVencedor){
+				return jogador;
+			}
 		}
 		return null;
 	}

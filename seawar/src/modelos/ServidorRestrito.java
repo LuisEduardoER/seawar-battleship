@@ -125,6 +125,7 @@ public class ServidorRestrito implements IMessageListener {
 				}
 			}
 			try {
+				String tokensJogadoresJogando="";
 				if(!this.jogoCorrente.isVazio()){
 					//Se o jogo não estiver vazio, envia mensagem para os jogadores de plantão que mais 1 jogador entrou no jogo na última posição
 					for(Jogador jogadorAguardando : this.jogoCorrente.getListaJogador()){
@@ -132,6 +133,8 @@ public class ServidorRestrito implements IMessageListener {
 						String mensagemEnviar = String.format(mensagem, this.jogoCorrente.getIdJogo(), obj.getLogin(), aListaJogadorJogando.size());
 						MessageSender sender = new MessageSender(jogadorAguardando.getConexao().getSocket(), mensagemEnviar);
 						serverExecutor.execute(sender);
+						
+						tokensJogadoresJogando += String.format("%s%s%s%s", Constantes.TOKEN_SEPARATOR, "jogador", Constantes.VALUE_SEPARATOR, jogadorAguardando.getLogin());
 					}
 				}
 				obj.setOnline();
@@ -154,9 +157,9 @@ public class ServidorRestrito implements IMessageListener {
 				Future futuro = serverExecutor.submit(send);
 				futuro.get(); 				
 				
-				//também informa o jogador qual a posição dele na lista de jogadores 
+				//também informa o jogador qual a posição dele na lista de jogadores, concatenando também com tokens dos nomes de jogadores que estão online
 				String msgEntrouJogo = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.EntrarJogo);
-				String msgEntrouJogoEnviar = String.format(msgEntrouJogo, this.jogoCorrente.getIdJogo(), obj.getLogin(), aListaJogadorJogando.indexOf(obj));
+				String msgEntrouJogoEnviar = String.format(msgEntrouJogo, this.jogoCorrente.getIdJogo(), obj.getLogin(), aListaJogadorJogando.indexOf(obj)) + tokensJogadoresJogando;
 				MessageSender sender = new MessageSender(obj.getConexao().getSocket(), msgEntrouJogoEnviar);
 				serverExecutor.execute(sender);
 				
@@ -538,24 +541,27 @@ public class ServidorRestrito implements IMessageListener {
 			if(jogo != null){
 				Jogador jogador = jogo.EncontrarJogador(socketEnviou);
 				if(jogador != null){
+
+					Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
 					//Atualiza a pontuação do cara (200 pontos por perder?)
 					int pontos = 0;
-					//Verifica quantos barcos ele afundou
-					for(Embarcacao barco : jogador.getTabuleiroAtaque().getArrEmbarcacoes()){
-						if(barco.getNaufragado()){
-							//pontua pelo valor do barco
-							pontos += barco.getValorEmbarcacao();
-						}else {
-							for(Celula celulaBarco : barco.getListaCelulas()){							
-								//Pontua de acordo com as células que ele acertou
-								pontos += (celulaBarco.getTipoCelula() == TipoCelula.Embarcacao) ? barco.getValorEmbarcacao()/barco.getTamanho() : 0;
+					//Verifica quantos barcos ele afundou no campo do adversário
+					for(Embarcacao barco : adversario.getTabuleiroDefesa().getArrEmbarcacoes()){
+						if(barco != null){
+							if(barco.getNaufragado()){
+								//pontua pelo valor do barco
+								pontos += barco.getValorEmbarcacao();
+							}else {
+								for(Celula celulaBarco : barco.getListaCelulas()){							
+									//Pontua de acordo com as células que ele acertou
+									pontos += (celulaBarco.getTipoCelula() == TipoCelula.Embarcacao && celulaBarco.isAtirada()) ? barco.getValorEmbarcacao()/barco.getTamanho() : 0;
+								}
 							}
 						}
 					}
 					jogador.setPontuacao(pontos);
 					
 					
-					Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
 					this.declararVencedor(jogo, jogador);
 					this.declararPerdedor(jogo, adversario);
 					fireDisplayChangeEvent(
@@ -569,6 +575,7 @@ public class ServidorRestrito implements IMessageListener {
 		private void declararVencedor(Jogo jogo,Jogador vencedor) {
 			//Define o vencedor no id do usuário
 			//this.jogoCorrente.declaraJogadorVencedor(vencedor.getId_usuario());
+			this.jogoCorrente.setCodJogadorVencedor(vencedor.getId_usuario());
 			this.jogoCorrente.encerrarJogo();
 			
 			//Envia para o usuário que ele venceu o jogo
@@ -604,7 +611,8 @@ public class ServidorRestrito implements IMessageListener {
 				Jogador jogador = encontrarJogadorPorIpEmJogo(jogo, socketEnviou);				
 			
 				Jogador adversario = encontrarAdversarioEmJogo(jogo, jogador);
-				celula = adversario.getTabuleiroDefesa().atacar(celula.x, celula.y);
+				Tabuleiro tabuleiroAdversario = adversario.getTabuleiroDefesa();
+				celula = tabuleiroAdversario.atacar(celula.x, celula.y);
 				
 				//Envia ataque para o cliente que foi atacado
 				Socket clientSocketAtacado = adversario.getConexao().getSocket();
@@ -615,7 +623,7 @@ public class ServidorRestrito implements IMessageListener {
 				String mensagemAtaque = String.format(mensagemOriginal, jogoId, celula.x, celula.y);
 				serverExecutor.execute(new MessageSender(clientSocketAtacado, mensagemAtaque));
 				
-				venceuJogo = adversario.getTabuleiroDefesa().isTodosBarcosAfundados();
+				venceuJogo = tabuleiroAdversario.isTodosBarcosAfundados();
 				
 				if(jogador.bIsBot && !venceuJogo){
 					//TODO: Implementar a lógica de ataque do bot aqui
@@ -624,7 +632,19 @@ public class ServidorRestrito implements IMessageListener {
 				//Se o jogador não for bot:
 				//Envia resposta para o cliente que atacou
 				String mensagemResposta = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.RespostaAtaque);
-				String mensagemFormatada = String.format(mensagemResposta,jogo.getIdJogo(), celula.x, celula.y, celula.getTipoCelula().toString(), 0); 
+				//TODO: Fzer esta mensagem enviar se o barco foi afundado ou não :)
+				
+				Embarcacao barcoAcertado = tabuleiroAdversario.getEmbarcacao(celula.x, celula.y);
+				String nomeBarco = "";
+				boolean afundouBarco = false;
+				if(barcoAcertado != null){ 
+					nomeBarco = barcoAcertado.getNomeEmbarcacao();
+					afundouBarco = barcoAcertado.getNaufragado();
+					//imprime na tela do servidor qual barco foi acertado
+					String mensagemExibir = String.format("%s acertou o barco %s de %s. %s", jogador.getLogin(), nomeBarco, adversario.getLogin(), ((afundouBarco)?"***Barco Naufragado***":""));
+					fireDisplayChangeEvent(new ServerEvent(mensagemExibir, TipoEvento.DisplayAtualizado));
+				}
+				String mensagemFormatada = String.format(mensagemResposta,jogo.getIdJogo(), celula.x, celula.y, celula.getTipoCelula().toString(), 0, nomeBarco, afundouBarco); 
 				//ordem 0 pq eu não sei ainda como reconhecer qual parte do barco ele acertou
 				Socket clientSocket = jogador.getConexao().getSocket();
 				

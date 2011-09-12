@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -28,6 +29,7 @@ import modelos.Jogador;
 import modelos.Jogo;
 import modelos.Log;
 import modelos.Tabuleiro;
+import modelos.TipoCelula;
 import Comunicacao.Constantes;
 import Comunicacao.MessageSender;
 import Events.ClientEvent;
@@ -323,6 +325,12 @@ public class ClientGUI extends Applet{
 					botao = new BotaoCelula(i, j);	
 				}
 				botao.setSize(32, 32);
+				//Define a cor do botão se for barco
+				if(celula.getTipoCelula() == TipoCelula.Embarcacao)
+					botao.setBackground(getCorBotao(celula));
+				
+				//Adiciona o botão ao GRID para futuras referencias
+				botoesDefesa.setBotao(botao, i, j);
 				
 				//Adiciona o botão no tabuleiro
 				//(Como o BotaoCelula extende o JButton, o painel o reconhece como botão
@@ -396,6 +404,13 @@ public class ClientGUI extends Applet{
 		habilitarBotaoPronto(false);
 		habilitarBotaoConectar(true);
 		habilitarBotaoDesconectar(false);
+		limparTabuleiros();
+	}
+
+	private void limparTabuleiros() {
+		//TODO: Retirar todos os botões da UI
+		pnlTabDefesa.removeAll();
+		pnlTabuleiroAtaque.removeAll();
 	}
 
 	private void habilitarBotaoDesconectar(boolean b) {
@@ -469,7 +484,7 @@ public class ClientGUI extends Applet{
 		Color cor = Constantes.CorAgua;
 		switch(celula.getTipoCelula()){
 			case Embarcacao:
-				cor = Constantes.CorBarcoAcertado;
+				cor = (celula.isAtirada())? Constantes.CorBarcoAcertado : Constantes.CorBarco ;
 				break;
 			default:
 				cor = Constantes.CorAguaAcertada;
@@ -511,7 +526,33 @@ public class ClientGUI extends Applet{
 			
 			@Override
 			public void respostaTiro(Object source, ClientEvent evt, Celula celula) {
-				exibirRespostaAtaque(celula);				
+				List<String> tokens = (List<String>)source;
+				String nomeBarco = null;
+				boolean afundou = false;
+				for(String token : tokens){
+					String[] split = token.split(Constantes.VALUE_SEPARATOR);
+					//Aqui compara o length, porque pode vir vazio o valor do barco
+					if(split[0].equalsIgnoreCase("barco") && split.length == 2){
+						//Atualiza o Id do jogo para futuras referencias
+						nomeBarco = split[1];
+					}
+					else if(split[0].equalsIgnoreCase("afundou")){
+						//Atualiza o Id do jogo para futuras referencias
+						afundou = Boolean.parseBoolean(split[1]);
+						
+					}
+				}
+				
+					
+				
+				exibirRespostaAtaque(celula);
+				
+				//Se o cliente acertou um barco, informa qual barco foi
+				if(nomeBarco != null && !nomeBarco.isEmpty()){
+					String mensagemBarco = "%s a embarcação %s do adversário!";
+					mensagemBarco = String.format(mensagemBarco, (afundou? "Afundou":"Acertou"), nomeBarco);
+					exibeMensagem(mensagemBarco);
+				}
 			}
 			
 			@Override
