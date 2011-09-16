@@ -11,12 +11,15 @@ import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.List;
 
+import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -24,7 +27,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+import com.mysql.jdbc.PingTarget;
+
 import modelos.Celula;
+import modelos.Embarcacao;
 import modelos.Jogador;
 import modelos.Jogo;
 import modelos.Log;
@@ -44,6 +50,7 @@ public class ClientGUI extends Applet{
 	 */
 	//Variaveis necessárias para funcionamento background
 	MessageSender enviador;
+	Embarcacao barcoTransformar;
 	Cliente client;  //  @jve:decl-index=0:
 	Socket socket;
 	EventoCliente eventosCliente = null;
@@ -63,12 +70,14 @@ public class ClientGUI extends Applet{
 	private GridBotoes botoesDefesa = null;  //  @jve:decl-index=0:
 	private GridBotoes botoesAtaque = null;
 	private EventoAtaque listenerAtaque = null;
+	private EventoDefesa listenerDefesa = null;
 	private BotaoCelula botaoPressionado = null;
 	private JScrollPane jScrollPane = null;
 	
 	public ClientGUI(){
 		super();
 		listenerAtaque = new EventoAtaque();
+		listenerDefesa = new EventoDefesa();
 	}
 	
 	/**
@@ -78,7 +87,7 @@ public class ClientGUI extends Applet{
 	 */
 	public void init() {
 		this.setLayout(null);
-		this.setSize(653, 495);
+		this.setSize(733, 495);
 		this.add(getBtnConectar(), null);
 		this.add(getBtnDesconectar(), null);
 		this.add(getPnlTabuleiros(), null);
@@ -102,6 +111,8 @@ public class ClientGUI extends Applet{
 			pnlTabDefesa = new JPanel();
 			pnlTabDefesa.setLayout(gridLayout1);
 			pnlTabDefesa.setBounds(new Rectangle(4, 71, 290, 242));
+			//Corrige o tamanho do tabuleiro
+			pnlTabDefesa.setSize(Constantes.TAMANHO_TABULEIRO * Constantes.LARGURA_CELULA, Constantes.TAMANHO_TABULEIRO * Constantes.ALTURA_CELULA);
 		}
 		return pnlTabDefesa;
 	}
@@ -117,8 +128,10 @@ public class ClientGUI extends Applet{
 			gridLayout.setRows(10);
 			gridLayout.setColumns(10);
 			pnlTabuleiroAtaque = new JPanel();
-			pnlTabuleiroAtaque.setBounds(new Rectangle(308, 71, 310, 241));
+			pnlTabuleiroAtaque.setBounds(new Rectangle(396, 72, 310, 241));
 			pnlTabuleiroAtaque.setLayout(gridLayout);
+			//Corrige o tamanho do tabuleiro
+			pnlTabuleiroAtaque.setSize(Constantes.TAMANHO_TABULEIRO * Constantes.LARGURA_CELULA, Constantes.TAMANHO_TABULEIRO * Constantes.ALTURA_CELULA);
 		}
 		return pnlTabuleiroAtaque;
 	}
@@ -212,7 +225,7 @@ public class ClientGUI extends Applet{
 	private JPanel getPnlTabuleiros() {
 		if (pnlTabuleiros == null) {
 			lblTabuleiroAtaque = new JLabel();
-			lblTabuleiroAtaque.setBounds(new Rectangle(306, 49, 311, 22));
+			lblTabuleiroAtaque.setBounds(new Rectangle(394, 50, 311, 22));
 			lblTabuleiroAtaque.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
 			lblTabuleiroAtaque.setText("Tabuleiro Ataque:");
 			lblTabuleiroDefesa = new JLabel();
@@ -220,7 +233,7 @@ public class ClientGUI extends Applet{
 			lblTabuleiroDefesa.setText("Tabuleiro Defesa:");
 			pnlTabuleiros = new JPanel();
 			pnlTabuleiros.setLayout(null);
-			pnlTabuleiros.setBounds(new Rectangle(6, 134, 641, 351));
+			pnlTabuleiros.setBounds(new Rectangle(6, 134, 715, 351));
 			pnlTabuleiros.setEnabled(false);
 			//pnlTabuleiros.setVisible(false);
 			pnlTabuleiros.add(getPnlTabDefesa(), null);
@@ -324,17 +337,38 @@ public class ClientGUI extends Applet{
 				else{
 					botao = new BotaoCelula(i, j);	
 				}
-				botao.setSize(32, 32);
-				//Define a cor do botão se for barco
-				if(celula.getTipoCelula() == TipoCelula.Embarcacao)
-					botao.setBackground(getCorBotao(celula));
-				
+				botao.setSize(Constantes.LARGURA_CELULA, Constantes.ALTURA_CELULA);
+				//Define a cor do botão
+				botao.setBackground(getCorBotao(celula));
+				//Define qual a célula daquele botão (ajuda posteriormente a recuperar a célula de maneira mais rapida)
+				botao.setCelula(celula);
 				//Adiciona o botão ao GRID para futuras referencias
 				botoesDefesa.setBotao(botao, i, j);
-				
+				botao.addMouseListener(listenerDefesa);
+				botao.addActionListener(listenerDefesa);
 				//Adiciona o botão no tabuleiro
 				//(Como o BotaoCelula extende o JButton, o painel o reconhece como botão
 				this.pnlTabDefesa.add(botao);
+			}
+		}
+		//repinta o tabuleiro para exibir os botoes
+		this.pnlTabDefesa.repaint();
+	}
+
+	private void repintarTabuleiroDefesa(Tabuleiro tabuleiro) {
+		//Repinta o tabuleiro em memória
+		tabuleiro.repintarTabuleiro();
+		//Atualiza a pintura na tela
+		for (int i = 0; i < botoesDefesa.getLargura(); i++) {
+			for (int j = 0; j < botoesDefesa.getAltura(); j++) {
+				//Pega o botão que foi escolhido
+				BotaoCelula botao = botoesDefesa.getBotao(i, j);				
+				Celula celulaTabuleiro = tabuleiro.getCelula(i, j);
+				botao.setCelula(celulaTabuleiro);
+				//Define a cor do botão se for barco
+				botao.setBackground(getCorBotao(celulaTabuleiro));
+				
+				botao.repaint();
 			}
 		}
 		//repinta o tabuleiro para exibir os botoes
@@ -481,16 +515,8 @@ public class ClientGUI extends Applet{
 	}
 
 	private Color getCorBotao(Celula celula) {
-		Color cor = Constantes.CorAgua;
-		switch(celula.getTipoCelula()){
-			case Embarcacao:
-				cor = (celula.isAtirada())? Constantes.CorBarcoAcertado : Constantes.CorBarco ;
-				break;
-			default:
-				cor = Constantes.CorAguaAcertada;
-				break;
-		}
-		return cor;
+		//Método encapsulado dentro da classe responsável pelos botões
+		return GridBotoes.getCorBotao(celula);
 	}
 	
 	//Classe interna que implementa os eventos ocorridos no botão de ataque
@@ -502,21 +528,119 @@ public class ClientGUI extends Applet{
 			if (client.getPerfil().isOnline() && !btnPronto.isEnabled() && e.getSource() instanceof BotaoCelula) {
 				//Pega o botão pressionado e envia o ataque
 				botaoPressionado = (BotaoCelula) e.getSource();
-				//Envia o ataque e fica aguardando a resposta, que ativará o método "exibirRespostaAtaque()"
-				if(enviarAtaqueCliente(botaoPressionado.getCoordX(), botaoPressionado.getCoordY())){
-				//Desabilita o botão para não utilizá-lo novamente
-				botaoPressionado.setEnabled(false);			
+				if(botaoPressionado != null){
+					//Envia o ataque e fica aguardando a resposta, que ativará o método "exibirRespostaAtaque()"
+					if(enviarAtaqueCliente(botaoPressionado.getCoordX(), botaoPressionado.getCoordY())){
+					//Desabilita o botão para não utilizá-lo novamente
+					botaoPressionado.setEnabled(false);
+					}
 				}
 			}
 		}
 		
 	}
+	//Classe interna que implementa os eventos ocorridos no botões de defesa
+	class EventoDefesa implements ActionListener, MouseListener{
 
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			//A premissa para poder transformar uma embarcação (mover/rotacionar), é o jogador estar online e não clicar em "pronto"
+			if (btnPronto.isEnabled() && e.getSource() instanceof BotaoCelula) {
+
+				BotaoCelula botaoBarco = (BotaoCelula) e.getSource();
+				
+				Tabuleiro tabDef = client.getPerfil().getTabuleiroDefesa();
+				
+				//Se não tiver barco selecionado, seleciona o clicado.
+				if(barcoTransformar == null){			
+					//Se não for uma célula de embarcação, cai fora do método, pois não se deve selecionar uma água
+					if(botaoBarco.getCelula().getTipoCelula() != TipoCelula.Embarcacao){
+						return;
+					}
+					
+					barcoTransformar = tabDef.getEmbarcacao(botaoBarco.getCoordX(), botaoBarco.getCoordY());
+					
+					//Se não encontrar o barco, é bug do jogo, então sai do método
+					if(barcoTransformar == null)
+						return;
+					
+					//marca as celulas como selecionadas
+					barcoTransformar.setSelecionado(true);
+					
+					repintarTabuleiroDefesa(tabDef);					
+				}
+				else{
+					int xMudar = botaoBarco.getCoordX();
+					int yMudar = botaoBarco.getCoordY();				
+					//marca o barco como não selecionado mais
+					barcoTransformar.setSelecionado(false);
+
+					if(tabDef.ValidarPosicaoEmbarcacao(barcoTransformar, xMudar, yMudar)){
+						//Se validar a mudança, muda o barco de posição e repinta o tabuleiro
+						barcoTransformar.setPosicao(xMudar, yMudar);
+					}
+
+					repintarTabuleiroDefesa(tabDef);
+					botoesDefesa.repintarTodos();
+					//libera a variável para não ficar com um barco selecionado aqui
+					barcoTransformar = null;
+				}
+			}		
+		}
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			if(e.getButton() == MouseEvent.BUTTON3 && barcoTransformar != null){
+				//Pega o tabuleiro de defesa (para validação)
+				Tabuleiro tabDef = client.getPerfil().getTabuleiroDefesa();
+				//Pega a célula de origem do barco (a 1ª celula)
+				Celula origem = barcoTransformar.getListaCelulas()[0];
+				//Desseleciona o barco para não exibir na interface ele "marcado" após a edição
+				barcoTransformar.setSelecionado(false);
+				//Valida a posição do barco para atribuir a nova orientação
+				if(tabDef.ValidarRotacaoEmbarcacao(barcoTransformar)){
+					//Se for válida rotaciona o barco
+					barcoTransformar.rotacionar();
+				}
+				//Se a rotação for válida, repinta o tabuleiro
+				repintarTabuleiroDefesa(tabDef);
+				botoesDefesa.repintarTodos();
+				
+				barcoTransformar = null;
+			}
+			
+		}
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mouseExited(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+	}
+	
+	//Eventos que acontecem na classe Cliente e são ouvidos pela GUI (esta classe)
 	class EventoCliente implements ClientEventListener{
 			
 			@Override
 			public void turnoAlterado(Object source, ClientEvent evt) {
-				// TODO Auto-generated method stub				
 			}
 			
 			@Override

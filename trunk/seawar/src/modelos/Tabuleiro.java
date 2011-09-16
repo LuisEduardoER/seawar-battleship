@@ -257,6 +257,48 @@ public class Tabuleiro implements Serializable{
 		return true;
 	}
 	
+	//Valida se a nova posição para o barco é válida (Se não está fora do tabuleiro ou sobrepondo de outro barco)
+	public boolean ValidarRotacaoEmbarcacao(Embarcacao barco) {
+		//incrementadores da posição que será validada para a embarcação
+		int xInc = barco.getListaCelulas()[0].x;
+		int yInc = barco.getListaCelulas()[0].y;
+		try{
+			Celula[] celulas = barco.getListaCelulas();
+			//Verifica se as posições estão válidas
+			for(int i = 0; i < celulas.length; i++){
+				//Pega a embarcação daquela posição em verificação
+				Embarcacao barcoDaCelula = this.getEmbarcacao(xInc, yInc);
+				//Se tem algum barco naquela célula e não for o barco que estou movendo, retorna falso
+				if(barcoDaCelula != null && !barcoDaCelula.equals(barco)){
+					return false;
+				}
+				
+				if(this.mMatrizCelula[xInc][yInc] == null)
+					return false;
+				if(xInc >= this.mMatrizCelula.length || yInc >= this.mMatrizCelula[0].length)
+					return false;
+				//Se o barco não está na vertical ainda, aumenta o Y para verificar a proxima celula vertical
+				//senão, caso o barco esteja na vertical e queira ficar horizontal, aumenta o X para verificar a proxima celula horizontal
+				if(!barco.estaVertical())
+				{ yInc++; }
+				else
+				{ xInc++; }
+			}
+		}
+		catch(IndexOutOfBoundsException ex){
+			//A embarcação ficará com alguma parte fora do tabuleiro
+			//se cair aqui dentro
+			//throw ex;
+			return false;
+		}
+		
+
+		//Seta a posição da frente do barco apenas se tiver válido
+		//barco.setPosicao(x, y);
+		//Só retorna TRUE se passar por toda a validação e não sair do método com alguma posição falsa
+		return true;
+	}
+	
 	private Embarcacao gerarEmbarcacao(int posx, int posy, int tamanho) {
 		Embarcacao obj = new Embarcacao(tamanho);
 		obj.setNomeEmbarcacao("Barco " + tamanho);
@@ -294,10 +336,10 @@ public class Tabuleiro implements Serializable{
 	}
 	
 	public void repintarTabuleiro(){
-		//Limpa todas as células do tabuleiro (marca-as como água)
+		//Limpa todas as células do tabuleiro (renova-as como água)
 		for(int i = 0; i < this.mMatrizCelula.length; i++){
 			for(int j = 0; j < this.mMatrizCelula[0].length; j++){
-				this.mMatrizCelula[i][j].limpar();
+				this.mMatrizCelula[i][j] = new Celula(i, j);
 			}
 		}
 		
@@ -309,7 +351,9 @@ public class Tabuleiro implements Serializable{
 			for(int j = 0; j < celulasBarco.length; j++){
 				int x = celulasBarco[j].x;
 				int y = celulasBarco[j].y;
-				mMatrizCelula[x][y] = celulasBarco[j];				
+				//Celula celulaMatriz = mMatrizCelula[x][y];
+				mMatrizCelula[x][y] = celulasBarco[j];		
+				mMatrizCelula[x][y].setTipoCelula(TipoCelula.Embarcacao);
 			}
 		}
 	}
@@ -351,4 +395,5 @@ public class Tabuleiro implements Serializable{
 		
 		return this.mMatrizCelula[i][j];
 	}
+		
 }

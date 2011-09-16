@@ -24,6 +24,7 @@ public class Celula extends Point implements Serializable{
 	 */
 	private static final long serialVersionUID = 7L;
 	boolean acertada;
+	boolean selecionada;
 	Icon icone;
 	
 	public Celula(int x,int y){
@@ -48,6 +49,14 @@ public class Celula extends Point implements Serializable{
 	public boolean isAtirada(){
 		return acertada;
 	}
+	public boolean isSelecionada() {
+		return selecionada;
+	}
+
+	public void setSelecionada(boolean selecionada) {
+		this.selecionada = selecionada;
+	}
+
 	public void carregarImagem(TipoCelula tipoCelula) {
 		//TODO: Rever esta implementação, verificar na doc.
 	}

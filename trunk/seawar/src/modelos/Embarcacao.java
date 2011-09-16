@@ -115,7 +115,9 @@ public class Embarcacao implements Serializable {
 			}
 			//Troca a celula de referencia para a proxima celula do loop
 			celulaAnterior = celulaAtual;
-		}		
+		}	
+		
+		return;
 	}
 	
 	//Gera as celulas da embarcação
@@ -133,5 +135,17 @@ public class Embarcacao implements Serializable {
 		Celula celulaInicial = aListaCelulas[0];
 		celulaInicial.setLocation(posx, posy);
 		ordenarCelulas();
+	}
+	public void setSelecionado(boolean b) {
+		for(int i = 0; i < aListaCelulas.length; i++){
+			Celula celulaAtual = aListaCelulas[i];
+			if(celulaAtual != null){
+				celulaAtual.setSelecionada(b);
+			}
+		}				
+	}
+	public void rotacionar() {
+		//rotaciona o barco
+		this.setVertical(!bVertical);
 	}
 }

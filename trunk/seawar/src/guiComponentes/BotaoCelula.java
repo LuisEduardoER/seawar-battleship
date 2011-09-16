@@ -4,6 +4,8 @@ import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JButton;
 
+import modelos.Celula;
+
 //Classe que extende as funcionalidades do JButton para armazenar as coordenadas da célula que ele guarda
 public class BotaoCelula extends JButton{
 	
@@ -12,6 +14,7 @@ public class BotaoCelula extends JButton{
 	 */
 	private static final long serialVersionUID = 1L;
 
+	Celula celula;
 	int coordX;
 	int coordY;
 		
@@ -47,5 +50,11 @@ public class BotaoCelula extends JButton{
 	
 	public int getCoordY(){
 		return coordY;
+	}
+	public Celula getCelula() {
+		return celula;
+	}
+	public void setCelula(Celula celula) {
+		this.celula = celula;
 	}
 }

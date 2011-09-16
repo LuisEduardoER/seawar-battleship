@@ -19,10 +19,15 @@ public interface Constantes {
 	
 	
 	/*Constantes para cores de células*/
-	public static final Color CorAgua = new Color(50,50,255); //um tom de azul mais claro que o azul puro
+	public static final Color CorAgua = null;//new Color(50,50,255); //um tom de azul mais claro que o azul puro
 	public static final Color CorAguaAcertada = new Color(150,150,255); //um tom de azul mais claro que o azul sem acerto
 
 	public static final Color CorBarco = new Color(50,50,50); //um tom de cinza
 	public static final Color CorBarcoAcertado = new Color(255,100,20); //um tom de laranja
+	public static final Color CorBarcoSelecionado = new Color(180,180,0);//tom de amarelo
+	
+	//Medidas em pixels das células
+	public static final int LARGURA_CELULA = 32;
+	public static final int ALTURA_CELULA = 32;
 
 }
