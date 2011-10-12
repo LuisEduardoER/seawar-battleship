@@ -2,6 +2,7 @@ package modelos;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -521,8 +522,7 @@ public class ServidorRestrito implements IMessageListener {
 							new ServerEvent(String.format("%s ganhou do %s no jogo %s", adversario.getLogin(), jogador.getLogin(), jogo.getIdJogo()), TipoEvento.DisplayAtualizado)
 							);
 				}
-			}
-			
+			}			
 		}
 
 		/*
@@ -697,6 +697,12 @@ public class ServidorRestrito implements IMessageListener {
 			//TODO: Adaptar para fazer loop na lista de jogos quando for mais de 1 jogo rodando no servidor
 			
 			return this.jogoCorrente.EncontrarJogador(socketJogador);
+		}
+
+		@Override
+		public void socketFinalizado(Socket socket) {
+			// TODO Auto-generated method stub
+			
 		}
 		
 }

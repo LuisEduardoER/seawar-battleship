@@ -1,6 +1,5 @@
 package client;
 
-import java.net.MulticastSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,23 +36,27 @@ import Events.JogoEventListener;
 import Events.ServerEventListener;
 import Events.TipoEvento;
 
-public class Cliente implements IMessageListener {
+public class ClienteMulti implements IMessageListener {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 	MessageReceiver recebedor; //Objeto responsável por receber as mensagens por socket
+	MulticastReceiver recebedorMulticast;//Objecto responsavel por receber mensagens de multicast
 	MessageSender sender; //Objeto responsável por enviar as mensagens via socket
 	ExecutorService executor;
 	Socket mySocket; //socket do jogador
 	Jogador perfil; //perfil do jogador
 	Jogo jogo; //jogo na instancia do cliente
 	
+	private final int TOKEN_HEADER = 0;
+	private final int TOKEN_VALUE = 1;
+	
 	//Lista de eventos que possui a classe jogo
 	protected EventListenerList listenerList = new EventListenerList();
 	
-	public Cliente(Socket socket){		
+	public ClienteMulti(Socket socket){		
 		//Cria um executador, para classes que precisam de execução paralela
 		executor = Executors.newCachedThreadPool();
 		//Atribui o socket a variavel correta
@@ -61,6 +64,9 @@ public class Cliente implements IMessageListener {
 		//Instancia um recebedor de mensagem socket e executa-o para ficar escutando o socket
 		recebedor = new MessageReceiver(this, mySocket);
 		executor.execute(recebedor);
+		//Instancia um recebedor de mensagens multicast
+		recebedorMulticast = new MulticastReceiver(this, mySocket);
+		executor.execute(recebedorMulticast);
 		//Instancia um Jogador
 		perfil = new Jogador(mySocket);
 	}
@@ -70,7 +76,7 @@ public class Cliente implements IMessageListener {
 		//Também verifica se o jogo ainda não foi encerrado
 		if(this.jogo != null && !this.jogo.isJogoEncerrado()){
 			if(this.perfil.isMinhaVez()){
-				this.perfil.Atacar(this.jogo.getIdJogo(),x, y);
+				this.perfil.Atacar(this.jogo.getIdJogo(), x, y);
 				String mensagemAlerta = String.format("Atirando na coordenada: %d, %d", x,y);
 				fireMensagemAlertaEvent(mensagemAlerta);
 				//Altera a flag do jogador para ele não poder jogar de novo
@@ -179,7 +185,10 @@ public class Cliente implements IMessageListener {
 			//DesconectarJogador(lstTokens, ipEnviou);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.SerChamadoPorJogador.toString())){
-			//ChamarJogadorParaJogar(lstTokens, ipEnviou);
+			exibirChamadoParaJogar(lstTokens, ipEnviou);
+		}
+		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.RespostaChamada.toString())){
+			exibirRespostaChamada(lstTokens, ipEnviou);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.EnviarListaJogos.toString())){
 			//EnviarListaJogosAbertos(lstTokens, ipEnviou);
@@ -204,10 +213,11 @@ public class Cliente implements IMessageListener {
 			DesconectarJogador(lstTokens, ipEnviou);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.JogoCriado.toString())){
-			//AtualizarListaJogos(lstTokens, ipEnviou);
+			avisarJogoCriado(lstTokens, socket);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.NovoJogadorConectado.toString())){
-			//AtualizarListaJogadores(lstTokens, ipEnviou);
+			//Se um novo jogador foi conectado, solicita a lista de jogadores
+			this.perfil.solicitarListaJogadores();
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.OponenteEntrou.toString())){
 			//Utilizado quando algum oponente entrar no jogo que estou
@@ -247,14 +257,97 @@ public class Cliente implements IMessageListener {
 			//AtivarBotComoOponenteParaJogador(lstTokens, ipEnviou);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.ReceberListaJogadores.toString())){
-			//Para Cliente receber e popular a lista de jogadores na tela dele
+			ReceberListaJogadores(lstTokens, socket);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.ReceberListaJogos.toString())){
-			//Para o cliente receber e popular al ista de jogos na tela dele
+			ReceberListaJogos(lstTokens, socket);
 		}
-		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.ReceberTabuleiroOponente.toString())){
-			//mensagem que não será utilizada, pois o tabuleiro não será enviado para o cliente mais
+	}
+
+	private void avisarJogoCriado(List<String> lstTokens, Socket socket) {
+		String nomeCriador = "";
+		String strJogoId = "";
+		for (String token : lstTokens) {
+			String[] split = token.split(Constantes.VALUE_SEPARATOR);
+			if (split[TOKEN_HEADER].equalsIgnoreCase("jogoid")) {
+				strJogoId = split[TOKEN_VALUE];
+			}
+			else if (split[TOKEN_HEADER].equalsIgnoreCase("nomeCriador")) {
+				nomeCriador = split[TOKEN_VALUE];
+			}
 		}
+		//Envia mensagem para receber a lista de jogos novamente
+		receberListaJogos();
+		//Dispara evento com a mensagem de que alguém criou um jogo
+		fireMensagemAlertaEvent(String.format("%s criou o jogo Jogo%s", nomeCriador, strJogoId));
+	}
+
+	private void exibirRespostaChamada(List<String> lstTokens, String ipEnviou) {
+		String resposta = null;
+		String nomeChamado = null;
+		for (String token : lstTokens) {
+			String[] split = token.split(Constantes.VALUE_SEPARATOR);
+			if(split[TOKEN_HEADER].equalsIgnoreCase("resposta")){
+				resposta = split[TOKEN_VALUE];
+			}
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("nomeChamou")){
+				nomeChamado = split[TOKEN_VALUE];
+			}
+		}
+		fireReceberRespostaConviteEvent(nomeChamado, resposta);
+	}
+
+	private void ReceberListaJogos(List<String> lstTokens, Socket socket) {
+		List<String> nomeJogos = new ArrayList<String>();
+		for (String token : lstTokens) {
+			String[] split = token.split(Constantes.VALUE_SEPARATOR);
+			if(split.length == 2){
+				if(split[TOKEN_HEADER].equalsIgnoreCase("listaJogos")){
+					for (String nomeJogo : split[TOKEN_VALUE].split(",")) {
+						nomeJogos.add(nomeJogo);
+					}
+				}
+			}
+		}
+		
+		fireReceberListaJogosEvent(nomeJogos);
+	}
+
+	private void ReceberListaJogadores(List<String> lstTokens, Socket socket) {
+		List<String> nomeJogadores = new ArrayList<String>();
+		for (String token : lstTokens) {
+			String[] split = token.split(Constantes.VALUE_SEPARATOR);
+			if(split.length == 2){
+				if(split[TOKEN_HEADER].equalsIgnoreCase("listaJogadores")){
+					for (String nomeJogador : split[TOKEN_VALUE].split(",")) {
+						nomeJogadores.add(nomeJogador);
+					}
+				}
+			}
+		}
+		
+		fireReceberListaJogadoresEvent(nomeJogadores);
+	}
+
+	private void exibirChamadoParaJogar(List<String> lstTokens, String ipEnviou) {
+		int idJogo = 0;
+		String nomeJogador = null;
+		
+		for (String token : lstTokens) {
+			String[] split = token.split(Constantes.VALUE_SEPARATOR);
+			if (split[TOKEN_HEADER].equalsIgnoreCase("jogoid")) {
+				idJogo = Integer.parseInt(split[TOKEN_VALUE]);
+			}
+			else if (split[TOKEN_HEADER].equalsIgnoreCase("nomeChamou")) {
+				nomeJogador = split[TOKEN_VALUE];
+			}
+		}
+		//Se as informações recebidas são inválida, ignora 
+		if(idJogo < 1 || nomeJogador == null){
+			return;
+		}
+				
+		fireReceberConviteEvent(nomeJogador, idJogo);
 	}
 
 	//Quando um INIMIGO desconecta do meu jogo
@@ -264,35 +357,45 @@ public class Cliente implements IMessageListener {
 		String nome = "";
 		for (String token : lstTokens) {
 			String[] split = token.split(Constantes.VALUE_SEPARATOR);
-			if(split[0].equalsIgnoreCase("jogoid")){
-				jogoId = Integer.parseInt(split[1]);
+			if(split[TOKEN_HEADER].equalsIgnoreCase("jogoid")){
+				jogoId = Integer.parseInt(split[TOKEN_VALUE]);
 			}
-			else if(split[0].equalsIgnoreCase("nome")){
-				nome = split[1];				             
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("nome")){
+				nome = split[TOKEN_VALUE];				             
 			}
-			else if(split[0].equalsIgnoreCase("usuarioid")){
-				usuarioId=  Integer.parseInt(split[1]);
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("usuarioid")){
+				usuarioId=  Integer.parseInt(split[TOKEN_VALUE]);
 			}				
 		}
-		
-		//Encontra o jogador que foi desconectado e remove-o do jogo
-		for (Jogador jogador : this.jogo.getListaJogador()) {
-			if(jogador.getLogin().equalsIgnoreCase(nome)){
-				//Solicita ao jogador se ele quer continuar o jogo contra um BOT
-				//ou se deseja terminar o jogo
-				
-				//TODO: Verificar uma solução melhor do que um JOptionPane :)
-				if(JOptionPane.showConfirmDialog(null, "Seu adversário saiu do jogo por algum motivo,\ndeseja continuar utilizando um bot em seu lugar?\n(Seus pontos continuarão a ser computados)", "Adversário desconectado", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
-					this.jogo.setBot(jogador);
-					EnviarDecisaoJogarContraBot();
-					fireAtivarBotEvent(this.jogo, jogador);
+		Jogador jogadorDesconectado = null;
+		//Se o cara desconectado estava no mesmo jogo que eu, era meu adversário
+		if(this.jogo != null && jogoId > 0 && jogoId == this.jogo.getIdJogo()){			
+			//Encontra o jogador que foi desconectado e remove-o do jogo
+			for (Jogador jogador : this.jogo.getListaJogador()) {
+				if(jogador.getLogin().equalsIgnoreCase(nome)){
+					jogadorDesconectado = jogador;
+					//Solicita ao jogador se ele quer continuar o jogo contra um BOT
+					//ou se deseja terminar o jogo, desde que não seja ele o desconectado
+					if(jogador != this.perfil){
+						if(JOptionPane.showConfirmDialog(null, "Seu adversário saiu do jogo por algum motivo,\ndeseja continuar utilizando um bot em seu lugar?\n(Seus pontos continuarão a ser computados)", "Adversário desconectado", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
+							this.jogo.setBot(jogador);
+							EnviarDecisaoJogarContraBot();
+							fireAtivarBotEvent(this.jogo, jogador);
+						}
+						else{
+							this.jogo.removerJogador(jogador);	
+						}
+					}
+					break;
+					
 				}
-				else{
-					this.jogo.removerJogador(jogador);	
-				}
-				break;
 			}
 		}
+		//Se o jogador desconectado foi um jogador do meu jogo, dispara o evento de jogador desconectado
+		if(jogadorDesconectado != null)
+			fireJogadorDesconectado(jogadorDesconectado);
+		else//senão solicita apenas a nova lista de jogadores
+			this.receberListaJogadores();
 	}
 
 	//Envia a mensagem para o servidor que você escolheu jogar contra BOT
@@ -310,15 +413,15 @@ public class Cliente implements IMessageListener {
 		//Preenche a célula de acordo com os valores dos tokens
 		for (String string : lstTokens) {
 			String[] split = string.split(Constantes.VALUE_SEPARATOR);
-			if(split[0].equalsIgnoreCase("x")){
-				celulaAtacada.x = Integer.parseInt(split[1]);
+			if(split[TOKEN_HEADER].equalsIgnoreCase("x")){
+				celulaAtacada.x = Integer.parseInt(split[TOKEN_VALUE]);
 			}
-			else if(split[0].equalsIgnoreCase("y")){
-				celulaAtacada.y = Integer.parseInt(split[1]);
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("y")){
+				celulaAtacada.y = Integer.parseInt(split[TOKEN_VALUE]);
 			}
-			else if(split[0].equalsIgnoreCase("jogoid")){
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("jogoid")){
 				//Atualiza o Id do jogo para futuras referencias
-				int jogoId = Integer.parseInt(split[1]);
+				int jogoId = Integer.parseInt(split[TOKEN_VALUE]);
 				this.jogo.setIdJogo(jogoId);
 			}
 		}
@@ -349,19 +452,19 @@ public class Cliente implements IMessageListener {
 		//Preenche a célula de acordo com os valores dos tokens
 		for (String string : lstTokens) {
 			String[] split = string.split(Constantes.VALUE_SEPARATOR);
-			if(split[0].equalsIgnoreCase("x")){
-				celulaAtacou.x = Integer.parseInt(split[1]);
+			if(split[TOKEN_HEADER].equalsIgnoreCase("x")){
+				celulaAtacou.x = Integer.parseInt(split[TOKEN_VALUE]);
 			}
-			else if(split[0].equalsIgnoreCase("y")){
-				celulaAtacou.y = Integer.parseInt(split[1]);
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("y")){
+				celulaAtacou.y = Integer.parseInt(split[TOKEN_VALUE]);
 			}
-			else if(split[0].equalsIgnoreCase("tipoCelula")){
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("tipoCelula")){
 				//Atualiza o Id do jogo para futuras referencias
-				celulaAtacou.setTipoCelula(Enum.valueOf(TipoCelula.class, split[1]));
+				celulaAtacou.setTipoCelula(Enum.valueOf(TipoCelula.class, split[TOKEN_VALUE]));
 			}
-			else if(split[0].equalsIgnoreCase("jogoid")){
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("jogoid")){
 				//Atualiza o Id do jogo para futuras referencias
-				int jogoId = Integer.parseInt(split[1]);
+				int jogoId = Integer.parseInt(split[TOKEN_VALUE]);
 				this.jogo.setIdJogo(jogoId);
 			}
 		}
@@ -376,14 +479,14 @@ public class Cliente implements IMessageListener {
 		//String status = "";
 		for (String token : lstTokens) {
 			String[] split = token.split(Constantes.VALUE_SEPARATOR);
-			if(split[0].equalsIgnoreCase("jogoid")){
-				//jogoId = Integer.parseInt(split[1]);
+			if(split[TOKEN_HEADER].equalsIgnoreCase("jogoid")){
+				//jogoId = Integer.parseInt(split[TOKEN_VALUE]);
 			} 
-			else if(split[0].equalsIgnoreCase("oponente")){
-				nomeAdv = split[1];
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("oponente")){
+				nomeAdv = split[TOKEN_VALUE];
 			} 
-			else if(split[0].equalsIgnoreCase("status")){
-				//status = split[1];
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("status")){
+				//status = split[TOKEN_VALUE];
 			} 
 		}
 		
@@ -415,18 +518,19 @@ public class Cliente implements IMessageListener {
 		List<Jogador> jogadores = new ArrayList<Jogador>();
 		for (String string : lstTokens) {
 			String[] split = string.split(Constantes.VALUE_SEPARATOR);
-			if(split[0].equalsIgnoreCase("posicao")){
-				posicaoString = split[1];
+			if(split[TOKEN_HEADER].equalsIgnoreCase("posicao")){
+				posicaoString = split[TOKEN_VALUE];
 			}
-			else if(split[0].equalsIgnoreCase("jogoid")){
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("jogoid")){
 				//Atualiza o Id do jogo para futuras referencias
-				jogoId = Integer.parseInt(split[1]);
+				jogoId = Integer.parseInt(split[TOKEN_VALUE]);
+				CriarJogoLocal(jogoId);
 				this.jogo.setIdJogo(jogoId);
 			}
 
-			else if(split[0].equalsIgnoreCase("jogador")){			
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("jogador")){			
 				Jogador adv = new Jogador();
-				adv.setLogin(split[1]);
+				adv.setLogin(split[TOKEN_VALUE]);
 				jogadores.add(adv);
 			}
 		}		
@@ -434,14 +538,6 @@ public class Cliente implements IMessageListener {
 		//Se a posição for válida, adiciona-o na lista de jogadores do jogo
 		if(posicao >= 0){
 			try {
-				//Enquanto a posição não for a 0, preenche as outras com jogadores dummies (sem reação), pois o tratamento é feito no servidor
-//				for(int i = 0; i < posicao; i++){					
-//					Jogador adv = new Jogador();
-//					adv.setLogin("Player"+(i+1));
-//					this.jogo.AdicionarJogador(adv);
-//					//Evento já disparado pela classe Jogo, capturado e redisparado por esta, não há necessidade de redundancia
-//					//fireJogadorConectado(adv);
-//				}
 				for(Jogador jogador : jogadores){
 					this.jogo.AdicionarJogador(jogador);
 				}
@@ -452,8 +548,16 @@ public class Cliente implements IMessageListener {
 				this.jogo.AdicionarJogador(perfil, posicao);
 				//Será a vez do jogador se ele foi o primeiro a entrar
 				this.perfil.setMinhaVez((posicao == 0));
-				//Evento já disparado pela classe Jogo, capturado e redisparado por esta, não há necessidade de redundancia
-				//fireJogadorConectado(perfil);//TODO: Rever
+
+				if(posicao == 0){
+					//Evento que dispara para avisar quando o jogador é o criador do jogo (ou seja, quando ele é adicionado na posição 0 do jogo)
+					fireJogoCriadoEvent(this.jogo);
+				}
+				else{
+					//Evento que dispara quando o jogador conecta em um jogo, que não foi o criador, para iniciar a tela do jogo
+					fireCarregarTelaJogo(this.jogo);
+				}
+				
 			} catch (FullGameException e) {
 				//Grava no log caso haja alguma falha
 				Log.gravarLog(e.getMessage());
@@ -469,15 +573,15 @@ public class Cliente implements IMessageListener {
 		
 		for (String string : lstTokens) {
 			String[] split = string.split(Constantes.VALUE_SEPARATOR);
-			if(split[0].equalsIgnoreCase("posicao")){
-				posicaoString = split[1];
+			if(split[TOKEN_HEADER].equalsIgnoreCase("posicao")){
+				posicaoString = split[TOKEN_VALUE];
 			}
-			else if(split[0].equalsIgnoreCase("nomeEntrou")){
-				nomeJogador = split[1];
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("nomeEntrou")){
+				nomeJogador = split[TOKEN_VALUE];
 			}
-			else if(split[0].equalsIgnoreCase("jogoid")){
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("jogoid")){
 				//Atualiza o Id do jogo para futuras referencias
-				jogoId = Integer.parseInt(split[1]);
+				jogoId = Integer.parseInt(split[TOKEN_VALUE]);
 				this.jogo.setIdJogo(jogoId);
 			}
 		}
@@ -489,8 +593,11 @@ public class Cliente implements IMessageListener {
 		if(posicao >= 0){
 			try {
 				this.jogo.AdicionarJogador(novo, posicao);
-				//Evento abaixo já é disparado automaticamente pela classe Jogo, tornando esta chamada redundante
-				//fireJogadorConectado(novo);
+
+				//Se com a conexão do novo oponente o jogo ficar lotado, dispara o evento para carregar a tela do jogo
+				if(this.jogo.isLotado()){
+					fireCarregarTelaJogo(this.jogo);
+				}
 			} catch (FullGameException e) {
 				Log.gravarLog(e.getMessage());
 				fireFalhaGenericaEvent("Houve um erro ao tentar conectar oponente no jogo.", e);
@@ -500,23 +607,22 @@ public class Cliente implements IMessageListener {
 
 	//Método acessado quando EU conecto no servidor
 	private void jogadorConectado(List<String> lstTokens, String ipEnviou) {
-		int jogoId = 10;
+		//int jogoId = 10;		
+		//CriarJogoLocal(jogoId);		
+		//fireCarregarTelaJogo(this.jogo);
 		
-		CriarJogoLocal(jogoId);
-		fireCarregarTelaJogo(this.jogo);
 		this.perfil.setOnline();
-		
+		fireCarregarTelaPrincipal();		
 	}
 
 	private void CriarJogoLocal(int jogoId) {
-		jogo = new Jogo(jogoId, 2);
+		jogo = new Jogo(jogoId, Constantes.CAPACIDADE_JOGO);
 		DefinirListenersJogo();
 	}
 
 	public void conectar(String login, String senha) {
 		perfil.setLogin(login);
 		perfil.setSenha(senha);
-		//TODO: Enviar login e senha para validação no servidor
 		perfil.conexaoJogador.conectarJogador();
 	}
 
@@ -563,6 +669,36 @@ public class Cliente implements IMessageListener {
 			}
 		});
 	}
+	
+
+	
+	public Jogador getPerfil() {		
+		return this.perfil;
+	}
+
+	public boolean enviarTabuleiro() {
+		if(this.jogo != null)
+			return this.perfil.enviarTabuleiroDefesa(this.jogo.getIdJogo());
+
+		return this.perfil.enviarTabuleiroDefesa(this.getPerfil().getJogoId());
+	}
+	public boolean enviarTabuleiro(int idJogo) {
+		return this.perfil.enviarTabuleiroDefesa(idJogo);		
+	}
+	public boolean enviarRespostaPositiva(int jogoid, String nomeJogador){
+		return perfil.enviarRespostaConvite(jogoid, nomeJogador, Constantes.RESPOSTA_POSITIVA);		
+	}
+	public boolean enviarRespostaNegativa(int jogoid, String nomeJogador){
+		return perfil.enviarRespostaConvite(jogoid, nomeJogador, Constantes.RESPOSTA_NEGATIVA);		
+	}
+
+	public boolean conectarEmJogo(int jogoid) {
+		return perfil.conectarEmJogo(jogoid);		
+	}
+	
+	
+	
+	
 	//Manipuladores de listeners de eventos
 	public void AddClientEventListener(ClientEventListener listener){
 		listenerList.add(ClientEventListener.class, listener);
@@ -670,6 +806,16 @@ public class Cliente implements IMessageListener {
 	    	 }
 	     }
 	}
+	private void fireCarregarTelaPrincipal(){
+		 Object[] listeners = listenerList.getListenerList();
+	       // Each listener occupies two elements - the first is the listener class
+	       // and the second is the listener instance
+	     for (int i=0; i<listeners.length; i+=2) {
+	    	 if (listeners[i]==ClientEventListener.class) {
+	    		 ((ClientEventListener)listeners[i+1]).carregarTelaPrincipal();
+	    	 }
+	     }
+	}
 	private void fireMensagemAlertaEvent(Object mensagem){
 		 Object[] listeners = listenerList.getListenerList();
 	       // Each listener occupies two elements - the first is the listener class
@@ -680,19 +826,77 @@ public class Cliente implements IMessageListener {
 	    	 }
 	     }
 	}
-
-	public Jogador getPerfil() {		
-		return this.perfil;
+	private void fireReceberListaJogosEvent(Object listaJogos){
+		 Object[] listeners = listenerList.getListenerList();
+	       // Each listener occupies two elements - the first is the listener class
+	       // and the second is the listener instance
+	     for (int i=0; i<listeners.length; i+=2) {
+	    	 if (listeners[i]==ClientEventListener.class) {
+	    		 ((ClientEventListener)listeners[i+1]).listaJogosRecebida(listaJogos);
+	    	 }
+	     }
+	}
+	private void fireReceberListaJogadoresEvent(Object listaJogadores){
+		 Object[] listeners = listenerList.getListenerList();
+	       // Each listener occupies two elements - the first is the listener class
+	       // and the second is the listener instance
+	     for (int i=0; i<listeners.length; i+=2) {
+	    	 if (listeners[i]==ClientEventListener.class) {
+	    		 ((ClientEventListener)listeners[i+1]).listaJogadoresRecebida(listaJogadores);
+	    	 }
+	     }
+	}
+	private void fireReceberRespostaConviteEvent(String nome, Object resposta){
+		 Object[] listeners = listenerList.getListenerList();
+	       // Each listener occupies two elements - the first is the listener class
+	       // and the second is the listener instance
+	     for (int i=0; i<listeners.length; i+=2) {
+	    	 if (listeners[i]==ClientEventListener.class) {
+	    		 ((ClientEventListener)listeners[i+1]).respostaConviteParaJogar(nome, resposta);
+	    	 }
+	     }
+	}
+	private void fireReceberConviteEvent(String nomeJogador, int jogoid){
+		 Object[] listeners = listenerList.getListenerList();
+	       // Each listener occupies two elements - the first is the listener class
+	       // and the second is the listener instance
+	     for (int i=0; i<listeners.length; i+=2) {
+	    	 if (listeners[i]==ClientEventListener.class) {
+	    		 ((ClientEventListener)listeners[i+1]).receberConviteParaJogar(nomeJogador, jogoid);
+	    	 }
+	     }
 	}
 
-	public boolean enviarTabuleiro() {
-		return this.perfil.enviarTabuleiroDefesa(this.jogo.getIdJogo());		
+	private void fireJogoCriadoEvent(Jogo jogoObject) {
+		Object[] listeners = listenerList.getListenerList();
+	       // Each listener occupies two elements - the first is the listener class
+	       // and the second is the listener instance
+	     for (int i=0; i<listeners.length; i+=2) {
+	    	 if (listeners[i]==ClientEventListener.class) {
+	    		 ((ClientEventListener)listeners[i+1]).jogoCriado(jogoObject);
+	    	 }
+	     }
+	}
+
+	public boolean criarNovoJogo() {
+		return this.perfil.criarNovoJogo();
+	}
+
+	public void receberListaJogos() {
+		this.perfil.solicitarListaJogos();
+		
+	}
+
+	public void receberListaJogadores() {
+		this.perfil.solicitarListaJogadores();
+		
 	}
 
 	@Override
 	public void socketFinalizado(Socket socket) {
 		fireJogadorDesconectado(perfil);		
 	}
+	
 
 //	private void fireTurnoAlterado(Object src){
 //		 Object[] listeners = listenerList.getListenerList();

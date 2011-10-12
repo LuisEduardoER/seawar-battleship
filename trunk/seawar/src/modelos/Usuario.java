@@ -160,4 +160,9 @@ public class Usuario {
 	{
 			return dao.UsuarioDAO.verificarUsuario(login, email);//new Login();
 	}
+	
+	@Override
+	public String toString() {
+		return this.sLogin;
+	}
 }

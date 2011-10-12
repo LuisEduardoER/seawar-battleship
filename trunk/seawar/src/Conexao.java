@@ -16,11 +16,11 @@ public class Conexao {
 
 	}
 
-	public void desconectarJogador(Objeto Jogador) {
+	public void desconectarJogador(Jogador jogador) {
 
 	}
 
-	public void enviarAtaque(Objeto Celula) {
+	public void enviarAtaque(Celula celula) {
 
 	}
 
@@ -28,7 +28,7 @@ public class Conexao {
 
 	}
 
-	public void enviarVitoria(Objeto Jogador) {
+	public void enviarVitoria(Jogador jogador) {
 
 	}
 

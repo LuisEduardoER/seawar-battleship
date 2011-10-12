@@ -13,7 +13,7 @@
 
 
 public class Embarcacao {
-	public Array Objeto Celula aListaCelulas;
+	public Celula[] aListaCelulas;
 	public String sNomeEmbarcacao;
 	public int iValorEmbarcacao;
 	public boolean bNaufragado;
@@ -21,7 +21,7 @@ public class Embarcacao {
 	
 	}
 	
-	public void setListaCelulas(Array Objeto Celula) {
+	public void setListaCelulas(Celula[] celulas) {
 	
 	}
 	

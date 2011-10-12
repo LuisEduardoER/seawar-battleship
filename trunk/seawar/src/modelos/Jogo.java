@@ -50,6 +50,7 @@ public class Jogo {
 	public void AdicionarJogador(Jogador obj) throws FullGameException{
 		//Verifica se o jogo não está lotado e se aceita novos jogadores ainda
 		if(!isLotado() && aceitaNovosJogadores()){
+			obj.setJogoId(this.getIdJogo());
 			aListaJogador.add(obj);
 			fireConnectedEvent(new JogoEvent(obj, TipoEvento.JogadorConectado));
 		}
@@ -69,6 +70,7 @@ public class Jogo {
 	}
 	public void removerJogador(Jogador obj){
 		if(this.aListaJogador.size() > 0){
+			obj.setJogoId(0);//Retira o ID do jogo, para indicar que o jogador não está jogando
 			this.aListaJogador.remove(obj);
 			fireDisconnectedEvent(new JogoEvent(obj, TipoEvento.JogadorDesconectado));
 		}
@@ -330,5 +332,9 @@ public class Jogo {
 		fireGameOverEvent(new JogoEvent(vencedor, TipoEvento.EncerrouJogo));		
 	}
 
+	@Override
+	public String toString() {
+		return String.format("Jogo%d (%d/%d)", this.codJogo, this.aListaJogador.size(), this.capacidadeJogo);
+	}
 	
 }

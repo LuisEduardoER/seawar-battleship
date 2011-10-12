@@ -6,7 +6,7 @@ public interface Constantes {
 	public static final String MULTICAST_ADDRESS = "239.0.0.1";
 	public static final int MULTICAST_SENDING_PORT = 4350;
 	public static final int MULTICAST_LISTENING_PORT = 4339;
-
+	public static final int MULTICAST_MESSAGE_SIZE = 1024;
 	public static final String SERVER_ADDRESS = "10.0.2.15";
 	public static final int SERVER_PORT = 4351;
 
@@ -16,7 +16,7 @@ public interface Constantes {
 	public static final String CONNECT_TOKEN = "$connect";
 	public static final String PING_TOKEN = "$ping";
 	public static final int TAMANHO_TABULEIRO = 10;
-	
+	public static final int CAPACIDADE_JOGO = 2;
 	
 	/*Constantes para cores de células*/
 	public static final Color CorAgua = null;//new Color(50,50,255); //um tom de azul mais claro que o azul puro
@@ -30,4 +30,7 @@ public interface Constantes {
 	public static final int LARGURA_CELULA = 32;
 	public static final int ALTURA_CELULA = 32;
 
+	//Respostas de convite
+	public static final String RESPOSTA_NEGATIVA = "nao";
+	public static final String RESPOSTA_POSITIVA = "sim";
 }

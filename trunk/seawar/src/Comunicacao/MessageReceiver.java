@@ -43,14 +43,6 @@ public class MessageReceiver implements Runnable {
 			try {
 				
 				message = input.readLine();	
-				//System.out.println(message);
-				//TODO: Verificar se pode mesmo deixar assim ou se remove isso
-				//pode ter problema de ficar com a thread em loop infinito matando a performance
-
-				//Enquanto tiver mensagem no buffer do socket, vai lendo
-//				while(input.ready()){		
-//					message += input.readLine();							
-//				}
 			} catch (SocketTimeoutException timeoutEx) {
 				continue; // Se der timeout na leitura do socket,
 				// continua a iteração pra poder ouvir proximas mensagens
@@ -76,7 +68,7 @@ public class MessageReceiver implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}// fim try-catch
-
+		messageListener.socketFinalizado(this.socket);
 	}
 
 	private void pararDeOuvir() {

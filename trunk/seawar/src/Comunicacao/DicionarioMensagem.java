@@ -21,16 +21,16 @@ public class DicionarioMensagem {
 			incluirTipo = false;
 			break;
 		case ReceberListaJogos:
-			mensagem = CriarMensagemParametrizada("listarJogosAbertos");
-			break;
-		case EnviarListaJogos:
 			mensagem = CriarMensagemParametrizada("listaJogos");
 			break;
+		case EnviarListaJogos:
+			mensagem = "";//CriarMensagemParametrizada("listaJogos");
+			break;
 		case ReceberListaJogadores:
-			mensagem = CriarMensagemParametrizada("listarJogadoresLivres");
+			mensagem = CriarMensagemParametrizada("listaJogadores");
 			break;
 		case EnviarListaJogadores:
-			mensagem = CriarMensagemParametrizada("listaJogadores");
+			mensagem = "";//CriarMensagemParametrizada("listaJogadores");
 			break;
 		case CriarJogo:
 			mensagem = CriarMensagemParametrizada("jogoid", "nomeCriador");
@@ -43,6 +43,9 @@ public class DicionarioMensagem {
 			break;
 		case SerChamadoPorJogador:
 			mensagem = CriarMensagemParametrizada("jogoid", "nomeChamou");
+			break;
+		case RespostaChamada:
+			mensagem = CriarMensagemParametrizada("jogoid", "nomeChamou", "resposta");
 			break;
 		case EntrarJogo:
 			mensagem = CriarMensagemParametrizada("jogoid", "nomeEntrou", "posicao");
