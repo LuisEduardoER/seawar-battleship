@@ -1,11 +1,14 @@
 package GUI;
 
 import java.awt.BorderLayout;
+import java.awt.ScrollPane;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import Events.ServerEvent;
@@ -27,16 +30,51 @@ public class ServerGUI extends JFrame {
 	
 	public ServerGUI(){
 		super("Server do jogo Batalha Naval");
+		
+		
 		listaJogadores = new JList();
-		listaJogadores.setSize(100, 300);
+		JScrollPane containerListaJogadores = new JScrollPane(listaJogadores);
+		containerListaJogadores.setSize(250, 100);
+		containerListaJogadores.setLocation(20, 20);
+		containerListaJogadores.setWheelScrollingEnabled(true);
+		JLabel lblJogadores = new JLabel("Jogadores:");
+		lblJogadores.setSize(100, 20);
+		lblJogadores.setLocation(20, 0);
+		
+		
 		listaJogos = new JList();
-		listaJogos.setSize(100,300);
+		JScrollPane containerListaJogos = new JScrollPane(listaJogos);
+		containerListaJogos.setSize(250,100);
+		containerListaJogos.setLocation(290, 20);
+		containerListaJogos.setWheelScrollingEnabled(true);
+		JLabel lblJogos = new JLabel("Jogos:");
+		lblJogos.setSize(100, 20);
+		lblJogos.setLocation(290, 0);
+		
+		
 		displayArea = new JTextArea();
-		displayArea.setSize(400, 300);
+		displayArea.setAutoscrolls(true);	
+		displayArea.setLineWrap(true);
+		JScrollPane containerMensagens = new JScrollPane(displayArea);
+		containerMensagens.setSize(520, 100);
+		containerMensagens.setLocation(20, 150);
+		containerMensagens.setAutoscrolls(true);
+		containerListaJogadores.setEnabled(true);
+		JLabel lblMensagens = new JLabel("Mensagens:");
+		lblMensagens.setSize(100, 20);
+		lblMensagens.setLocation(20, 130);
+		
+		
 		setSize(600, 300);		
-		add(listaJogadores, BorderLayout.WEST);
-		add(listaJogos, BorderLayout.EAST);
-		add(displayArea, BorderLayout.CENTER);
+		setLayout(null);
+		
+		
+		add(lblJogadores);
+		add(containerListaJogadores);
+		add(lblJogos);
+		add(containerListaJogos);
+		add(lblMensagens);
+		add(containerMensagens);
 		
 		server = new Servidor();
 		
@@ -77,20 +115,21 @@ public class ServerGUI extends JFrame {
 			lista.addElement(obj.getLogin());
 		}
 		
-		listaJogadores = new JList(lista);			
+		listaJogadores.setModel(lista);		
 	}
 	
 	private void AtualizarListaJogos() {
 		DefaultListModel lista = new DefaultListModel();
 		List<Jogo> jogos = server.getListaJogos();
 		for(Jogo obj : jogos){
-			lista.addElement(String.format("jogo: %s, #players: %s",obj.getIdJogo(), obj.getListaJogador().size()));
+			lista.addElement(obj);
 		}
 		
-		listaJogadores = new JList(lista);			
+		listaJogos.setModel(lista);			
 	}
 	
 	private void AtualizarDisplay(String mensagem) {
-		displayArea.append(mensagem);			
+		displayArea.append("\n"+mensagem);		
+		displayArea.setCaretPosition(displayArea.getText().length());
 	}
 }

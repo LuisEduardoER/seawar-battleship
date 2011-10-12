@@ -748,6 +748,41 @@ public class ClientGUI extends Applet{
 				// TODO Auto-generated method stub
 				
 			}
+
+			@Override
+			public void listaJogadoresRecebida(Object lista) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void listaJogosRecebida(Object lista) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void respostaConviteParaJogar(String nome, Object resposta) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void carregarTelaPrincipal() {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void receberConviteParaJogar(String nomeJogador, int jogoid) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void jogoCriado(Jogo jogoObject) {
+				//Não utilizado
+			}
 		
 	}
 	

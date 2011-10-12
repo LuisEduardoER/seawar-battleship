@@ -35,7 +35,7 @@ import Comunicacao.TipoMensagem;
 
 
 
-public class Conexao implements IMessageListener {
+public class Conexao {
 	private String sIp_servidor;
 	private int porta_servidor;
 	
@@ -47,19 +47,6 @@ public class Conexao implements IMessageListener {
 	
 	public Conexao(Jogador jogador){
 		player = jogador;
-		//executor = Executors.newCachedThreadPool();
-//		sIp_servidor = Constantes.SERVER_ADDRESS;
-//		porta_servidor = Constantes.SERVER_PORT;
-//		try {
-//			socket = new Socket(InetAddress.getByName(sIp_servidor), porta_servidor);
-//			
-//		} catch (UnknownHostException e) {
-//			//TODO: fazer algo se ocorrer exception se host desconhecido
-//			e.printStackTrace();
-//		} catch (IOException e) {
-//			// TODO Fazer algo se não tiver IO
-//			e.printStackTrace();
-//		}
 	}
 	public Conexao(Jogador jogador, Socket clientSocket) {
 		socket = clientSocket;
@@ -105,16 +92,13 @@ public class Conexao implements IMessageListener {
 		if(!player.isOnline())
 			return;
 		
-			//Formatter output = new Formatter(socket.getOutputStream());
-			String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.AtacarOponente);
-			mensagem = String.format(mensagem, jogoId, celulaAtacada.x, celulaAtacada.y);
-			MessageSender send = new MessageSender(this.socket, mensagem);
-			executor.execute(send);
-			
-		
+		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.AtacarOponente);
+		mensagem = String.format(mensagem, jogoId, celulaAtacada.x, celulaAtacada.y);
+		MessageSender send = new MessageSender(this.socket, mensagem);
+		executor.execute(send);
 	}
 	
-	public void enviarTabuleiro(Tabuleiro tabuleiro) throws TabuleiroIOException{
+	public void enviarTabuleiro(int idJogo, Tabuleiro tabuleiro) throws TabuleiroIOException{
 		if(!player.isOnline()){
 			return;
 		}
@@ -127,43 +111,56 @@ public class Conexao implements IMessageListener {
 			e.printStackTrace();
 			throw new TabuleiroIOException(e.getMessage());
 		}
-		String mensagemEnviar = String.format(mensagem, player.getJogoId(), tabuleiroSerializado, "OK");
+		System.out.println("Enviando tabuleiro defesa");
+		String mensagemEnviar = String.format(mensagem, idJogo, tabuleiroSerializado, "OK");
 		MessageSender send = new MessageSender(this.socket, mensagemEnviar);
 		executor.execute(send);
 	}
 	
-	public void receberAtaque() {
-		if(!player.isOnline())
-			return;
+	public void enviarRespostaConvite(int jogoid, String nomeJogador, String resposta) throws Exception {
+		verificarJogadorOnline();
+		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.RespostaChamada);
+		mensagem = String.format(mensagem, jogoid, nomeJogador, resposta);
+		MessageSender send = new MessageSender(this.socket, mensagem);
+		executor.execute(send);
 	}
-	
-	public void enviarVitoria(Jogador jogador) {
-		if(!player.isOnline())
-			return;
-	}
-	
-	public void receberVitoria() {
-		if(!player.isOnline())
-			return;
-	}
-	
-	public void enviarAcao(String comando) {
-		if(!player.isOnline())
-			return;
-	}
-	
-	public void receberAcao() {
-		if(!player.isOnline())
-			return;
-	}
-	@Override
-	public void mensagemRecebida(String mensagem, Socket socketOrigem) {
-		// TODO Auto-generated method stub
+	public void conectarEmJogo(int jogoid) throws Exception {
+		verificarJogadorOnline();
+		//Envia a mensagem para o servidor com a intenção de entrar no jogo escolhido
+		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.EntrarJogo);
+		mensagem = String.format(mensagem, jogoid, this.player.getLogin(), 1);
+		MessageSender send = new MessageSender(this.socket, mensagem);
+		executor.execute(send);
 		
 	}
-	@Override
-	public void receberTokensMensagem(StringTokenizer tokens, Socket socket) {
-		// TODO Auto-generated method stub
-		
+	public void criarNovoJogo() throws Exception {
+		verificarJogadorOnline();
+		//Envia a mensagem para o servidor com a intenção de criar um novo jogo
+		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.CriarJogo);
+		//formata a mensagem informando  jogoID e o nome do criador
+		mensagem = String.format(mensagem, 0, this.player.getLogin());
+		MessageSender send = new MessageSender(this.socket, mensagem);
+		executor.execute(send);
+	}
+	private void verificarJogadorOnline() throws Exception {
+		if(!player.isOnline()){
+			throw new Exception("Jogador offline!");
+		}
+	}
+	public void solicitarListaJogadores() throws Exception {
+		verificarJogadorOnline();	
+		//Envia a mensagem para o servidor solicitando a lista de jogadores online
+		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.EnviarListaJogadores);
+		mensagem = String.format(mensagem, "");
+		MessageSender send = new MessageSender(this.socket, mensagem);
+		executor.execute(send);
+	}
+	public void solicitarListaJogos() throws Exception {
+		verificarJogadorOnline();
+		//Envia a mensagem para o servidor solicitando a lista de jogos abertos
+		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.EnviarListaJogos);
+		mensagem = String.format(mensagem, "");
+		MessageSender send = new MessageSender(this.socket, mensagem);
+		executor.execute(send);
 	}
 }

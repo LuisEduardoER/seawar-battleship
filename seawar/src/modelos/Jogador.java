@@ -1,5 +1,6 @@
 package modelos;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 
@@ -96,6 +97,7 @@ public class Jogador extends Usuario {
 	
 	public boolean isOnline() {
 		
+		//return getConexao().socket != null && getConexao().socket.isConnected();
 		return online;//JogadorDAO.IsOnline(this.iId_usuario);
 	}
 	public static boolean isOnline(int id_usuario) {
@@ -107,8 +109,15 @@ public class Jogador extends Usuario {
 		//Ativa o bot
 		//setIsBot(true);
 		//setIpJogador("localhost");
-		online = false;
-		boolean removido = true ;//TODO: Descomentar: JogadorDAO.RemoverJogador(this);
+		online = false;//TODO: Descomentar: JogadorDAO.RemoverJogador(this);
+		if(this.getConexao().socket != null && !this.getConexao().socket.isClosed()){
+			try {
+				this.getConexao().socket.close();
+			} catch (IOException e) {
+				//Socket já fechado
+			}
+		}
+		boolean removido = true ;
 		return removido;
 	}
 	
@@ -120,9 +129,9 @@ public class Jogador extends Usuario {
 	}
 	
 	public boolean isJogando() {
-		boolean jogando = false;
+		boolean jogando = (this.getJogoId() > 0);
 		
-		jogando = JogadorDAO.IsJogando(this.iId_usuario);
+		//jogando = JogadorDAO.IsJogando(this.iId_usuario);
 		
 		return jogando;
 	}
@@ -137,13 +146,13 @@ public class Jogador extends Usuario {
 		return this.conexaoJogador;
 	}
 	
-	public void Atacar(int x, int y){
+	public void Atacar(int idJogo, int x, int y){
 		//Tabuleiro tabuleiroAtaque = getTabuleiroAtaque();		
 		//Celula cel = tabuleiroAtaque.encontrarCelula(x, y);
 		
 		//Como a célula não é processada aqui, pode-se jogar uma célula DUMMIE com apenas o X e o Y do local atacado
 		Celula cel = new Celula(x,y);
-		this.conexaoJogador.enviarAtaque(this.jogoId,cel);
+		this.conexaoJogador.enviarAtaque(idJogo,cel);
 	}
 
 	public boolean desconectar() {
@@ -155,9 +164,9 @@ public class Jogador extends Usuario {
 		
 	}
 
-	public boolean enviarTabuleiroAtaque() {
+	public boolean enviarTabuleiroDefesa(int idJogo) {
 		try {
-			this.conexaoJogador.enviarTabuleiro(oTabuleiroDefesa);
+			this.conexaoJogador.enviarTabuleiro(idJogo, oTabuleiroDefesa);
 			return true;
 		} catch (TabuleiroIOException e) {
 			Log.gravarLog(e.getMessage());
@@ -165,4 +174,55 @@ public class Jogador extends Usuario {
 		}
 		return false;
 	}
+
+	public boolean enviarRespostaConvite(int jogoid, String nomeJogador, String resposta) {
+		try{
+			this.conexaoJogador.enviarRespostaConvite(jogoid, nomeJogador,resposta);
+			return true;
+		}catch (Exception e) {
+			
+		}
+		
+		return false;
+	}
+
+	public boolean conectarEmJogo(int jogoid) {
+		try	{
+			this.conexaoJogador.conectarEmJogo(jogoid);
+			return true;
+		}
+		catch(Exception e){
+			
+		}
+		return false;
+	}
+
+	public boolean criarNovoJogo() {
+		try{
+			this.conexaoJogador.criarNovoJogo();
+		}
+		catch(Exception e){
+			
+		}
+		return false;
+	}
+
+	public void solicitarListaJogadores() {
+		try{
+			this.conexaoJogador.solicitarListaJogadores();
+		}
+		catch(Exception e){
+			
+		}
+	}
+
+	public void solicitarListaJogos() {
+		try{
+			this.conexaoJogador.solicitarListaJogos();
+		}
+		catch(Exception e){
+			
+		}
+	}
+
 }

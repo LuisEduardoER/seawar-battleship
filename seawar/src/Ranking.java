@@ -13,12 +13,12 @@
 
 
 public class Ranking {
-	public Array Usuario aListaUsuario;
+	public Usuario[] aListaUsuario;
 	public void getListaUsuario() {
 	
 	}
 	
-	public void setListaUsuario(Array usuario) {
+	public void setListaUsuario(Usuario[] usuario) {
 	
 	}
 }

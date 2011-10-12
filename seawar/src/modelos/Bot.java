@@ -204,7 +204,7 @@ public class Bot extends Jogador {
 					.atacar(celulaAtacar.x, celulaAtacar.y);
 			// Envia o ataque chamando da classe conexao do método na classe
 			// Jogador
-			this.Atacar(celulaAtacar.x, celulaAtacar.y);
+			this.Atacar(this.getJogoId(), celulaAtacar.x, celulaAtacar.y);
 			if (getTabuleiroAtaque().mMatrizCelula[celulaAtacar.x][celulaAtacar.y].getTipoCelula() == TipoCelula.Embarcacao) {
 				if(getUltimaCelulaAtacadaEmbarcacao() != null){
 				tamanhoSegundoNavioAtacado = getTabuleiroAtaque().getEmbarcacao(celulaAtacar.x, celulaAtacar.y).getTamanho();
