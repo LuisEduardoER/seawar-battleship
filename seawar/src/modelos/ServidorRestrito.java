@@ -627,6 +627,13 @@ public class ServidorRestrito implements IMessageListener {
 				
 				if(jogador.bIsBot && !venceuJogo){
 					//TODO: Implementar a lógica de ataque do bot aqui
+					Bot objBot = (Bot)(jogador);
+					objBot.atacar();
+					//celula = objBot.getUltimaEscolha();
+					//Envia ataque para o cliente que foi atacado
+					//mensagemAtaque = String.format(mensagemOriginal, jogoId, celula.x, celula.y);
+					//serverExecutor.execute(new MessageSender(clientSocketAtacado, mensagemAtaque));
+						
 				}
 				else{
 				//Se o jogador não for bot:
@@ -690,7 +697,12 @@ public class ServidorRestrito implements IMessageListener {
 					MessageSender enviador = new MessageSender(adversario.getConexao().getSocket(), msgFormatada);
 					serverExecutor.execute(enviador);
 				}
+				Bot objBot = new Bot(jogador,this);
+				objBot.setTabuleiroAtaque(jogador.getTabuleiroDefesa());
+				objBot.getTabuleiroAtaque().setMatrizCelula(jogador.getTabuleiroDefesa().getMatrizCelula());
+				
 			}
+			
 		}
 
 		private Jogador encontrarJogadorPorIPNoServidoreJogos(Socket socketJogador) {

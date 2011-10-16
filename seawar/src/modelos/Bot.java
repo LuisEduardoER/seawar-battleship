@@ -4,6 +4,13 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Stack;
+import java.util.StringTokenizer;
+
+import Comunicacao.Constantes;
+import Comunicacao.DicionarioMensagem;
+import Comunicacao.IMessageListener;
+import Comunicacao.MessageSender;
+import Comunicacao.TipoMensagem;
 
 //
 //
@@ -24,15 +31,21 @@ public class Bot extends Jogador {
 	// Arrays de jogadas feitas para fins heuristicos de jogada
 	ArrayList<Celula> celulasEscolhidas = new ArrayList<Celula>();
 	ArrayList<Celula> celulasAtacadasEmbarcacao = new ArrayList<Celula>();
+//	Servidor objServidor = null;
+//	ServidorRestrito objServidorRestrito = null;
+	IMessageListener objServidor;
 
-	public Bot() {
-
+	
+	public Bot(IMessageListener server) {
+		objServidor = server;
 	}
 
-	public Bot(Jogador objJogador) {
+	public Bot(Jogador objJogador,IMessageListener server) {
 		this.setTabuleiroAtaque(objJogador.getTabuleiroAtaque());
 		this.setTabuleiroDefesa(objJogador.getTabuleiroDefesa());
 		this.conexaoJogador = objJogador.getConexao();
+		objServidor = server;
+
 	}
 
 	public Celula getProximaCelula() {
@@ -187,7 +200,19 @@ public class Bot extends Jogador {
 	private boolean seCapazAtirar(Celula objCelula) {
 		return !getTabuleiroAtaque().seCelulaAtacada(objCelula);
 	}
-
+	
+	@Override
+	public void Atacar(int idJogo, int x, int y){
+		//Tabuleiro tabuleiroAtaque = getTabuleiroAtaque();		
+		//Celula cel = tabuleiroAtaque.encontrarCelula(x, y);
+		
+		//Como a célula não é processada aqui, pode-se jogar uma célula DUMMIE com apenas o X e o Y do local atacado
+		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.AtacarOponente);
+		mensagem = String.format(mensagem, idJogo, x, y);
+		StringTokenizer tokens = new StringTokenizer(mensagem,Constantes.TOKEN_SEPARATOR);
+		objServidor.receberTokensMensagem(tokens, this.getConexao().socket);
+	}
+	
 	public void atacar() {
 		analisarTabuleiro();
 		Celula celulaAtacar = getUltimaEscolha();
@@ -204,7 +229,7 @@ public class Bot extends Jogador {
 					.atacar(celulaAtacar.x, celulaAtacar.y);
 			// Envia o ataque chamando da classe conexao do método na classe
 			// Jogador
-			this.Atacar(this.getJogoId(), celulaAtacar.x, celulaAtacar.y);
+			
 			if (getTabuleiroAtaque().mMatrizCelula[celulaAtacar.x][celulaAtacar.y].getTipoCelula() == TipoCelula.Embarcacao) {
 				if(getUltimaCelulaAtacadaEmbarcacao() != null){
 				tamanhoSegundoNavioAtacado = getTabuleiroAtaque().getEmbarcacao(celulaAtacar.x, celulaAtacar.y).getTamanho();
@@ -229,6 +254,7 @@ public class Bot extends Jogador {
 					System.out.println(provocar());
 				}
 			}
+			this.Atacar(this.getJogoId(), celulaAtacar.x, celulaAtacar.y);
 		}
 
 	}

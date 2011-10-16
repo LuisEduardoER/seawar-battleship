@@ -794,7 +794,9 @@ public class Servidor implements IMessageListener {
 		//Dispara eventos para a UI ser atualizada
 		firePlayerListChangeEvent(new ServerEvent(aListaJogadorOnline, TipoEvento.JogadoresAtualizados));
 		fireDisplayChangeEvent(new ServerEvent(String.format("%s desconectou",jogador.getLogin()), TipoEvento.DisplayAtualizado));
-				
+		
+		//TODO : COlocar a intancia do bot aqui
+		
 		//Após remover o jogador de todos os lugares e avisar a UI que ele foi removido, avisa os outros jogadores por multicast
 		String mensagemJogadorDesconectado = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.JogadorDesconectado);
 		mensagemJogadorDesconectado = String.format(mensagemJogadorDesconectado, idJogoJogando, jogador.getLogin(), jogador.getId_usuario());
