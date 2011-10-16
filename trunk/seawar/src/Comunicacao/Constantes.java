@@ -17,6 +17,7 @@ public interface Constantes {
 	public static final String PING_TOKEN = "$ping";
 	public static final int TAMANHO_TABULEIRO = 10;
 	public static final int CAPACIDADE_JOGO = 2;
+	public static final int VALOR_UNIDADE_EMBARCACAO = 5;
 	
 	/*Constantes para cores de células*/
 	public static final Color CorAgua = null;//new Color(50,50,255); //um tom de azul mais claro que o azul puro
