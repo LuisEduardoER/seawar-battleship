@@ -33,7 +33,7 @@ public class JogoTest {
 			p2.getTabuleiroAtaque().setMatrizCelula(p1.getTabuleiroDefesa().getMatrizCelula());
 			
 			if(p2.isBot()){
-				Bot bot = new Bot(p2);
+				Bot bot = new Bot(p2,null);
 				System.out.println("=================BOT em ação!!!=================");
 				bot.getTabuleiroAtaque().pintarTabuleiro();
 					do{
