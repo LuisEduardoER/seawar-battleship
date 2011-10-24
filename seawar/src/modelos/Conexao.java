@@ -163,4 +163,13 @@ public class Conexao {
 		MessageSender send = new MessageSender(this.socket, mensagem);
 		executor.execute(send);
 	}
+	public void chamarJogador(String nomeJogador, int jogoId) throws Exception {
+		verificarJogadorOnline();
+		
+		//Envia mensagem para o servidor alertar outro jogador sobre o convite
+		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.ChamarJogador);
+		mensagem = String.format(mensagem, jogoId, nomeJogador);
+		MessageSender send = new MessageSender(this.socket, mensagem);
+		executor.execute(send);
+	}
 }

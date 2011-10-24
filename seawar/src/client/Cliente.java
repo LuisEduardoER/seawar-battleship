@@ -459,6 +459,11 @@ public class Cliente implements IMessageListener {
 				Log.gravarLog(e.getMessage());
 				fireFalhaGenericaEvent("O jogo está lotado, não tem mais espaço", e);
 			}
+			 catch (GameException e) {
+					//Grava no log caso haja alguma falha
+					Log.gravarLog(e.getMessage());
+					fireFalhaGenericaEvent(e.getMessage(), e);
+			}
 		}
 	}
 	//Método acessado quando o opoentente conectar no servidor
@@ -491,9 +496,9 @@ public class Cliente implements IMessageListener {
 				this.jogo.AdicionarJogador(novo, posicao);
 				//Evento abaixo já é disparado automaticamente pela classe Jogo, tornando esta chamada redundante
 				//fireJogadorConectado(novo);
-			} catch (FullGameException e) {
+			} catch (GameException e) {
 				Log.gravarLog(e.getMessage());
-				fireFalhaGenericaEvent("Houve um erro ao tentar conectar oponente no jogo.", e);
+				fireFalhaGenericaEvent(e.getMessage(), e);
 			}
 		}		
 	}

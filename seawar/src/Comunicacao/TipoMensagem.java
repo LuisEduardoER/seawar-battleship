@@ -30,5 +30,6 @@ public enum TipoMensagem {
 	PerdeuJogo, 
 	Ping, 
 	JogadorTimeout, 
-	JogarComBot
+	JogarComBot, 
+	SairDeJogo
 }
