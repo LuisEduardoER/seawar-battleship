@@ -48,6 +48,9 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.Point;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.JProgressBar;
+import javax.swing.JCheckBox;
+import java.awt.event.KeyEvent;
 
 public class NewClientGUI extends Applet{
 
@@ -91,7 +94,7 @@ public class NewClientGUI extends Applet{
 	DefaultListModel listModelJogos;
 	DefaultListModel listModelPlayers;
 	private JLabel lblBemVindo = null;
-	
+	private JLabel lblTurnoAtacar = null;
 	public NewClientGUI(){
 		super();
 		listenerAtaque = new EventoAtaque();
@@ -261,6 +264,12 @@ public class NewClientGUI extends Applet{
 	 */
 	private JPanel getPnlTabuleiros() {
 		if (pnlTabuleiros == null) {
+			lblTurnoAtacar = new JLabel();
+			lblTurnoAtacar.setBounds(new Rectangle(395, 24, 223, 26));
+			lblTurnoAtacar.setDisplayedMnemonic(KeyEvent.VK_UNDEFINED);
+			lblTurnoAtacar.setForeground(new Color(0, 170, 0));
+			lblTurnoAtacar.setText("Atacar");
+			lblTurnoAtacar.setVisible(false);
 			lblTabuleiroAtaque = new JLabel();
 			lblTabuleiroAtaque.setBounds(new Rectangle(394, 50, 311, 22));
 			lblTabuleiroAtaque.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
@@ -279,6 +288,7 @@ public class NewClientGUI extends Applet{
 			pnlTabuleiros.add(lblTabuleiroDefesa, null);
 			pnlTabuleiros.add(lblTabuleiroAtaque, null);
 			pnlTabuleiros.add(getBtnPronto(), null);
+			pnlTabuleiros.add(lblTurnoAtacar, null);
 		}
 		return pnlTabuleiros;
 	}
@@ -318,12 +328,32 @@ public class NewClientGUI extends Applet{
 						habilitarBotaoPronto(false);
 						habilitarTabuleiroDefesa(false);//Desabilita o tabuleiro de defesa
 					}
+					if(client.getPerfil().isMinhaVez()){
+						setLabelTurnoAtacar(true);
+					}
+					else
+					{
+						setLabelTurnoAtacar(false);
+					}
+					lblTurnoAtacar.setVisible(true);
 				}
 			});
 		}
 		return btnPronto;
 	}
 	
+	protected void setLabelTurnoAtacar(boolean meuTurno) {
+
+		if(meuTurno){
+			lblTurnoAtacar.setText("Atacar");
+			lblTurnoAtacar.setForeground(new Color(0, 170,0));
+		}
+		else{
+			lblTurnoAtacar.setText("Aguardar ataque");
+			lblTurnoAtacar.setForeground(new Color(255, 0,0));			
+		}
+	}
+
 	public void carregarFrameTabuleiros(Jogo jogo){
 		//this.add(getPnlTabuleiros(), null);
 		
@@ -362,6 +392,7 @@ public class NewClientGUI extends Applet{
 	private void exibirTabuleiros() {
 		pnlTabuleiros.setVisible(true);
 		pnlListas.setVisible(false);
+		lblTurnoAtacar.setVisible(false);
 	}
 
 	private void exibirTelaInicial() {
@@ -372,6 +403,9 @@ public class NewClientGUI extends Applet{
 		habilitarBotaoConectar(false);
 		lblBemVindo.setText("Bem vindo, "+this.client.getPerfil().getLogin());
 		AtualizarListas();
+		btnConvidar.setVisible(lstJogadores.getSelectedIndex() < 0 && this.jogo != null);
+		btnCriarJogo.setEnabled(true);
+		
 	}
 	
 	private void AtualizarListas() {
@@ -495,14 +529,18 @@ public class NewClientGUI extends Applet{
 
 
 	protected void DesconectarJogador() {
+		//desconecta o client e limpa as variaveis de jogo
 		this.client.desconectar();
+		this.client.limparJogo();
+		this.jogo = null;
 		//Desabilita os botões necessários da interface
 		habilitarTabuleiroAtaque(false);
 		habilitarTabuleiroDefesa(false);
 		habilitarBotaoPronto(false);
 		habilitarBotaoConectar(true);
 		habilitarBotaoDesconectar(false);
-		pnlListas.setVisible(true);
+		//Esconde os tabuleiros e tudo o que precisa
+		pnlListas.setVisible(false);
 		pnlTabuleiros.setVisible(false);
 		limparTabuleiros();
 	}
@@ -711,7 +749,8 @@ public class NewClientGUI extends Applet{
 			
 			@Override
 			public void tiroRecebido(Object source, ClientEvent evt, Celula celula) {
-				exibirAtaqueRecebido(celula);				
+				exibirAtaqueRecebido(celula);		
+				setLabelTurnoAtacar(true);
 			}
 			
 			@Override
@@ -733,7 +772,7 @@ public class NewClientGUI extends Applet{
 					}
 				}
 				
-					
+				setLabelTurnoAtacar(false);
 				
 				exibirRespostaAtaque(celula);
 				
@@ -790,10 +829,12 @@ public class NewClientGUI extends Applet{
 				JOptionPane.showMessageDialog(null, mensagemVencedor, "Fim de jogo", JOptionPane.INFORMATION_MESSAGE);
 				//Finaliza a variavel do jogo
 				jogo = null;
+				client.limparJogo();
 				//Retira o ID do jogo do perfil do jogador
 				client.getPerfil().setJogoId(0);
 				//Exibe a tela principal para outro jogo poder ser iniciado
 				exibirTelaInicial();
+				limparTabuleiros();
 			}
 			
 			@Override
@@ -861,7 +902,8 @@ public class NewClientGUI extends Applet{
 			public void respostaConviteParaJogar(String nome, Object resposta) {
 				String strResposta = resposta.toString();
 				if(strResposta.equalsIgnoreCase(Constantes.RESPOSTA_POSITIVA)){
-					//Inicia o jogo
+					//exibirTabuleiros();
+					//Quando a resposta é positiva, o adversário já faz um "conectar em jogo" automaticamente
 				}
 				else if(strResposta.equalsIgnoreCase(Constantes.RESPOSTA_NEGATIVA)){
 					JOptionPane.showMessageDialog(null, String.format("%s não aceitou seu convite", nome));
@@ -873,7 +915,7 @@ public class NewClientGUI extends Applet{
 
 			@Override
 			public void receberConviteParaJogar(String nomeJogador, int jogoid) {
-				String mensagem = String.format("Jogador %s está chamando você para jogar com ele na sala Jogo%s, você aceita?", jogoid, nomeJogador);
+				String mensagem = String.format("Jogador %s está chamando você para jogar com ele na sala Jogo%s, você aceita?", nomeJogador, jogoid);
 				int resposta = JOptionPane.showConfirmDialog(null, mensagem, "Convite para jogar", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 				if(resposta == JOptionPane.YES_OPTION){
 					client.enviarRespostaPositiva(jogoid, nomeJogador);
@@ -895,6 +937,8 @@ public class NewClientGUI extends Applet{
 			@Override
 			public void jogoCriado(Jogo jogoObject) {
 				btnConvidar.setVisible(true);
+				btnCriarJogo.setEnabled(false);
+				btnEntrarJogo.setEnabled(false);
 			}
 	}
 	
@@ -1013,8 +1057,23 @@ public class NewClientGUI extends Applet{
 			btnConvidar.setEnabled(false);
 			btnConvidar.setText("Convidar");
 			btnConvidar.setVisible(false);
+			btnConvidar.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if(lstJogadores.getSelectedIndex() >= 0){
+						String nomeJogador = lstJogadores.getSelectedValue().toString();
+						convidarJogador(nomeJogador);
+					}
+				}
+			});
 		}
 		return btnConvidar;
+	}
+
+	protected void convidarJogador(String nomeJogador) {
+		this.client.chamarJogador(nomeJogador);
+		
 	}
 
 	/**

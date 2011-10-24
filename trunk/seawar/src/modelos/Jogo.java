@@ -58,16 +58,26 @@ public class Jogo {
 			throw new FullGameException("Este jogo está lotado e não pode receber mais jogadores");
 		}
 	}
-	public void AdicionarJogador(Jogador obj, int index) throws FullGameException{
+	public void AdicionarJogador(Jogador obj, int index) throws GameException{
 		//Verifica se o jogo não está lotado e se aceita novos jogadores ainda
 		if(!isLotado() && aceitaNovosJogadores()){
+			//if(this.contemJogador(obj)){
+			//	throw new GameException("Jogador já está em jogo e não pode ser readicionado");
+			//}
+			
 			aListaJogador.add(index, obj);
+			obj.setJogoId(this.codJogo);
 			fireConnectedEvent(new JogoEvent(obj, TipoEvento.JogadorConectado));
 		}
 		else{
 			throw new FullGameException("Este jogo está lotado e não pode receber mais jogadores");
 		}
 	}
+	private boolean contemJogador(Jogador obj) {
+		Jogador encontrado = EncontrarJogador(obj.getId_usuario());
+		return (encontrado != null);
+	}
+
 	public void removerJogador(Jogador obj){
 		if(this.aListaJogador.size() > 0){
 			obj.setJogoId(0);//Retira o ID do jogo, para indicar que o jogador não está jogando

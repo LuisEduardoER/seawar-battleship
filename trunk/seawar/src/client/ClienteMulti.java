@@ -224,7 +224,8 @@ public class ClienteMulti implements IMessageListener {
 			ConectarOponenteEmJogo(lstTokens, ipEnviou);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.IniciarJogo.toString())){
-			//DesbilitarJogoParaNovasConexoes(lstTokens, ipEnviou);			
+			//DesbilitarJogoParaNovasConexoes(lstTokens, ipEnviou);
+			iniciarTelaDeJogo(lstTokens, socket);
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.BarcosPosicionados.toString())){
 			//CarregarBarcosDoJogadorNoJogo(lstTokens, ipEnviou);
@@ -262,6 +263,20 @@ public class ClienteMulti implements IMessageListener {
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.ReceberListaJogos.toString())){
 			ReceberListaJogos(lstTokens, socket);
 		}
+	}
+
+	private void iniciarTelaDeJogo(List<String> lstTokens, Socket socket) {
+		int jogoId = 0;
+		for (String token : lstTokens) {
+			String[] split = token.split(Constantes.VALUE_SEPARATOR);
+			if(split[TOKEN_HEADER].equalsIgnoreCase("jogoid")){
+				//Atualiza o Id do jogo para futuras referencias
+				jogoId = Integer.parseInt(split[TOKEN_VALUE]);
+				this.jogo.setIdJogo(jogoId);
+			}
+		}
+		
+		
 	}
 
 	private void avisarJogoCriado(List<String> lstTokens, Socket socket) {
@@ -338,7 +353,7 @@ public class ClienteMulti implements IMessageListener {
 			if (split[TOKEN_HEADER].equalsIgnoreCase("jogoid")) {
 				idJogo = Integer.parseInt(split[TOKEN_VALUE]);
 			}
-			else if (split[TOKEN_HEADER].equalsIgnoreCase("nomeChamou")) {
+			else if (split[TOKEN_HEADER].equalsIgnoreCase("nome")) {
 				nomeJogador = split[TOKEN_VALUE];
 			}
 		}
@@ -465,7 +480,7 @@ public class ClienteMulti implements IMessageListener {
 			else if(split[TOKEN_HEADER].equalsIgnoreCase("jogoid")){
 				//Atualiza o Id do jogo para futuras referencias
 				int jogoId = Integer.parseInt(split[TOKEN_VALUE]);
-				this.jogo.setIdJogo(jogoId);
+				//this.jogo.setIdJogo(jogoId);
 			}
 		}
 		//Dispara o evento que informa o que era a célula atacada pelo jogador		
@@ -497,6 +512,7 @@ public class ClienteMulti implements IMessageListener {
 	private void DefinirJogadorComoVencedor(List<String> lstTokens, String ipEnviou) {
 		//Marca EU como jogador vencedor e automaticamente dispara o evento de finalização de jogo
 		this.jogo.setVencedor(this.perfil);
+		
 	}
 
 	private void DefinirJogadorComoPerdedor(List<String> lstTokens, String ipEnviou) {
@@ -547,9 +563,11 @@ public class ClienteMulti implements IMessageListener {
 				//Adiciona o jogador
 				this.jogo.AdicionarJogador(perfil, posicao);
 				//Será a vez do jogador se ele foi o primeiro a entrar
-				this.perfil.setMinhaVez((posicao == 0));
+				boolean jogadorCriou = (posicao == 0);
+				
+				this.perfil.setMinhaVez(jogadorCriou);
 
-				if(posicao == 0){
+				if(jogadorCriou){
 					//Evento que dispara para avisar quando o jogador é o criador do jogo (ou seja, quando ele é adicionado na posição 0 do jogo)
 					fireJogoCriadoEvent(this.jogo);
 				}
@@ -559,6 +577,10 @@ public class ClienteMulti implements IMessageListener {
 				}
 				
 			} catch (FullGameException e) {
+				//Grava no log caso haja alguma falha
+				Log.gravarLog(e.getMessage());
+				fireFalhaGenericaEvent("O jogo está lotado, não tem mais espaço", e);
+			} catch (GameException e) {
 				//Grava no log caso haja alguma falha
 				Log.gravarLog(e.getMessage());
 				fireFalhaGenericaEvent("O jogo está lotado, não tem mais espaço", e);
@@ -598,7 +620,7 @@ public class ClienteMulti implements IMessageListener {
 				if(this.jogo.isLotado()){
 					fireCarregarTelaJogo(this.jogo);
 				}
-			} catch (FullGameException e) {
+			} catch (GameException e) {
 				Log.gravarLog(e.getMessage());
 				fireFalhaGenericaEvent("Houve um erro ao tentar conectar oponente no jogo.", e);
 			}
@@ -686,7 +708,8 @@ public class ClienteMulti implements IMessageListener {
 		return this.perfil.enviarTabuleiroDefesa(idJogo);		
 	}
 	public boolean enviarRespostaPositiva(int jogoid, String nomeJogador){
-		return perfil.enviarRespostaConvite(jogoid, nomeJogador, Constantes.RESPOSTA_POSITIVA);		
+		//return perfil.enviarRespostaConvite(jogoid, nomeJogador, Constantes.RESPOSTA_POSITIVA);
+		return conectarEmJogo(jogoid);
 	}
 	public boolean enviarRespostaNegativa(int jogoid, String nomeJogador){
 		return perfil.enviarRespostaConvite(jogoid, nomeJogador, Constantes.RESPOSTA_NEGATIVA);		
@@ -696,7 +719,9 @@ public class ClienteMulti implements IMessageListener {
 		return perfil.conectarEmJogo(jogoid);		
 	}
 	
-	
+	public void limparJogo(){
+		this.jogo = null;
+	}
 	
 	
 	//Manipuladores de listeners de eventos
@@ -895,6 +920,15 @@ public class ClienteMulti implements IMessageListener {
 	@Override
 	public void socketFinalizado(Socket socket) {
 		fireJogadorDesconectado(perfil);		
+	}
+
+	public void chamarJogador(String nomeJogador) {
+		try {
+			this.perfil.getConexao().chamarJogador(nomeJogador, this.perfil.getJogoId());
+		} catch (Exception e) {
+			fireMensagemAlertaEvent(e.getMessage());
+		}
+		
 	}
 	
 

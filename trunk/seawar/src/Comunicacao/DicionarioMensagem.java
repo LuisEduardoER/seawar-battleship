@@ -39,10 +39,10 @@ public class DicionarioMensagem {
 			mensagem = CriarMensagemParametrizada("jogoid", "nomeCriador");
 			break;
 		case ChamarJogador:
-			mensagem = CriarMensagemParametrizada("jogoid", "nomeChamou");
+			mensagem = CriarMensagemParametrizada("jogoid", "nome");
 			break;
 		case SerChamadoPorJogador:
-			mensagem = CriarMensagemParametrizada("jogoid", "nomeChamou");
+			mensagem = CriarMensagemParametrizada("jogoid", "nome");
 			break;
 		case RespostaChamada:
 			mensagem = CriarMensagemParametrizada("jogoid", "nomeChamou", "resposta");
@@ -98,6 +98,8 @@ public class DicionarioMensagem {
 		case JogarComBot:
 			mensagem = CriarMensagemParametrizada("jogoid");
 			break;
+		case SairDeJogo:
+			mensagem = CriarMensagemParametrizada("jogoid");
 		default:
 			mensagem = Constantes.PING_TOKEN;
 			incluirTipo = false;
@@ -225,6 +227,8 @@ public class DicionarioMensagem {
 		case JogarComBot:
 			mensagem = CriarMensagemParametrizadaComValores(values, "jogoid");
 			break;
+		case SairDeJogo:
+			mensagem = CriarMensagemParametrizadaComValores(values, "jogoid");
 		default:
 			mensagem = Constantes.PING_TOKEN;
 			incluirTipo = false;
