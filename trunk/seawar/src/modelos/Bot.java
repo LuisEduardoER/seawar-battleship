@@ -23,7 +23,7 @@ import Comunicacao.TipoMensagem;
 //
 //
 
-public class Bot extends Jogador {
+public class Bot extends Jogador implements Runnable{
 	boolean bAcertouEmbarcacao = false;
 	boolean bAfundouEmbarcacao = false;
 	// pilha de navios que foram acertados mas não afundados
@@ -357,5 +357,10 @@ public class Bot extends Jogador {
 		return (celulasAtacadasEmbarcacao
 				.get(celulasAtacadasEmbarcacao.size() - 1).x == celulasAtacadasEmbarcacao
 				.get(celulasAtacadasEmbarcacao.size() - 2).x);
+	}
+
+	@Override
+	public void run() {
+		this.atacar();
 	}
 }
