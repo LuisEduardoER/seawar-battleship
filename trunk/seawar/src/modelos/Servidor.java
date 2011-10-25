@@ -566,6 +566,8 @@ public class Servidor implements IMessageListener {
 			
 			if(jogador.bIsBot && !venceuJogo){
 				//TODO: Implementar a lógica de ataque do bot aqui
+				Bot objBot = (Bot)(jogador);
+				objBot.atacar();
 			}
 			else{
 			//Se o jogador não for bot:
@@ -873,6 +875,9 @@ public class Servidor implements IMessageListener {
 		fireDisplayChangeEvent(new ServerEvent(String.format("%s desconectou",jogador.getLogin()), TipoEvento.DisplayAtualizado));
 		
 		//TODO : COlocar a intancia do bot aqui
+		Bot objBot = new Bot(jogador,this);
+		objBot.setTabuleiroAtaque(jogador.getTabuleiroDefesa());
+		objBot.getTabuleiroAtaque().setMatrizCelula(jogador.getTabuleiroDefesa().getMatrizCelula());
 		
 		//Após remover o jogador de todos os lugares e avisar a UI que ele foi removido, avisa os outros jogadores por multicast
 		String mensagemJogadorDesconectado = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.JogadorDesconectado);
@@ -946,7 +951,8 @@ public class Servidor implements IMessageListener {
 			}
 		}
 		//TODO: Validar aqui o login e a senha do jogador
-		if(true){
+		if(obj.logar(obj.getLogin(), obj.getSenha())!=null){
+		//if(true){
 			aListaJogadorOnline.add(obj);
 			//informa o jogador que ele foi conectado com sucesso!
 			String msgConectado = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.ConectarServidor);
@@ -962,6 +968,7 @@ public class Servidor implements IMessageListener {
 			MulticastSender multicast = new MulticastSender(msgConectado);
 			serverExecutor.execute(multicast);
 		}
+		
 	}
 	//Permite que os jogadores possam posicionar suas embarcações
 	private void iniciarPosicionamentos(Jogo jogo) {
