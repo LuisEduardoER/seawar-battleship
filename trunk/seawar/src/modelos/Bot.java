@@ -45,7 +45,7 @@ public class Bot extends Jogador implements Runnable{
 		this.setTabuleiroDefesa(objJogador.getTabuleiroDefesa());
 		this.conexaoJogador = objJogador.getConexao();
 		objServidor = server;
-
+		this.setIsBot(true);
 	}
 
 	public Celula getProximaCelula() {
