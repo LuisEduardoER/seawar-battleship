@@ -930,6 +930,16 @@ public class ClienteMulti implements IMessageListener {
 		}
 		
 	}
+
+	public void desistirJogo() {
+		try{
+			this.perfil.getConexao().desistirJogo(this.jogo.getIdJogo());
+			limparJogo();
+		}
+		catch(Exception e){
+			fireMensagemAlertaEvent(e.getMessage());
+		}
+	}
 	
 
 //	private void fireTurnoAlterado(Object src){

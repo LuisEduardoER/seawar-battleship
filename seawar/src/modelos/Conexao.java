@@ -172,4 +172,13 @@ public class Conexao {
 		MessageSender send = new MessageSender(this.socket, mensagem);
 		executor.execute(send);
 	}
+	public void desistirJogo(int idJogo) throws Exception {
+		verificarJogadorOnline();
+		
+		//Envia mensagem para o servidor alertar outro jogador sobre o convite
+		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.SairDeJogo);
+		mensagem = String.format(mensagem, idJogo);
+		MessageSender send = new MessageSender(this.socket, mensagem);
+		executor.execute(send);
+	}
 }

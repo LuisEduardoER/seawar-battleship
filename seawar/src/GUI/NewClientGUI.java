@@ -51,6 +51,9 @@ import javax.swing.SwingConstants;
 import javax.swing.JProgressBar;
 import javax.swing.JCheckBox;
 import java.awt.event.KeyEvent;
+import java.awt.GridBagLayout;
+import javax.swing.JTextField;
+import javax.swing.JPasswordField;
 
 public class NewClientGUI extends Applet{
 
@@ -69,7 +72,6 @@ public class NewClientGUI extends Applet{
 	private static final long serialVersionUID = 1L;
 	private JPanel pnlTabDefesa = null;
 	private JPanel pnlTabuleiroAtaque = null;
-	private JButton btnConectar = null;
 	private JButton btnDesconectar = null;
 	private JPanel pnlTabuleiros = null;
 	private JTextArea txtAreaServer = null;
@@ -95,6 +97,13 @@ public class NewClientGUI extends Applet{
 	DefaultListModel listModelPlayers;
 	private JLabel lblBemVindo = null;
 	private JLabel lblTurnoAtacar = null;
+	private JPanel pnlLogin = null;
+	private JButton btnLogar = null;
+	private JTextField txtLogin = null;
+	private JLabel lblLogin = null;
+	private JLabel lblSenha = null;
+	private JPasswordField txtSenha = null;
+	private JButton btnDesistir = null;
 	public NewClientGUI(){
 		super();
 		listenerAtaque = new EventoAtaque();
@@ -115,13 +124,13 @@ public class NewClientGUI extends Applet{
 		lblBemVindo.setText("");
 		this.setLayout(null);
 		this.setSize(733, 574);
-		this.add(getBtnConectar(), null);
 		this.add(getBtnDesconectar(), null);
 		this.add(getPnlTabuleiros(), null);
 		//CarregarFrameTabuleiros();//TODO: Excluir no final :)
 		this.add(getJScrollPane(), null);
 		this.add(getPnlListas(), null);
 		this.add(lblBemVindo, null);
+		this.add(getPnlLogin(), null);
 		
 		
 		
@@ -163,42 +172,6 @@ public class NewClientGUI extends Applet{
 			pnlTabuleiroAtaque.setSize(Constantes.TAMANHO_TABULEIRO * Constantes.LARGURA_CELULA, Constantes.TAMANHO_TABULEIRO * Constantes.ALTURA_CELULA);
 		}
 		return pnlTabuleiroAtaque;
-	}
-
-	/**
-	 * This method initializes btnConectar	
-	 * 	
-	 * @return javax.swing.JButton	
-	 */
-	private JButton getBtnConectar() {
-		if (btnConectar == null) {
-			btnConectar = new JButton();
-			btnConectar.setBounds(new Rectangle(15, 15, 107, 26));
-			btnConectar.setText("Conectar");
-			btnConectar.addActionListener(new java.awt.event.ActionListener() {
-				public void actionPerformed(java.awt.event.ActionEvent e) {
-					String login = JOptionPane.showInputDialog("Digite o login");
-					if(login !=null && login.isEmpty()){
-						return;
-					}
-					String senha = JOptionPane.showInputDialog("Digite sua senha");
-					//Se o usuário não fornece senha e login, não conecta-o ao jogo
-					if(login == null || senha == null || login.isEmpty() || senha.isEmpty()){
-						imprimirMensagem("Login ou senha não fornecidos");
-						return;
-					}
-					//Se instanciar corretamente o objeto do cliente, conecta-o com o login e a senha fornecidos
-					if(InstanciarCliente()){
-						client.conectar(login,senha);
-					}
-					else{
-						imprimirMensagem("Erro ao tentar se conectar, socket falhou ao ser instanciado");
-					}
-					//Quando conectado, o cliente disparará um evento de conectarJogador
-				}
-			});
-		}
-		return btnConectar;
 	}
 
 	protected boolean InstanciarCliente() {
@@ -289,6 +262,7 @@ public class NewClientGUI extends Applet{
 			pnlTabuleiros.add(lblTabuleiroAtaque, null);
 			pnlTabuleiros.add(getBtnPronto(), null);
 			pnlTabuleiros.add(lblTurnoAtacar, null);
+			pnlTabuleiros.add(getBtnDesistir(), null);
 		}
 		return pnlTabuleiros;
 	}
@@ -393,14 +367,16 @@ public class NewClientGUI extends Applet{
 		pnlTabuleiros.setVisible(true);
 		pnlListas.setVisible(false);
 		lblTurnoAtacar.setVisible(false);
+		btnDesistir.setEnabled(true);
 	}
 
 	private void exibirTelaInicial() {
 		pnlTabuleiros.setVisible(false);
+		pnlLogin.setVisible(false);
 		pnlListas.setVisible(true);
 
 		habilitarBotaoDesconectar(true);
-		habilitarBotaoConectar(false);
+		mostrarPainelLogin(false);
 		lblBemVindo.setText("Bem vindo, "+this.client.getPerfil().getLogin());
 		AtualizarListas();
 		btnConvidar.setVisible(lstJogadores.getSelectedIndex() < 0 && this.jogo != null);
@@ -537,7 +513,7 @@ public class NewClientGUI extends Applet{
 		habilitarTabuleiroAtaque(false);
 		habilitarTabuleiroDefesa(false);
 		habilitarBotaoPronto(false);
-		habilitarBotaoConectar(true);
+		mostrarPainelLogin(true);
 		habilitarBotaoDesconectar(false);
 		//Esconde os tabuleiros e tudo o que precisa
 		pnlListas.setVisible(false);
@@ -546,7 +522,6 @@ public class NewClientGUI extends Applet{
 	}
 
 	private void limparTabuleiros() {
-		//TODO: Retirar todos os botões da UI
 		pnlTabDefesa.removeAll();
 		pnlTabuleiroAtaque.removeAll();
 	}
@@ -556,9 +531,8 @@ public class NewClientGUI extends Applet{
 		
 	}
 
-	private void habilitarBotaoConectar(boolean b) {
-		this.btnConectar.setEnabled(b);
-		
+	private void mostrarPainelLogin(boolean b) {
+			pnlLogin.setVisible(b);		
 	}
 
 	private void habilitarTabuleiroDefesa(boolean b) {
@@ -801,7 +775,7 @@ public class NewClientGUI extends Applet{
 					//Esconde as telas que devem ser vistas apenas quando online
 					pnlListas.setVisible(false);
 					pnlTabuleiros.setVisible(false);
-					habilitarBotaoConectar(true);
+					mostrarPainelLogin(true);
 					habilitarBotaoDesconectar(false);
 				}
 			}
@@ -852,7 +826,7 @@ public class NewClientGUI extends Applet{
 			@Override
 			public void carregarTelaJogo(Object source) {
 				try{
-					habilitarBotaoConectar(false);		
+					mostrarPainelLogin(false);		
 					exibirTabuleiros();
 					habilitarTabuleirosParaPosicionamento();
 					PreencherTabuleiroDefesa(client.getPerfil().getTabuleiroDefesa());
@@ -1133,5 +1107,130 @@ public class NewClientGUI extends Applet{
 			});
 		}
 		return btnEntrarJogo;
+	}
+
+	/**
+	 * This method initializes pnlLogin	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getPnlLogin() {
+		if (pnlLogin == null) {
+			lblSenha = new JLabel();
+			lblSenha.setBounds(new Rectangle(15, 75, 46, 31));
+			lblSenha.setText("Senha:");
+			lblLogin = new JLabel();
+			lblLogin.setBounds(new Rectangle(15, 30, 46, 31));
+			lblLogin.setText("Login:");
+			pnlLogin = new JPanel();
+			pnlLogin.setLayout(null);
+			pnlLogin.setBounds(new Rectangle(105, 210, 326, 196));
+			pnlLogin.add(getBtnLogar(), null);
+			pnlLogin.add(getTxtLogin(), null);
+			pnlLogin.add(lblLogin, null);
+			pnlLogin.add(lblSenha, null);
+			pnlLogin.add(getTxtSenha(), null);
+		}
+		return pnlLogin;
+	}
+
+	/**
+	 * This method initializes btnLogar	
+	 * 	
+	 * @return javax.swing.JButton	
+	 */
+	private JButton getBtnLogar() {
+		if (btnLogar == null) {
+			btnLogar = new JButton();
+			btnLogar.setBounds(new Rectangle(120, 135, 76, 29));
+			btnLogar.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					String login = txtLogin.getText();
+					if(login !=null && login.isEmpty()){
+						return;
+					}
+					char[] senhaChar =txtSenha.getPassword();
+					
+					String senha = "";
+					for (int i = 0; i < senhaChar.length; i++) {
+						senha += senhaChar[i];
+					}
+					//Se o usuário não fornece senha e login, não conecta-o ao jogo
+					if(login == null || senha == null || login.isEmpty() || senha.isEmpty()){
+						imprimirMensagem("Login ou senha não fornecidos");
+						return;
+					}
+					//Se instanciar corretamente o objeto do cliente, conecta-o com o login e a senha fornecidos
+					if(InstanciarCliente()){
+						client.conectar(login,senha);
+						txtSenha.setText("");
+					}
+					else{
+						imprimirMensagem("Erro ao tentar se conectar, socket falhou ao ser instanciado");
+					}
+					//Quando conectado, o cliente disparará um evento de conectarJogador
+				}
+			});
+			btnLogar.setText("Logar");
+		}
+		return btnLogar;
+	}
+
+	/**
+	 * This method initializes txtLogin	
+	 * 	
+	 * @return javax.swing.JTextField	
+	 */
+	private JTextField getTxtLogin() {
+		if (txtLogin == null) {
+			txtLogin = new JTextField();
+			txtLogin.setBounds(new Rectangle(60, 30, 241, 31));
+		}
+		return txtLogin;
+	}
+
+	/**
+	 * This method initializes txtSenha	
+	 * 	
+	 * @return javax.swing.JPasswordField	
+	 */
+	private JPasswordField getTxtSenha() {
+		if (txtSenha == null) {
+			txtSenha = new JPasswordField();
+			txtSenha.setBounds(new Rectangle(60, 75, 241, 31));
+		}
+		return txtSenha;
+	}
+
+	/**
+	 * This method initializes btnDesistir	
+	 * 	
+	 * @return javax.swing.JButton	
+	 */
+	private JButton getBtnDesistir() {
+		if (btnDesistir == null) {
+			btnDesistir = new JButton();
+			btnDesistir.setBounds(new Rectangle(15, 375, 121, 31));
+			btnDesistir.setText("Desistir");
+			btnDesistir.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					if(jogo != null && jogo.getIdJogo() > 0){
+						int resposta = JOptionPane.showConfirmDialog(null, "Deseja realmente desistir da partida?","Confirmar desistência", JOptionPane.YES_NO_OPTION);
+						
+						if(resposta == JOptionPane.YES_OPTION){
+							client.desistirJogo();
+							exibirTelaInicial();
+							limparTabuleiros();
+						}
+					}
+					else{
+						btnDesistir.setEnabled(false);
+					}
+				}
+			});
+		}
+		return btnDesistir;
 	}
 }  //  @jve:decl-index=0:visual-constraint="9,17"

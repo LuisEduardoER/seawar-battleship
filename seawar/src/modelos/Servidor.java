@@ -248,6 +248,9 @@ public class Servidor implements IMessageListener {
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.EntrarJogo.toString())){
 			ConectarJogadorEmJogo(lstTokens, socket);
 		}
+		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.SairDeJogo.toString())){
+			DesconectarJogadorDeJogo(lstTokens, socket);
+		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.CriarJogo.toString())){
 			CriarJogoComJogador(lstTokens, socket);
 		}
@@ -313,6 +316,45 @@ public class Servidor implements IMessageListener {
 		}
 		else if(header.equalsIgnoreCase(Comunicacao.TipoMensagem.ReceberTabuleiroOponente.toString())){
 			//mensagem que não será utilizada, pois o tabuleiro não será enviado para o cliente mais
+		}
+	}
+
+	private void DesconectarJogadorDeJogo(List<String> lstTokens, Socket socket) {
+		int idJogo = 0;
+		
+		for (String token : lstTokens) {
+			String[] split = token.split(Constantes.VALUE_SEPARATOR);
+			if(split[TOKEN_HEADER].equalsIgnoreCase("jogoid")){
+				idJogo = Integer.parseInt(split[TOKEN_VALUE]);
+			}
+		}
+		
+		if(idJogo > 0){
+			Jogo jogo = encontrarJogoPorId(idJogo);
+			if(jogo != null){
+				Jogador jogadorSair = jogo.EncontrarJogador(socket);
+				Jogador adversario = jogo.EncontrarJogadorAdversario(jogadorSair);
+				
+				int posicaoJogadorEmJogo = jogo.getListaJogador().indexOf(jogadorSair);
+				jogo.removerJogador(jogadorSair);
+				aListaJogadorJogando.remove(jogadorSair);
+				//Se agora o jogo estiver vazio, remove o jogo da lista
+				if(jogo.isVazio() || posicaoJogadorEmJogo == 0)
+					removerJogo(jogo.getIdJogo());
+				else{
+					//Se o jogo não ficou vazio com a saída do jogador, coloca-o como bot
+					//para caso o jogador decida jogar contra um bot
+					inicializarBotEmJogo(jogadorSair, posicaoJogadorEmJogo, jogo);
+					
+
+					//Após marcar o jogador como bot, avisa o adversário que ele saiu para decidir se quer jogar contra bot ou não
+					String mensagemJogadorDesconectado = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.JogadorDesconectado);
+					mensagemJogadorDesconectado = String.format(mensagemJogadorDesconectado, jogo.getIdJogo(), jogadorSair.getLogin(), jogadorSair.getId_usuario());
+					MessageSender messageSender = new MessageSender(adversario.getConexao().getSocket(), mensagemJogadorDesconectado);
+					serverExecutor.execute(messageSender);
+				}
+				
+			}
 		}
 	}
 
@@ -847,6 +889,7 @@ public class Servidor implements IMessageListener {
 
 	private void DesconectarJogador(List<String> lstTokens, Socket socketEnviou) {
 		Jogador jogador = this.encontrarJogadorPorSocket(socketEnviou);
+		int posicaoJogadorEmJogo = 0;
 		//Jogador jogador = EncontrarJogadorPorIp(ipEnviou);
 		if(jogador == null){
 			Log.gravarLog(String.format("Jogador sob IP: %s, não foi localizado", socketEnviou.getInetAddress().getHostAddress()));
@@ -856,11 +899,17 @@ public class Servidor implements IMessageListener {
 		int idJogoJogando = jogador.getJogoId();
 		Jogo jogo = encontrarJogoPorId(idJogoJogando);
 		if(jogo != null){
+			posicaoJogadorEmJogo = jogo.getListaJogador().indexOf(jogador);
 			jogo.removerJogador(jogador);
 			aListaJogadorJogando.remove(jogador);
 			//Se agora o jogo estiver vazio, remove o jogo da lista
-			if(jogo.isVazio())
+			if(jogo.isVazio() || posicaoJogadorEmJogo == 0)
 				removerJogo(idJogoJogando);
+			else{
+				//Se o jogo não ficou vazio com a saída do jogador, coloca-o como bot
+				//para caso o jogador decida jogar contra um bot
+				inicializarBotEmJogo(jogador, posicaoJogadorEmJogo, jogo);
+			}
 		}
 		if(jogador.setOffline()){
 			//ficou offline por bem :)
@@ -874,16 +923,25 @@ public class Servidor implements IMessageListener {
 		firePlayerListChangeEvent(new ServerEvent(aListaJogadorOnline, TipoEvento.JogadoresAtualizados));
 		fireDisplayChangeEvent(new ServerEvent(String.format("%s desconectou",jogador.getLogin()), TipoEvento.DisplayAtualizado));
 		
-		//TODO : COlocar a intancia do bot aqui
-		Bot objBot = new Bot(jogador,this);
-		objBot.setTabuleiroAtaque(jogador.getTabuleiroDefesa());
-		objBot.getTabuleiroAtaque().setMatrizCelula(jogador.getTabuleiroDefesa().getMatrizCelula());
-		
 		//Após remover o jogador de todos os lugares e avisar a UI que ele foi removido, avisa os outros jogadores por multicast
 		String mensagemJogadorDesconectado = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.JogadorDesconectado);
 		mensagemJogadorDesconectado = String.format(mensagemJogadorDesconectado, idJogoJogando, jogador.getLogin(), jogador.getId_usuario());
 		MulticastSender multicastSender = new MulticastSender(mensagemJogadorDesconectado);
 		serverExecutor.execute(multicastSender);
+	}
+
+	private void inicializarBotEmJogo(Jogador jogador,
+			int posicaoJogadorEmJogo, Jogo jogo) {
+		Bot objBot = new Bot(jogador,this);
+		objBot.setTabuleiroAtaque(jogador.getTabuleiroDefesa());
+		objBot.getTabuleiroAtaque().setMatrizCelula(jogador.getTabuleiroDefesa().getMatrizCelula());
+		objBot.conexaoJogador = new Conexao(objBot,new Socket());
+		try {
+			jogo.AdicionarJogador(objBot, posicaoJogadorEmJogo);
+		} catch (GameException e) {
+			e.printStackTrace();
+			Log.gravarLog("Não foi possível adicionar BOT ao jogo "+jogo.getIdJogo());
+		}
 	}
 	
 	private Jogador encontrarJogadorPorSocket(Socket socketJogador) {
