@@ -100,6 +100,7 @@ public class DicionarioMensagem {
 			break;
 		case SairDeJogo:
 			mensagem = CriarMensagemParametrizada("jogoid");
+			break;
 		default:
 			mensagem = Constantes.PING_TOKEN;
 			incluirTipo = false;

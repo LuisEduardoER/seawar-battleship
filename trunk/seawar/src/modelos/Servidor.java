@@ -220,12 +220,12 @@ public class Servidor implements IMessageListener {
 			}
 		}//fim da adatapcao da lista de tokens		
 		
-		TratarTokens(lstTokens, socketOrigem.getInetAddress().getHostAddress(),  socketOrigem);
+		TratarTokens(lstTokens,  socketOrigem);
 	}
 
 
 	
-	private void TratarTokens(List<String> lstTokens, String ipEnviou, Socket socket) {
+	private void TratarTokens(List<String> lstTokens, Socket socket) {
 		if(lstTokens == null || lstTokens.isEmpty())
 			return;
 		
@@ -339,7 +339,7 @@ public class Servidor implements IMessageListener {
 				jogo.removerJogador(jogadorSair);
 				aListaJogadorJogando.remove(jogadorSair);
 				//Se agora o jogo estiver vazio, remove o jogo da lista
-				if(jogo.isVazio() || posicaoJogadorEmJogo == 0)
+				if(jogo.isVazio())
 					removerJogo(jogo.getIdJogo());
 				else{
 					//Se o jogo não ficou vazio com a saída do jogador, coloca-o como bot
@@ -444,12 +444,14 @@ public class Servidor implements IMessageListener {
 			Jogador jogador = jogo.EncontrarJogador(socketEnviou);
 			if(jogador != null){
 				//Define o adversário do jogador como um bot
-				Jogador bot = jogo.EncontrarJogadorAdversario(jogador);
-				bot.setOffline();
-				bot.setIsBot(true);
+				//Jogador bot = jogo.EncontrarJogadorAdversario(jogador);
+				//bot.setOffline();
+				//bot.setIsBot(true);
 				fireDisplayChangeEvent(
-						new ServerEvent(String.format("Jogador %s ativou o bot no lugar do jogador %s", jogador.getLogin(), bot.getLogin()), TipoEvento.DisplayAtualizado)
+						new ServerEvent(String.format("Jogador %s ativou o bot no lugar do jogador %s", jogador.getLogin(), /*bot.getLogin()*/"adversário"), TipoEvento.DisplayAtualizado)
 						);
+				
+				
 			}
 		}		
 		
@@ -535,9 +537,9 @@ public class Servidor implements IMessageListener {
 				}
 				jogador.setPontuacao(pontos);
 				
-				
 				this.declararVencedor(jogo, jogador);
 				this.declararPerdedor(jogo, adversario);
+				
 				fireDisplayChangeEvent(
 						new ServerEvent(String.format("%s ganhou do %s no jogo %s", jogador.getLogin(), adversario.getLogin(), jogo.getIdJogo()), TipoEvento.DisplayAtualizado)
 						);
@@ -552,29 +554,43 @@ public class Servidor implements IMessageListener {
 		//this.jogoCorrente.declaraJogadorVencedor(vencedor.getId_usuario());
 		jogo.setCodJogadorVencedor(vencedor.getId_usuario());
 		jogo.encerrarJogo();
-	
-		//Recoloca o jogador na lista
-		setJogadorOnline(vencedor);
-		
-		//Envia para o usuário que ele venceu o jogo
-		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.GanhouJogo);
-		String mensagemEnviar = String.format(mensagem, jogo.getIdJogo(), vencedor.getLogin());
-		MessageSender sender = new MessageSender(vencedor.getConexao().getSocket(), mensagemEnviar);
-		serverExecutor.execute(sender);			
+
+		//Envia mensagem para o jogador vencedor, caso este não seja bot
+		if(!vencedor.isBot()){
+			//Recoloca o jogador na lista
+			setJogadorOnline(vencedor);
+			
+			//Envia para o usuário que ele venceu o jogo
+			String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.GanhouJogo);
+			String mensagemEnviar = String.format(mensagem, jogo.getIdJogo(), vencedor.getLogin());
+			MessageSender sender = new MessageSender(vencedor.getConexao().getSocket(), mensagemEnviar);
+			serverExecutor.execute(sender);
+		}
+		else{
+			Bot bot = (Bot)vencedor;
+			bot.dispose();
+		}
 	}
 
 	private void declararPerdedor(Jogo jogo, Jogador perdedor) {
 		//Define o vencedor no id do usuário
 		jogo.encerrarJogo();
 
-		//Recoloca o jogador na lista
-		setJogadorOnline(perdedor);
-		
-		//Envia para o usuário que ele venceu o jogo
-		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.PerdeuJogo);
-		String mensagemEnviar = String.format(mensagem, jogo.getIdJogo(), perdedor.getLogin());
-		MessageSender sender = new MessageSender(perdedor.getConexao().getSocket(), mensagemEnviar);
-		serverExecutor.execute(sender);	
+		//Envia mensagem para o perdedor se ele não for bot
+		if(!perdedor.isBot()){
+			//Recoloca o jogador na lista
+			setJogadorOnline(perdedor);
+			
+			//Envia para o usuário que ele venceu o jogo
+			String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.PerdeuJogo);
+			String mensagemEnviar = String.format(mensagem, jogo.getIdJogo(), perdedor.getLogin());
+			MessageSender sender = new MessageSender(perdedor.getConexao().getSocket(), mensagemEnviar);
+			serverExecutor.execute(sender);
+		}
+		else{
+			Bot bot = (Bot)perdedor;
+			bot.dispose();
+		}
 	}
 
 	private void ProcessarAtaque(List<String> lstTokens, Socket socketEnviou) {
@@ -595,46 +611,46 @@ public class Servidor implements IMessageListener {
 			Tabuleiro tabuleiroAdversario = adversario.getTabuleiroDefesa();
 			celula = tabuleiroAdversario.atacar(celula.x, celula.y);
 			
-			//Envia ataque para o cliente que foi atacado
+			if(!adversario.isBot()){
+			//Envia ataque para o cliente que foi atacado (se não for bot)
 			Socket clientSocketAtacado = adversario.getConexao().getSocket();
 			String mensagemOriginal = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.ReceberAtaque);
-//			for(String token : lstTokens){
-//				mensagemOriginal += Constantes.TOKEN_SEPARATOR + token;
-//			}
 			String mensagemAtaque = String.format(mensagemOriginal, jogoId, celula.x, celula.y);
 			serverExecutor.execute(new MessageSender(clientSocketAtacado, mensagemAtaque));
-			
+			}			
+			else{
+				//TODO: Implementar a lógica de ataque do bot aqui
+				Bot objBot = (Bot)(adversario);
+				serverExecutor.execute(objBot);
+				
+			}
 			venceuJogo = tabuleiroAdversario.isTodosBarcosAfundados();
 			
-			if(jogador.bIsBot && !venceuJogo){
-				//TODO: Implementar a lógica de ataque do bot aqui
-				Bot objBot = (Bot)(jogador);
-				objBot.atacar();
-			}
-			else{
-			//Se o jogador não for bot:
-			//Envia resposta para o cliente que atacou
-			String mensagemResposta = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.RespostaAtaque);
-			//TODO: Fzer esta mensagem enviar se o barco foi afundado ou não :)
-			
-			Embarcacao barcoAcertado = tabuleiroAdversario.getEmbarcacao(celula.x, celula.y);
-			String nomeBarco = "";
-			boolean afundouBarco = false;
-			if(barcoAcertado != null){ 
-				nomeBarco = barcoAcertado.getNomeEmbarcacao();
-				afundouBarco = barcoAcertado.getNaufragado();
-				//imprime na tela do servidor qual barco foi acertado
-				String mensagemExibir = String.format("%s acertou o barco %s de %s. %s", jogador.getLogin(), nomeBarco, adversario.getLogin(), ((afundouBarco)?"***Barco Naufragado***":""));
-				fireDisplayChangeEvent(new ServerEvent(mensagemExibir, TipoEvento.DisplayAtualizado));
-			}
-			String mensagemFormatada = String.format(mensagemResposta,jogo.getIdJogo(), celula.x, celula.y, celula.getTipoCelula().toString(), 0, nomeBarco, afundouBarco); 
-			//ordem 0 pq eu não sei ainda como reconhecer qual parte do barco ele acertou
-			Socket clientSocket = jogador.getConexao().getSocket();
-			
-			serverExecutor.execute(new MessageSender(clientSocket, mensagemFormatada));
+			if(!jogador.isBot())
+			{
+				//Se o jogador que atacou não for bot
+				//Envia resposta sobre a célula que ele acertou
+				String mensagemResposta = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.RespostaAtaque);
+				//TODO: Fzer esta mensagem enviar se o barco foi afundado ou não :)
+				
+				Embarcacao barcoAcertado = tabuleiroAdversario.getEmbarcacao(celula.x, celula.y);
+				String nomeBarco = "";
+				boolean afundouBarco = false;
+				if(barcoAcertado != null){ 
+					nomeBarco = barcoAcertado.getNomeEmbarcacao();
+					afundouBarco = barcoAcertado.getNaufragado();
+					//imprime na tela do servidor qual barco foi acertado
+					String mensagemExibir = String.format("%s acertou o barco %s de %s. %s", jogador.getLogin(), nomeBarco, adversario.getLogin(), ((afundouBarco)?"***Barco Naufragado***":""));
+					fireDisplayChangeEvent(new ServerEvent(mensagemExibir, TipoEvento.DisplayAtualizado));
+				}
+				String mensagemFormatada = String.format(mensagemResposta,jogo.getIdJogo(), celula.x, celula.y, celula.getTipoCelula().toString(), 0, nomeBarco, afundouBarco); 
+				//ordem 0 pq eu não sei ainda como reconhecer qual parte do barco ele acertou
+				Socket clientSocket = jogador.getConexao().getSocket();
+				
+				serverExecutor.execute(new MessageSender(clientSocket, mensagemFormatada));
 			}
 
-			//Se o jogador venceu o jogo com esse ataque, informa os 2 jogadores
+			//Se o jogador venceu o jogo com esse ataque, informa os 2 jogadores (exceto se um deles for bot)
 			if(venceuJogo){
 				//Limpa os tokens recebidos e adiciona apenas o que interessa
 				//para que a mensagem de vencedor seja procesada
@@ -933,9 +949,9 @@ public class Servidor implements IMessageListener {
 	private void inicializarBotEmJogo(Jogador jogador,
 			int posicaoJogadorEmJogo, Jogo jogo) {
 		Bot objBot = new Bot(jogador,this);
-		objBot.setTabuleiroAtaque(jogador.getTabuleiroDefesa());
-		objBot.getTabuleiroAtaque().setMatrizCelula(jogador.getTabuleiroDefesa().getMatrizCelula());
-		objBot.conexaoJogador = new Conexao(objBot,new Socket());
+		Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
+		objBot.setTabuleiroAtaque(adversario.getTabuleiroDefesa());
+		objBot.getTabuleiroAtaque().setMatrizCelula(adversario.getTabuleiroDefesa().getMatrizCelula());
 		try {
 			jogo.AdicionarJogador(objBot, posicaoJogadorEmJogo);
 		} catch (GameException e) {
@@ -1009,7 +1025,7 @@ public class Servidor implements IMessageListener {
 			}
 		}
 		//TODO: Validar aqui o login e a senha do jogador
-		if(obj.logar(obj.getLogin(), obj.getSenha())!=null){
+		if(true){
 		//if(true){
 			aListaJogadorOnline.add(obj);
 			//informa o jogador que ele foi conectado com sucesso!

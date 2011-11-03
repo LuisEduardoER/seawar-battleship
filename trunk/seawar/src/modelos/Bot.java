@@ -1,6 +1,7 @@
 package modelos;
 
 import java.awt.Point;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Stack;
@@ -43,7 +44,9 @@ public class Bot extends Jogador implements Runnable{
 	public Bot(Jogador objJogador,IMessageListener server) {
 		this.setTabuleiroAtaque(objJogador.getTabuleiroAtaque());
 		this.setTabuleiroDefesa(objJogador.getTabuleiroDefesa());
-		this.conexaoJogador = objJogador.getConexao();
+		this.conexaoJogador = new Conexao(this);
+		this.conexaoJogador.socket = new Socket();
+		this.setLogin(objJogador.getLogin());
 		objServidor = server;
 		this.setIsBot(true);
 	}
@@ -362,5 +365,22 @@ public class Bot extends Jogador implements Runnable{
 	@Override
 	public void run() {
 		this.atacar();
+	}
+	
+	public void dispose(){
+		this.celulasAtacadasEmbarcacao = null;
+		this.celulasEscolhidas = null;
+		this.bAcertouEmbarcacao = false;
+		this.bAfundouEmbarcacao = false;
+		this.myTurn = false;
+		this.naviosNaoAfundados = null;
+		this.objServidor = null;
+		this.online = false;
+		this.oTabuleiroAtaque = null;
+		this.oTabuleiroDefesa = null;
+		try {
+			this.finalize();
+		} catch (Throwable e) {
+		}
 	}
 }
