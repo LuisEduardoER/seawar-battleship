@@ -1216,7 +1216,8 @@ public class NewClientGUI extends Applet{
 				
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
-					if(jogo != null && jogo.getIdJogo() > 0){
+					//Verifica se o usuário está em um jogo e se o botão de pronto não está mais habilitado (já foi pressionado)
+					if(client.getPerfil().getJogoId() > 0 && !btnPronto.isEnabled()){
 						int resposta = JOptionPane.showConfirmDialog(null, "Deseja realmente desistir da partida?","Confirmar desistência", JOptionPane.YES_NO_OPTION);
 						
 						if(resposta == JOptionPane.YES_OPTION){
