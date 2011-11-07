@@ -47,6 +47,7 @@ public class Bot extends Jogador implements Runnable{
 		this.conexaoJogador = new Conexao(this);
 		this.conexaoJogador.socket = new Socket();
 		this.setLogin(objJogador.getLogin());
+		this.setPronto(objJogador.isPronto());
 		objServidor = server;
 		this.setIsBot(true);
 	}
