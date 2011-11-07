@@ -22,7 +22,7 @@ import exceptions.TabuleiroIOException;
 
 
 
-public class Jogador extends Usuario {
+public class Jogador extends Usuario implements Cloneable {
 	/**
 	 * 
 	 */
@@ -225,4 +225,8 @@ public class Jogador extends Usuario {
 		}
 	}
 
+	@Override
+	public Jogador clone() throws CloneNotSupportedException {
+		return (Jogador)super.clone();
+	}
 }
