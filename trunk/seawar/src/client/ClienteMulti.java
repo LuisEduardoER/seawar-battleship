@@ -82,6 +82,7 @@ public class ClienteMulti implements IMessageListener {
 				//Altera a flag do jogador para ele não poder jogar de novo
 				//antes do outro jogador jogar
 				this.perfil.setMinhaVez(false);
+				fireTurnoAlterado(false);
 				//Retorna true para informar que foi possivel fazer o ataque
 				return true;
 			}
@@ -423,6 +424,8 @@ public class ClienteMulti implements IMessageListener {
 
 	//Qando eu RECEBO um ataque
 	private void ReceberAtaque(List<String> lstTokens, String ipEnviou) {
+		if(this.jogo == null)
+			return;
 		//instancia uma célula para enviar ao evento
 		Celula celulaAtacada = new Celula(0,0);
 		//Preenche a célula de acordo com os valores dos tokens
@@ -449,12 +452,13 @@ public class ClienteMulti implements IMessageListener {
 		//Envia a resposta do ataque
 		//EnviarRespostaAtaque(celulaResposta);
 		
-		
-		//Dispara o evento que informa que uma célula foi atacada
-		fireReceberAtaque(lstTokens, celulaResposta);
-		
+
 		//Libera o jogador para fazer outro ataque
 		this.perfil.setMinhaVez(true);
+		fireTurnoAlterado(true);
+		
+		//Dispara o evento que informa que uma célula foi atacada
+		fireReceberAtaque(lstTokens, celulaResposta);		
 	}
 
 
@@ -942,14 +946,14 @@ public class ClienteMulti implements IMessageListener {
 	}
 	
 
-//	private void fireTurnoAlterado(Object src){
-//		 Object[] listeners = listenerList.getListenerList();
-//	        // Each listener occupies two elements - the first is the listener class
-//	        // and the second is the listener instance
-//	        for (int i=0; i<listeners.length; i+=2) {
-//	            if (listeners[i]==ClientEventListener.class) {
-//	                ((ClientEventListener)listeners[i+1]).AlterarTurno(src, new ClientEvent(src, TipoEvento.));
-//	            }
-//	        }
-//	}
+	private void fireTurnoAlterado(Object src){
+		 Object[] listeners = listenerList.getListenerList();
+	        // Each listener occupies two elements - the first is the listener class
+	        // and the second is the listener instance
+	        for (int i=0; i<listeners.length; i+=2) {
+	            if (listeners[i]==ClientEventListener.class) {
+	                ((ClientEventListener)listeners[i+1]).turnoAlterado(src, new ClientEvent(src, TipoEvento.DisplayAtualizado));
+	            }
+	        }
+	}
 }
