@@ -86,8 +86,22 @@ public class Jogo {
 		}
 	}
 	public boolean isVazio(){
-		return this.aListaJogador.size() == 0;
+		return (this.aListaJogador.size() == 0 || temApenasBots());
 	}
+	private boolean temApenasBots() {
+		int qtdBots = 0;
+		if(aListaJogador != null){
+			for (Jogador jogador : aListaJogador) {
+				if(jogador.isBot())
+					qtdBots++;
+			}
+		}
+		else{
+			return false;
+		}
+		return qtdBots == aListaJogador.size();
+	}
+
 	public boolean aceitaNovosJogadores(){
 		return bAceitaNovosJogadores;
 	}

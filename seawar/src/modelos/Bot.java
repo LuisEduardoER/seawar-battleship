@@ -143,7 +143,7 @@ public class Bot extends Jogador implements Runnable{
 			 * atacada = getCelula(); setCelulasEscolhida(atacada); }
 			 */
 		} else {
-			if(!naviosNaoAfundados.empty()){
+			if(naviosNaoAfundados != null && !naviosNaoAfundados.empty()){
 				bAcertouEmbarcacao = true;
 				bAfundouEmbarcacao = false;
 				atacada = popNaviosNaoAfundados();
@@ -365,6 +365,12 @@ public class Bot extends Jogador implements Runnable{
 
 	@Override
 	public void run() {
+		//Aguarda 3 segundos antes de atacar o adversário
+		try {
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		this.atacar();
 	}
 	

@@ -45,7 +45,7 @@ public class Jogador extends Usuario implements Cloneable {
 	
 	public Jogador(Socket clientSocket) {
 		//Cria um jogador com um socket especifico
-		sIpJogador = clientSocket.getInetAddress().getHostAddress();
+		sIpJogador = (clientSocket.getInetAddress() != null) ? clientSocket.getInetAddress().getHostAddress() : "0.0.0.0" ;
 		//Cria uma conexão utilizando o mesmo socket do jogador
 		conexaoJogador = new Conexao(this, clientSocket);
 	}

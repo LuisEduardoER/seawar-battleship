@@ -11,6 +11,7 @@ import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
@@ -83,7 +84,7 @@ public class NewClientGUI extends Applet{
 	private EventoAtaque listenerAtaque = null;  //  @jve:decl-index=0:
 	private EventoDefesa listenerDefesa = null;
 	private BotaoCelula botaoPressionado = null;
-	private JScrollPane jScrollPane = null;
+	private JScrollPane scrollPaneServerMsgs = null;
 	private JPanel pnlListas = null;
 	private JList lstJogadores = null;
 	private JLabel lblTextoJogadores = null;
@@ -119,7 +120,7 @@ public class NewClientGUI extends Applet{
 	 */
 	public void init() {
 		lblBemVindo = new JLabel();
-		lblBemVindo.setBounds(new Rectangle(255, 11, 381, 28));
+		lblBemVindo.setBounds(new Rectangle(340, 13, 381, 28));
 		lblBemVindo.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblBemVindo.setText("");
 		this.setLayout(null);
@@ -127,7 +128,7 @@ public class NewClientGUI extends Applet{
 		this.add(getBtnDesconectar(), null);
 		this.add(getPnlTabuleiros(), null);
 		//CarregarFrameTabuleiros();//TODO: Excluir no final :)
-		this.add(getJScrollPane(), null);
+		this.add(getScrollPaneServerMsgs(), null);
 		this.add(getPnlListas(), null);
 		this.add(lblBemVindo, null);
 		this.add(getPnlLogin(), null);
@@ -252,7 +253,7 @@ public class NewClientGUI extends Applet{
 			lblTabuleiroDefesa.setText("Tabuleiro Defesa:");
 			pnlTabuleiros = new JPanel();
 			pnlTabuleiros.setLayout(null);
-			pnlTabuleiros.setBounds(new Rectangle(6, 134, 715, 417));
+			pnlTabuleiros.setBounds(new Rectangle(6, 134, 715, 426));
 			pnlTabuleiros.setEnabled(false);
 			//pnlTabuleiros.setVisible(false);
 			pnlTabuleiros.setVisible(false);
@@ -278,6 +279,7 @@ public class NewClientGUI extends Applet{
 			txtAreaServer.setLineWrap(true);
 			txtAreaServer.setText("Aqui você receberá as mensagens do servidor");
 			txtAreaServer.setBackground(new Color(245, 244, 244));
+			txtAreaServer.setSize(830, 80);
 			txtAreaServer.setEditable(false);
 			txtAreaServer.setAutoscrolls(true);
 		}
@@ -326,6 +328,8 @@ public class NewClientGUI extends Applet{
 			lblTurnoAtacar.setText("Aguardar ataque");
 			lblTurnoAtacar.setForeground(new Color(255, 0,0));			
 		}
+		//Mantém a flag de turno do jogador atualizada para saber se é a vez dele de jogar
+		//this.client.getPerfil().setMinhaVez(meuTurno);
 	}
 
 	public void carregarFrameTabuleiros(Jogo jogo){
@@ -499,6 +503,7 @@ public class NewClientGUI extends Applet{
 		//de defesa também será, não permitindo ao jogador alterar a posição
 		//após o inicio da partida
 		this.btnPronto.setEnabled(b);
+		this.btnDesistir.setEnabled(!b);
 		habilitarTabuleiroDefesa(b);
 	}
 	
@@ -603,15 +608,24 @@ public class NewClientGUI extends Applet{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			//A premissa para poder fazer um ataque, é o jogador estar online e pronto
-			if (client.getPerfil().isOnline() && !btnPronto.isEnabled() && e.getSource() instanceof BotaoCelula) {
+			if (client.getPerfil().isOnline() && !btnPronto.isEnabled() && client.getPerfil().isMinhaVez() && e.getSource() instanceof BotaoCelula) {
 				//Pega o botão pressionado e envia o ataque
 				botaoPressionado = (BotaoCelula) e.getSource();
 				if(botaoPressionado != null){
+					 setLabelTurnoAtacar(false);
 					//Envia o ataque e fica aguardando a resposta, que ativará o método "exibirRespostaAtaque()"
 					if(enviarAtaqueCliente(botaoPressionado.getCoordX(), botaoPressionado.getCoordY())){
 					//Desabilita o botão para não utilizá-lo novamente
-					botaoPressionado.setEnabled(false);
+						try{
+						 botaoPressionado.setEnabled(false);
+						}
+						catch(Exception ex){
+							
+						}
 					}
+//					else{
+//						 setLabelTurnoAtacar(true);
+//					}					
 				}
 			}
 		}
@@ -719,12 +733,12 @@ public class NewClientGUI extends Applet{
 			
 			@Override
 			public void turnoAlterado(Object source, ClientEvent evt) {
+				setLabelTurnoAtacar(Boolean.parseBoolean(source.toString()));
 			}
 			
 			@Override
 			public void tiroRecebido(Object source, ClientEvent evt, Celula celula) {
-				exibirAtaqueRecebido(celula);		
-				setLabelTurnoAtacar(true);
+				exibirAtaqueRecebido(celula);	
 			}
 			
 			@Override
@@ -746,7 +760,7 @@ public class NewClientGUI extends Applet{
 					}
 				}
 				
-				setLabelTurnoAtacar(false);
+				//setLabelTurnoAtacar(false);
 				
 				exibirRespostaAtaque(celula);
 				
@@ -923,19 +937,19 @@ public class NewClientGUI extends Applet{
 	}
 
 	/**
-	 * This method initializes jScrollPane	
+	 * This method initializes scrollPaneServerMsgs	
 	 * 	
 	 * @return javax.swing.JScrollPane	
 	 */
-	private JScrollPane getJScrollPane() {
-		if (jScrollPane == null) {
-			jScrollPane = new JScrollPane();
-			jScrollPane.setBounds(new Rectangle(7, 44, 82, 67));
-			jScrollPane.setViewportView(getTxtAreaServer());
-			jScrollPane.setSize(630, 80);
-			jScrollPane.setAutoscrolls(true);
+	private JScrollPane getScrollPaneServerMsgs() {
+		if (scrollPaneServerMsgs == null) {
+			scrollPaneServerMsgs = new JScrollPane();
+			scrollPaneServerMsgs.setBounds(new Rectangle(7, 44, 714, 80));
+			scrollPaneServerMsgs.setSize(710, 80);
+			scrollPaneServerMsgs.setViewportView(getTxtAreaServer());
+			scrollPaneServerMsgs.setAutoscrolls(true);
 		}
-		return jScrollPane;
+		return scrollPaneServerMsgs;
 	}
 
 	/**
@@ -1124,7 +1138,9 @@ public class NewClientGUI extends Applet{
 			lblLogin.setText("Login:");
 			pnlLogin = new JPanel();
 			pnlLogin.setLayout(null);
-			pnlLogin.setBounds(new Rectangle(105, 210, 326, 196));
+			int painelHeight = 326;
+			int painelWidth = 196;
+			pnlLogin.setBounds(new Rectangle(200,200, painelHeight, painelWidth));
 			pnlLogin.add(getBtnLogar(), null);
 			pnlLogin.add(getTxtLogin(), null);
 			pnlLogin.add(lblLogin, null);
@@ -1145,30 +1161,7 @@ public class NewClientGUI extends Applet{
 			btnLogar.setBounds(new Rectangle(120, 135, 76, 29));
 			btnLogar.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					String login = txtLogin.getText();
-					if(login !=null && login.isEmpty()){
-						return;
-					}
-					char[] senhaChar =txtSenha.getPassword();
-					
-					String senha = "";
-					for (int i = 0; i < senhaChar.length; i++) {
-						senha += senhaChar[i];
-					}
-					//Se o usuário não fornece senha e login, não conecta-o ao jogo
-					if(login == null || senha == null || login.isEmpty() || senha.isEmpty()){
-						imprimirMensagem("Login ou senha não fornecidos");
-						return;
-					}
-					//Se instanciar corretamente o objeto do cliente, conecta-o com o login e a senha fornecidos
-					if(InstanciarCliente()){
-						client.conectar(login,senha);
-						txtSenha.setText("");
-					}
-					else{
-						imprimirMensagem("Erro ao tentar se conectar, socket falhou ao ser instanciado");
-					}
-					//Quando conectado, o cliente disparará um evento de conectarJogador
+					fazerLogin();
 				}
 			});
 			btnLogar.setText("Logar");
@@ -1185,6 +1178,25 @@ public class NewClientGUI extends Applet{
 		if (txtLogin == null) {
 			txtLogin = new JTextField();
 			txtLogin.setBounds(new Rectangle(60, 30, 241, 31));
+			txtLogin.addKeyListener(new KeyListener() {
+				
+				@Override
+				public void keyTyped(KeyEvent arg0) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void keyReleased(KeyEvent arg0) {
+					
+				}
+				
+				@Override
+				public void keyPressed(KeyEvent tecla) {
+					if(tecla.getKeyCode() == KeyEvent.VK_TAB || tecla.getKeyCode() == KeyEvent.VK_ENTER)
+						txtSenha.requestFocus();					
+				}
+			});
 		}
 		return txtLogin;
 	}
@@ -1198,6 +1210,28 @@ public class NewClientGUI extends Applet{
 		if (txtSenha == null) {
 			txtSenha = new JPasswordField();
 			txtSenha.setBounds(new Rectangle(60, 75, 241, 31));
+			txtSenha.addKeyListener(new KeyListener() {
+				
+				@Override
+				public void keyTyped(KeyEvent arg0) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void keyReleased(KeyEvent arg0) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void keyPressed(KeyEvent tecla) {
+					if(tecla.getKeyCode() == KeyEvent.VK_TAB)
+						btnLogar.requestFocus();			
+					else if(tecla.getKeyCode() == KeyEvent.VK_ENTER)
+						fazerLogin();
+				}
+			});
 		}
 		return txtSenha;
 	}
@@ -1210,7 +1244,8 @@ public class NewClientGUI extends Applet{
 	private JButton getBtnDesistir() {
 		if (btnDesistir == null) {
 			btnDesistir = new JButton();
-			btnDesistir.setBounds(new Rectangle(15, 375, 121, 31));
+			btnDesistir.setBounds(new Rectangle(190, 25, 80, 20));
+			btnDesistir.setBackground(new Color(255, 200,200));
 			btnDesistir.setText("Desistir");
 			btnDesistir.addActionListener(new ActionListener() {
 				
@@ -1233,5 +1268,32 @@ public class NewClientGUI extends Applet{
 			});
 		}
 		return btnDesistir;
+	}
+
+	private void fazerLogin() {
+		String login = txtLogin.getText();
+		if(login !=null && login.isEmpty()){
+			return;
+		}
+		char[] senhaChar =txtSenha.getPassword();
+		
+		String senha = "";
+		for (int i = 0; i < senhaChar.length; i++) {
+			senha += senhaChar[i];
+		}
+		//Se o usuário não fornece senha e login, não conecta-o ao jogo
+		if(login == null || senha == null || login.isEmpty() || senha.isEmpty()){
+			imprimirMensagem("Login ou senha não fornecidos");
+			return;
+		}
+		//Se instanciar corretamente o objeto do cliente, conecta-o com o login e a senha fornecidos
+		if(InstanciarCliente()){
+			client.conectar(login,senha);
+			txtSenha.setText("");
+		}
+		else{
+			imprimirMensagem("Erro ao tentar se conectar, socket falhou ao ser instanciado");
+		}
+		//Quando conectado, o cliente disparará um evento de conectarJogador
 	}
 }  //  @jve:decl-index=0:visual-constraint="9,17"

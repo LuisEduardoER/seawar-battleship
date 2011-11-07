@@ -338,6 +338,8 @@ public class Servidor implements IMessageListener {
 				int posicaoJogadorEmJogo = jogo.getListaJogador().indexOf(jogadorSair);
 				jogo.removerJogador(jogadorSair);
 				aListaJogadorJogando.remove(jogadorSair);
+				aListaJogadorOnline.add(jogadorSair);
+				
 				//Se agora o jogo estiver vazio, remove o jogo da lista
 				if(jogo.isVazio())
 					removerJogo(jogo.getIdJogo());
@@ -353,7 +355,7 @@ public class Servidor implements IMessageListener {
 					MessageSender messageSender = new MessageSender(adversario.getConexao().getSocket(), mensagemJogadorDesconectado);
 					serverExecutor.execute(messageSender);
 				}
-				
+				firePlayerListChangeEvent(new ServerEvent(aListaJogadorOnline, TipoEvento.JogadoresAtualizados));
 			}
 		}
 	}
@@ -444,7 +446,12 @@ public class Servidor implements IMessageListener {
 			Jogador jogador = jogo.EncontrarJogador(socketEnviou);
 			if(jogador != null){
 				//Define o adversário do jogador como um bot
-				//Jogador bot = jogo.EncontrarJogadorAdversario(jogador);
+				Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
+				//Se o adversario for um bot e for a vez dele jogar, ele jogará
+				if(adversario.isBot() && adversario.isMinhaVez()){
+					Bot bot = (Bot)adversario;
+					serverExecutor.execute(bot);
+				}
 				//bot.setOffline();
 				//bot.setIsBot(true);
 				fireDisplayChangeEvent(
@@ -610,20 +617,17 @@ public class Servidor implements IMessageListener {
 			Jogador adversario = encontrarAdversarioEmJogo(jogo, jogador);
 			Tabuleiro tabuleiroAdversario = adversario.getTabuleiroDefesa();
 			celula = tabuleiroAdversario.atacar(celula.x, celula.y);
-			
+			//Troca as flags da vez de quem atacou e de quem pode atacar
+			jogador.setMinhaVez(false);
+			adversario.setMinhaVez(true);
 			if(!adversario.isBot()){
 			//Envia ataque para o cliente que foi atacado (se não for bot)
 			Socket clientSocketAtacado = adversario.getConexao().getSocket();
 			String mensagemOriginal = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.ReceberAtaque);
 			String mensagemAtaque = String.format(mensagemOriginal, jogoId, celula.x, celula.y);
 			serverExecutor.execute(new MessageSender(clientSocketAtacado, mensagemAtaque));
-			}			
-			else{
-				//TODO: Implementar a lógica de ataque do bot aqui
-				Bot objBot = (Bot)(adversario);
-				serverExecutor.execute(objBot);
-				
 			}
+			
 			venceuJogo = tabuleiroAdversario.isTodosBarcosAfundados();
 			
 			if(!jogador.isBot())
@@ -649,7 +653,13 @@ public class Servidor implements IMessageListener {
 				
 				serverExecutor.execute(new MessageSender(clientSocket, mensagemFormatada));
 			}
-
+			
+			//Caso o adversário seja um bot, inicia a ação do contra-ataque, após enviar para o jogador a resposta do ataque dele.
+			if(adversario.isBot()){
+				//TODO: Implementar a lógica de ataque do bot aqui
+				Bot objBot = (Bot)(adversario);
+				serverExecutor.execute(objBot);
+			}
 			//Se o jogador venceu o jogo com esse ataque, informa os 2 jogadores (exceto se um deles for bot)
 			if(venceuJogo){
 				//Limpa os tokens recebidos e adiciona apenas o que interessa
@@ -721,11 +731,7 @@ public class Servidor implements IMessageListener {
 						);
 				return; //para de executar o método
 			}
-			//Envia mensagem para o inimigo falando o ID do jogo, o nome do adv q posicionou o barco e o status de OK
-			String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.BarcosOponentePosicionados);				
-			String msgEnviar = String.format(mensagem, jogo.getIdJogo(), jogador.getLogin(), "OK");				
-			MessageSender msgAdv = new MessageSender(adv.getConexao().getSocket(),msgEnviar);
-			serverExecutor.execute(msgAdv);
+			enviarAvisoJogadorPronto(jogo, jogador, adv);
 		}
 		
 		//Inicia a partida quando Todos (2) jogadores enviarem os tabuleiros
@@ -733,6 +739,15 @@ public class Servidor implements IMessageListener {
 			//Chama o método que inicia a partida do jogo
 			this.iniciarPartida(jogo);				
 		}
+	}
+
+	private void enviarAvisoJogadorPronto(Jogo jogo, Jogador jogador,
+			Jogador adv) {
+		//Envia mensagem para o inimigo falando o ID do jogo, o nome do adv q posicionou o barco e o status de OK
+		String mensagem = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.BarcosOponentePosicionados);				
+		String msgEnviar = String.format(mensagem, jogo.getIdJogo(), jogador.getLogin(), "OK");				
+		MessageSender msgAdv = new MessageSender(adv.getConexao().getSocket(),msgEnviar);
+		serverExecutor.execute(msgAdv);
 	}
 
 	private void DesbilitarJogoParaNovasConexoes(List<String> lstTokens, Socket socket) {
@@ -948,12 +963,24 @@ public class Servidor implements IMessageListener {
 
 	private void inicializarBotEmJogo(Jogador jogador,
 			int posicaoJogadorEmJogo, Jogo jogo) {
-		Bot objBot = new Bot(jogador,this);
+		
+		Bot objBot;
+		// Instancia um novo para ser o bot
+		objBot = new Bot(new Jogador(new Socket()),this);
+		objBot.setLogin(jogador.getLogin());
+		objBot.setPronto(jogador.isPronto());	
+		objBot.setTabuleiroDefesa(jogador.getTabuleiroDefesa());
+		objBot.setTabuleiroAtaque(jogador.getTabuleiroAtaque());
+		
 		Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
 		objBot.setTabuleiroAtaque(adversario.getTabuleiroDefesa());
 		objBot.getTabuleiroAtaque().setMatrizCelula(adversario.getTabuleiroDefesa().getMatrizCelula());
 		try {
 			jogo.AdicionarJogador(objBot, posicaoJogadorEmJogo);
+			if(!objBot.isPronto()){
+				enviarAvisoJogadorPronto(jogo, objBot, adversario);
+				objBot.setPronto(true);
+			}
 		} catch (GameException e) {
 			e.printStackTrace();
 			Log.gravarLog("Não foi possível adicionar BOT ao jogo "+jogo.getIdJogo());
