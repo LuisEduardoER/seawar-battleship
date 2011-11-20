@@ -98,7 +98,7 @@ public class Usuario {
 		this.bStatusUsuario = bStatusUsuario;
 	}
 
-	public Usuario logar(String login, String senha) {
+	public static Usuario logar(String login, String senha) {
 		int validado = 0;
 		if (login == "" || login == null || senha == "" || senha == null)
 			return null;
@@ -138,7 +138,7 @@ public class Usuario {
 		}
 	}
 
-	public Usuario getUsuario(int id_usuario) {
+	public static Usuario getUsuario(int id_usuario) {
 
 		//TODO: Implementar o DAO
 		Usuario user = UsuarioDAO.getUsuario(id_usuario);

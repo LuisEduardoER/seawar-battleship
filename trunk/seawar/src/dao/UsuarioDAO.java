@@ -238,4 +238,29 @@ public class UsuarioDAO {
 		return false;
 	}
 
+	public static void atualizarPontuacao(Usuario objUsuario) {		
+		
+		ConexaoBD objBD = new ConexaoBD();
+		if (objBD.abrirConexao()) {
+			try {
+				// Foi utilizado a classe StringBuilder, que nesse caso realiza
+				// a mesma função do que uma
+				// concatenação de strings
+				StringBuilder strSQL = new StringBuilder(
+						"UPDATE SEAWAR.USUARIO SET ");
+				strSQL.append("PONTUACAO = " + objUsuario.getPontuacao());
+				strSQL.append(" WHERE COD_ID_USUARIO = "
+						+ objUsuario.getId_usuario() + ";");
+
+				objBD.getObjStatement().executeUpdate(strSQL.toString());
+			} catch (SQLException ex) {
+				Logger.getLogger(Usuario.class.getName()).log(Level.SEVERE,
+						null, ex);
+			}
+			finally{
+				objBD.fecharConexaoBanco(objBD.getObjConn());
+			}
+		}
+	}
+
 }

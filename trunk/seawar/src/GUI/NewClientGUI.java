@@ -167,7 +167,7 @@ public class NewClientGUI extends Applet{
 			gridLayout.setRows(10);
 			gridLayout.setColumns(10);
 			pnlTabuleiroAtaque = new JPanel();
-			pnlTabuleiroAtaque.setBounds(new Rectangle(396, 72, 310, 241));
+			pnlTabuleiroAtaque.setBounds(new Rectangle(376, 72, 310, 241));
 			pnlTabuleiroAtaque.setLayout(gridLayout);
 			//Corrige o tamanho do tabuleiro
 			pnlTabuleiroAtaque.setSize(Constantes.TAMANHO_TABULEIRO * Constantes.LARGURA_CELULA, Constantes.TAMANHO_TABULEIRO * Constantes.ALTURA_CELULA);
@@ -845,6 +845,12 @@ public class NewClientGUI extends Applet{
 					habilitarTabuleirosParaPosicionamento();
 					PreencherTabuleiroDefesa(client.getPerfil().getTabuleiroDefesa());
 					PreencherTabuleiroAtaque(client.getPerfil().getTabuleiroAtaque());
+					
+
+//					Dimension rec = pnlTabuleiros.getSize();
+//					pnlTabuleiros.setSize(rec.width+1, rec.height+1);
+//					pnlTabuleiros.repaint();
+//					pnlTabuleiros.setSize(rec);
 				}
 				catch(Exception ex){
 					DesconectarJogador();

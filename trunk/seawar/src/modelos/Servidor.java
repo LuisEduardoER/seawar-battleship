@@ -526,26 +526,28 @@ public class Servidor implements IMessageListener {
 			if(jogador != null){
 
 				Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
-				//Atualiza a pontuação do cara (200 pontos por perder?)
-				int pontos = 0;
-				//Verifica quantos barcos ele afundou no campo do adversário
-				for(Embarcacao barco : adversario.getTabuleiroDefesa().getArrEmbarcacoes()){
-					if(barco != null){
-						if(barco.getNaufragado()){
-							//pontua pelo valor do barco
-							pontos += barco.getValorEmbarcacao();
-						}else {
-							for(Celula celulaBarco : barco.getListaCelulas()){							
-								//Pontua de acordo com as células que ele acertou
-								pontos += (celulaBarco.getTipoCelula() == TipoCelula.Embarcacao && celulaBarco.isAtirada()) ? barco.getValorEmbarcacao()/barco.getTamanho() : 0;
-							}
-						}
-					}
-				}
-				jogador.setPontuacao(pontos);
+				
+//				//Atualiza a pontuação do cara se nao for BOT (200 pontos por perder?)
+//				int pontos = 0;
+//				//Verifica quantos barcos ele afundou no campo do adversário
+//				for(Embarcacao barco : this.getTabuleiroDefesa().getArrEmbarcacoes()){
+//					if(barco != null){
+//						if(barco.getNaufragado()){
+//							//pontua pelo valor do barco
+//							pontos += barco.getValorEmbarcacao();
+//						}else {
+//							for(Celula celulaBarco : barco.getListaCelulas()){							
+//								//Pontua de acordo com as células que ele acertou
+//								pontos += (celulaBarco.getTipoCelula() == TipoCelula.Embarcacao && celulaBarco.isAtirada()) ? barco.getValorEmbarcacao()/barco.getTamanho() : 0;
+//							}
+//						}
+//					}
+//				}
 				
 				this.declararVencedor(jogo, jogador);
 				this.declararPerdedor(jogo, adversario);
+				jogador.gravarPontuacao(adversario);
+				adversario.gravarPontuacao(jogador);
 				
 				fireDisplayChangeEvent(
 						new ServerEvent(String.format("%s ganhou do %s no jogo %s", jogador.getLogin(), adversario.getLogin(), jogo.getIdJogo()), TipoEvento.DisplayAtualizado)
@@ -1052,8 +1054,12 @@ public class Servidor implements IMessageListener {
 			}
 		}
 		//TODO: Validar aqui o login e a senha do jogador
-		if(true){
+		Usuario usuarioValidado = Usuario.logar(obj.getLogin(), obj.getSenha());
+		if(usuarioValidado != null ){
 		//if(true){
+			//obj.carregarDadosUsuario(usuarioValidado);
+			obj.setId_usuario(usuarioValidado.getId_usuario());
+			obj.setPontuacao(usuarioValidado.getPontuacao());
 			aListaJogadorOnline.add(obj);
 			//informa o jogador que ele foi conectado com sucesso!
 			String msgConectado = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.ConectarServidor);

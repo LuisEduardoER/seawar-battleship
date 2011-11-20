@@ -27,13 +27,14 @@ import Comunicacao.TipoMensagem;
 public class Bot extends Jogador implements Runnable{
 	boolean bAcertouEmbarcacao = false;
 	boolean bAfundouEmbarcacao = false;
+	boolean bAnalisouNavios = false;
 	// pilha de navios que foram acertados mas não afundados
 	Stack<Celula> naviosNaoAfundados = new Stack<Celula>();
 	// Arrays de jogadas feitas para fins heuristicos de jogada
 	ArrayList<Celula> celulasEscolhidas = new ArrayList<Celula>();
 	ArrayList<Celula> celulasAtacadasEmbarcacao = new ArrayList<Celula>();
-//	Servidor objServidor = null;
-//	ServidorRestrito objServidorRestrito = null;
+	//	Servidor objServidor = null;
+	//	ServidorRestrito objServidorRestrito = null;
 	IMessageListener objServidor;
 
 	
@@ -130,18 +131,43 @@ public class Bot extends Jogador implements Runnable{
 		this.celulasAtacadasEmbarcacao.add(celulaAtacadaEmbarcacao);
 	}
 
+	public void analisarNaviosTabuleiro(){
+		ArrayList<Celula> arrNavios = new ArrayList<Celula>();
+		int tamX = 10;//getTabuleiroAtaque().mMatrizCelula.length; 
+		int tamY = 10;//getTabuleiroAtaque().mMatrizCelula[0].length;
+		boolean foiAcertada = false;
+		Celula cel = new Celula(0,0);
+		for(int x = 0; x < tamX;x++){
+			for(int y = 0; y< tamY;y++){
+				cel = this.getTabuleiroAtaque().encontrarCelula(x, y);
+				foiAcertada = false;
+				foiAcertada = this.getTabuleiroAtaque().getEmbarcacao(x, y).getCelula(x, y).isAtirada();
+				if (cel.getTipoCelula() == TipoCelula.Embarcacao && foiAcertada) {
+					for(Celula celPesquisa : arrNavios){
+						if(cel != celPesquisa){
+						//if(this.getTabuleiroAtaque().getEmbarcacao(cel.x, cel.y).getNomeEmbarcacao() != this.getTabuleiroAtaque().getEmbarcacao(celPesquisa.x, celPesquisa.y).getNomeEmbarcacao()){
+							arrNavios.add(cel);								
+						}
+					}
+				}
+			}
+		}
+		//Passo todas as células que foram acertadas para a pilha de naviosNaoAfundados
+		for(Celula celPesquisa : arrNavios){
+			if(celPesquisa != null){
+				pushNaviosNaoAfundados(celPesquisa);
+			}
+		}
+		bAnalisouNavios = true;
+	}
+	
 	public void analisarTabuleiro() {
+		if (!bAnalisouNavios){
+			//analisarNaviosTabuleiro();
+		}
 		Celula atacada = null;
 		if (bAcertouEmbarcacao && !bAfundouEmbarcacao) {
 			analisarJogada();
-			/*
-			 * // Realiza ataque após acertar a primeira célula de um navio if
-			 * (celulasAtacadasEmbarcacao.size() < 2) { atacada =
-			 * getProximaCelula(); if (atacada != null) { atacada.acertar();
-			 * setCelulasEscolhida(atacada); } } else { // Após acertar duas
-			 * células do navio vai pegando a proxima até // afundar o navio
-			 * atacada = getCelula(); setCelulasEscolhida(atacada); }
-			 */
 		} else {
 			if(naviosNaoAfundados != null && !naviosNaoAfundados.empty()){
 				bAcertouEmbarcacao = true;
@@ -158,19 +184,19 @@ public class Bot extends Jogador implements Runnable{
 				analisarJogada();
 			}
 			else{
-			// Realiza tiro aleatório até acertar um navio
-			bAfundouEmbarcacao = false;	
-			bAcertouEmbarcacao = false;
-			atacada = new Celula(0, 0);
-			atacada.x = coordRandom();
-			atacada.y = coordRandom();
-			while (seJogadaValida(atacada) && !seCapazAtirar(atacada)) {
+				// Realiza tiro aleatório até acertar um navio
+				bAfundouEmbarcacao = false;	
+				bAcertouEmbarcacao = false;
 				atacada = new Celula(0, 0);
 				atacada.x = coordRandom();
 				atacada.y = coordRandom();
-			}
-			atacada.acertar();
-			setCelulasEscolhida(atacada);
+				while (seJogadaValida(atacada) && !seCapazAtirar(atacada)) {
+					atacada = new Celula(0, 0);
+					atacada.x = coordRandom();
+					atacada.y = coordRandom();
+				}
+				atacada.acertar();
+				setCelulasEscolhida(atacada);
 			}
 		}
 	}
