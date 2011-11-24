@@ -969,6 +969,7 @@ public class Servidor implements IMessageListener {
 		Bot objBot;
 		// Instancia um novo para ser o bot
 		objBot = new Bot(new Jogador(new Socket()),this);
+		objBot.setMinhaVez(jogador.isMinhaVez());
 		objBot.setLogin(jogador.getLogin());
 		objBot.setPronto(jogador.isPronto());	
 		objBot.setTabuleiroDefesa(jogador.getTabuleiroDefesa());
@@ -1053,13 +1054,12 @@ public class Servidor implements IMessageListener {
 				obj.setSenha(split[TOKEN_VALUE]);
 			}
 		}
-		//TODO: Validar aqui o login e a senha do jogador
-		Usuario usuarioValidado = Usuario.logar(obj.getLogin(), obj.getSenha());
-		if(usuarioValidado != null ){
-		//if(true){
+		//Usuario usuarioValidado = Usuario.logar(obj.getLogin(), obj.getSenha());
+		//if(usuarioValidado != null ){
+		if(true){
 			//obj.carregarDadosUsuario(usuarioValidado);
-			obj.setId_usuario(usuarioValidado.getId_usuario());
-			obj.setPontuacao(usuarioValidado.getPontuacao());
+			//obj.setId_usuario(usuarioValidado.getId_usuario());
+			//obj.setPontuacao(usuarioValidado.getPontuacao());
 			aListaJogadorOnline.add(obj);
 			//informa o jogador que ele foi conectado com sucesso!
 			String msgConectado = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.ConectarServidor);

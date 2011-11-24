@@ -28,6 +28,8 @@ public class Embarcacao implements Serializable {
 	private boolean bNaufragado;
 	private boolean bVertical;
 	
+	public Embarcacao(){};
+	
 	public Embarcacao(int tamanho) {
 		bVertical = false;
 		this.tamanho = tamanho;
@@ -63,9 +65,10 @@ public class Embarcacao implements Serializable {
 	}
 	
 	public boolean getNaufragado() {
-		
+				
 		for (Celula celulaBarco : this.aListaCelulas) {
-			if(!celulaBarco.isAtirada())
+			
+			if(celulaBarco != null && !celulaBarco.isAtirada())
 				return false;
 		}
 		

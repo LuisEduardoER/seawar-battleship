@@ -445,25 +445,31 @@ public class ClienteMulti implements IMessageListener {
 		}
 		//Processa o ataque e indica a célula que foi atacada pelo inimigo
 		Celula celulaResposta = this.perfil.getTabuleiroDefesa().atacar(celulaAtacada.x, celulaAtacada.y);
-		
-		
-		//ATENÇÃO: O cliente não precisa enviar a resposta do ataque
-		//		   pois o servidor já cuida desse detalhe
-		//Envia a resposta do ataque
-		//EnviarRespostaAtaque(celulaResposta);
-		
+		Embarcacao barcoAcertado = null;
+		if(celulaResposta.getTipoCelula() == TipoCelula.Embarcacao){
+			barcoAcertado = this.perfil.getTabuleiroDefesa().getEmbarcacao(celulaAtacada.x, celulaAtacada.y);
+		}
 
 		//Libera o jogador para fazer outro ataque
 		this.perfil.setMinhaVez(true);
 		fireTurnoAlterado(true);
 		
 		//Dispara o evento que informa que uma célula foi atacada
-		fireReceberAtaque(lstTokens, celulaResposta);		
+		if(barcoAcertado != null)
+			fireReceberAtaque(barcoAcertado, celulaResposta);
+		else
+			fireReceberAtaque(new Object(), celulaResposta);
+		
 	}
 
 
 	//Quando eu processo a resposta do MEU ataque
 	private void ProcessarRespostaAtaque(List<String> lstTokens, String ipEnviou) {
+		Embarcacao barco = null;
+		String nomeBarco = null;
+		boolean afundou = false;
+		int ordem = 0;
+		
 		//instancia uma célula para enviar ao evento
 		Celula celulaAtacou = new Celula(0,0);
 		//define a celula como acertada
@@ -486,10 +492,40 @@ public class ClienteMulti implements IMessageListener {
 				int jogoId = Integer.parseInt(split[TOKEN_VALUE]);
 				//this.jogo.setIdJogo(jogoId);
 			}
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("ordem")){
+				ordem = Integer.parseInt(split[TOKEN_VALUE]);
+			}
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("barco") && split.length == 2){
+				//Atualiza o Id do jogo para futuras referencias
+				nomeBarco = split[TOKEN_VALUE];
+			}
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("afundou")){
+				//Atualiza o Id do jogo para futuras referencias
+				afundou = Boolean.parseBoolean(split[TOKEN_VALUE]);
+				
+			}
 		}
-		//Dispara o evento que informa o que era a célula atacada pelo jogador		
-		fireRespostaAtaque(lstTokens, celulaAtacou);
 		
+		if(nomeBarco != null && !nomeBarco.isEmpty()){
+			barco = this.perfil.getTabuleiroAtaque().encontrarBarco(nomeBarco);
+			//Se o barco não tiver naufragado, marca a célula dele como acertada
+			if(barco != null && !barco.getNaufragado()){
+				Celula[] celulas = barco.getListaCelulas();
+				int i = 0;
+				while(celulas[i].isAtirada()){
+					i++;
+				}
+				//Se o "i" não estiver fora dos limites das células, acerta a célula em que parou contador "i"
+				if(i < celulas.length)
+					celulas[i].acertar();
+			}
+		}
+		
+		//Dispara o evento que informa o que era a célula atacada pelo jogador
+		if(barco != null)
+			fireRespostaAtaque(barco, celulaAtacou);
+		else
+			fireRespostaAtaque(new Object(), celulaAtacou);		
 	}
 
 	private void BarcosOponenteCarregados(List<String> lstTokens, String ipEnviou) {
@@ -562,7 +598,7 @@ public class ClienteMulti implements IMessageListener {
 					this.jogo.AdicionarJogador(jogador);
 				}
 				//Cria os tabuleiros para o jogador
-				this.perfil.setTabuleiroAtaque(new Tabuleiro(Constantes.TAMANHO_TABULEIRO, false));
+				this.perfil.setTabuleiroAtaque(new Tabuleiro(Constantes.TAMANHO_TABULEIRO));
 				this.perfil.setTabuleiroDefesa(new Tabuleiro(Constantes.TAMANHO_TABULEIRO));	
 				//Adiciona o jogador
 				this.jogo.AdicionarJogador(perfil, posicao);
@@ -725,6 +761,8 @@ public class ClienteMulti implements IMessageListener {
 	
 	public void limparJogo(){
 		this.jogo = null;
+		this.perfil.setTabuleiroAtaque(null);
+		this.perfil.setTabuleiroDefesa(null);
 	}
 	
 	
