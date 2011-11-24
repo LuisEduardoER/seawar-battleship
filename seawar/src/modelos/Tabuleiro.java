@@ -398,5 +398,15 @@ public class Tabuleiro implements Serializable{
 		
 		return this.mMatrizCelula[i][j];
 	}
+
+	public Embarcacao encontrarBarco(String nomeBarco) {
+		for (int i = 0; i < arrEmbarcacoes.length; i++) {
+			Embarcacao barco = arrEmbarcacoes[i];
+			if(barco != null && barco.getNomeEmbarcacao().equalsIgnoreCase(nomeBarco)){
+				return barco;
+			}
+		}
+		return null;
+	}
 		
 }

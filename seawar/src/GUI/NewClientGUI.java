@@ -5,7 +5,9 @@ import guiComponentes.GridBotoes;
 
 import java.applet.Applet;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.ComponentOrientation;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.Panel;
 import java.awt.Rectangle;
@@ -18,6 +20,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Dictionary;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
@@ -105,6 +108,13 @@ public class NewClientGUI extends Applet{
 	private JLabel lblSenha = null;
 	private JPasswordField txtSenha = null;
 	private JButton btnDesistir = null;
+	private JPanel pnlDisplayBarcos = null;
+	private JPanel pnlDisplayBarcosDefAcertados = null;
+	private JPanel pnlDisplayBarcosAdvAcertados = null;
+	Dictionary<String, JPanel[]> dicMarcadoresJogador;
+	Dictionary<String, JPanel[]> dicMarcadoresAdversario;
+	private String[] marcadoresAdv;
+	private String[] marcadoresJogador;
 	public NewClientGUI(){
 		super();
 		listenerAtaque = new EventoAtaque();
@@ -124,7 +134,7 @@ public class NewClientGUI extends Applet{
 		lblBemVindo.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblBemVindo.setText("");
 		this.setLayout(null);
-		this.setSize(733, 574);
+		this.setSize(733, 786);
 		this.add(getBtnDesconectar(), null);
 		this.add(getPnlTabuleiros(), null);
 		//CarregarFrameTabuleiros();//TODO: Excluir no final :)
@@ -245,7 +255,7 @@ public class NewClientGUI extends Applet{
 			lblTurnoAtacar.setText("Atacar");
 			lblTurnoAtacar.setVisible(false);
 			lblTabuleiroAtaque = new JLabel();
-			lblTabuleiroAtaque.setBounds(new Rectangle(394, 50, 311, 22));
+			lblTabuleiroAtaque.setBounds(new Rectangle(354, 50, 311, 22));
 			lblTabuleiroAtaque.setComponentOrientation(ComponentOrientation.RIGHT_TO_LEFT);
 			lblTabuleiroAtaque.setText("Tabuleiro Ataque:");
 			lblTabuleiroDefesa = new JLabel();
@@ -253,7 +263,7 @@ public class NewClientGUI extends Applet{
 			lblTabuleiroDefesa.setText("Tabuleiro Defesa:");
 			pnlTabuleiros = new JPanel();
 			pnlTabuleiros.setLayout(null);
-			pnlTabuleiros.setBounds(new Rectangle(6, 134, 715, 426));
+			pnlTabuleiros.setBounds(new Rectangle(6, 134, 715, 547));
 			pnlTabuleiros.setEnabled(false);
 			//pnlTabuleiros.setVisible(false);
 			pnlTabuleiros.setVisible(false);
@@ -264,6 +274,7 @@ public class NewClientGUI extends Applet{
 			pnlTabuleiros.add(getBtnPronto(), null);
 			pnlTabuleiros.add(lblTurnoAtacar, null);
 			pnlTabuleiros.add(getBtnDesistir(), null);
+			pnlTabuleiros.add(getPnlDisplayBarcos(), null);
 		}
 		return pnlTabuleiros;
 	}
@@ -303,6 +314,7 @@ public class NewClientGUI extends Applet{
 					if(client.enviarTabuleiro()){
 						habilitarBotaoPronto(false);
 						habilitarTabuleiroDefesa(false);//Desabilita o tabuleiro de defesa
+						
 					}
 					if(client.getPerfil().isMinhaVez()){
 						setLabelTurnoAtacar(true);
@@ -311,6 +323,9 @@ public class NewClientGUI extends Applet{
 					{
 						setLabelTurnoAtacar(false);
 					}
+					
+					bindDosProgress();
+					
 					lblTurnoAtacar.setVisible(true);
 				}
 			});
@@ -318,6 +333,25 @@ public class NewClientGUI extends Applet{
 		return btnPronto;
 	}
 	
+	protected void bindDosProgress() {
+		
+		for(int i = 0; i < Constantes.NUMERO_EMBARCACOES; i++){
+			JLabel lblNomeBarco = new JLabel("");
+			FlowLayout flowLayout = new FlowLayout(FlowLayout.LEFT);
+			JPanel pnlFlow = new JPanel(flowLayout);	
+			pnlFlow.add(lblNomeBarco);
+			pnlDisplayBarcosAdvAcertados.add(pnlFlow);		
+		}
+		
+		for(int i = 0; i < Constantes.NUMERO_EMBARCACOES; i++){
+			JLabel lblNomeBarco = new JLabel("");
+			FlowLayout flowLayout = new FlowLayout(FlowLayout.LEFT);
+			JPanel pnlFlow = new JPanel(flowLayout);	
+			pnlFlow.add(lblNomeBarco);
+			pnlDisplayBarcosDefAcertados.add(pnlFlow);		
+		}
+	}
+
 	protected void setLabelTurnoAtacar(boolean meuTurno) {
 
 		if(meuTurno){
@@ -429,6 +463,16 @@ public class NewClientGUI extends Applet{
 				this.pnlTabDefesa.add(botao);
 			}
 		}
+		
+		marcadoresJogador = new String[tabuleiroDefesa.arrEmbarcacoes.length];
+//		for (int i = 0; i < tabuleiroDefesa.arrEmbarcacoes.length; i++) {
+//			Embarcacao barco = tabuleiroDefesa.arrEmbarcacoes[i];
+//			if(barco != null){
+//				marcadoresJogador[i] = barco.getNomeEmbarcacao();
+//			}
+//			                                                  
+//		}
+		
 		//repinta o tabuleiro para exibir os botoes
 		this.pnlTabDefesa.repaint();
 	}
@@ -482,6 +526,7 @@ public class NewClientGUI extends Applet{
 				this.pnlTabuleiroAtaque.add(botao);
 			}
 		}
+		marcadoresAdv = new String[tabuleiroAtaque.arrEmbarcacoes.length];
 		//Repinta o tabuleiro para exibir os botões
 		this.pnlTabuleiroAtaque.repaint();
 	}
@@ -491,12 +536,6 @@ public class NewClientGUI extends Applet{
 		habilitarTabuleiroDefesa(true);	
 		habilitarBotaoPronto(true);
 	}
-	private void habilitarTabuleirosParaAtaque() {
-		habilitarTabuleiroAtaque(true);		
-		habilitarTabuleiroDefesa(false);	
-		habilitarBotaoPronto(false);
-	}
-
 	protected void habilitarBotaoPronto(boolean b) {
 		//Botão de pronto tem que ter o enabled igual o tabuleiro de defesa
 		//Assim garantimos que o botão pronto será desativado e o posicionamento do tabuleiro
@@ -529,6 +568,8 @@ public class NewClientGUI extends Applet{
 	private void limparTabuleiros() {
 		pnlTabDefesa.removeAll();
 		pnlTabuleiroAtaque.removeAll();
+		pnlDisplayBarcosAdvAcertados.removeAll();
+		pnlDisplayBarcosDefAcertados.removeAll();
 	}
 
 	private void habilitarBotaoDesconectar(boolean b) {
@@ -738,38 +779,32 @@ public class NewClientGUI extends Applet{
 			
 			@Override
 			public void tiroRecebido(Object source, ClientEvent evt, Celula celula) {
+				if(source instanceof Embarcacao){
+					Embarcacao barco = (Embarcacao)source;
+					adicionarMarcadorBarco(barco);
+				}
 				exibirAtaqueRecebido(celula);	
 			}
 			
 			@Override
-			public void respostaTiro(Object source, ClientEvent evt, Celula celula) {
-				List<String> tokens = (List<String>)source;
-				String nomeBarco = null;
-				boolean afundou = false;
-				for(String token : tokens){
-					String[] split = token.split(Constantes.VALUE_SEPARATOR);
-					//Aqui compara o length, porque pode vir vazio o valor do barco
-					if(split[0].equalsIgnoreCase("barco") && split.length == 2){
-						//Atualiza o Id do jogo para futuras referencias
-						nomeBarco = split[1];
-					}
-					else if(split[0].equalsIgnoreCase("afundou")){
-						//Atualiza o Id do jogo para futuras referencias
-						afundou = Boolean.parseBoolean(split[1]);
-						
+			public void respostaTiro(Object source, ClientEvent evt, Celula celula) {				
+				if(source instanceof Embarcacao){
+					Embarcacao barco = (Embarcacao)source;
+					String nomeBarco = barco.getNomeEmbarcacao();
+					boolean afundou = barco.getNaufragado();
+					
+					
+					//setLabelTurnoAtacar(false);
+					
+					//Se o cliente acertou um barco, informa qual barco foi
+					if(nomeBarco != null && !nomeBarco.isEmpty()){
+						adicionarMarcadorBarcoAdversario(barco);
+						String mensagemBarco = "%s a embarcação %s do adversário!";
+						mensagemBarco = String.format(mensagemBarco, (afundou? "Afundou":"Acertou"), nomeBarco);
+						exibeMensagem(mensagemBarco);
 					}
 				}
-				
-				//setLabelTurnoAtacar(false);
-				
 				exibirRespostaAtaque(celula);
-				
-				//Se o cliente acertou um barco, informa qual barco foi
-				if(nomeBarco != null && !nomeBarco.isEmpty()){
-					String mensagemBarco = "%s a embarcação %s do adversário!";
-					mensagemBarco = String.format(mensagemBarco, (afundou? "Afundou":"Acertou"), nomeBarco);
-					exibeMensagem(mensagemBarco);
-				}
 			}
 			
 			@Override
@@ -845,17 +880,14 @@ public class NewClientGUI extends Applet{
 					habilitarTabuleirosParaPosicionamento();
 					PreencherTabuleiroDefesa(client.getPerfil().getTabuleiroDefesa());
 					PreencherTabuleiroAtaque(client.getPerfil().getTabuleiroAtaque());
+	
 					
-
-//					Dimension rec = pnlTabuleiros.getSize();
-//					pnlTabuleiros.setSize(rec.width+1, rec.height+1);
-//					pnlTabuleiros.repaint();
-//					pnlTabuleiros.setSize(rec);
 				}
 				catch(Exception ex){
 					DesconectarJogador();
 				}
 			}
+					
 			
 			@Override
 			public void barcosOponentePosicionados(Object src) {
@@ -940,6 +972,64 @@ public class NewClientGUI extends Applet{
 	public void destroy() {
 		this.DesconectarJogador();
 		super.destroy();
+	}
+
+	public void adicionarMarcadorBarco(Embarcacao barco) {
+		int i = barco.getTamanho()-1;
+		JPanel pnlAdicionar = new JPanel();
+		pnlAdicionar.setBackground(Color.GREEN);
+		pnlAdicionar.setSize(5, 5);
+		
+		//Se ainda não foi marcado o barco do jogador, exibe o nome dele na tela antes de adicionar o painel verde
+		if(marcadoresJogador[i] == null){
+			JPanel flowLayout = (JPanel) pnlDisplayBarcosDefAcertados.getComponent(i);
+			JLabel lblNomeBarco = (JLabel)flowLayout.getComponent(0);
+			lblNomeBarco.setText(barco.getNomeEmbarcacao());
+			flowLayout.add(pnlAdicionar);
+			//adiciona a marcação para indicar que o marcador foi adicionado com sucesso
+			marcadoresJogador[i] = barco.getNomeEmbarcacao();			
+		}
+
+		//Adiciona o painel verde para indicar a marcação de hit do barco
+		JPanel flowLayout = (JPanel) pnlDisplayBarcosDefAcertados.getComponent(i);
+		flowLayout.add(pnlAdicionar);
+		
+		repintarAfundado(barco, flowLayout);
+	}
+	
+	public void adicionarMarcadorBarcoAdversario(Embarcacao barco) {
+		int i = barco.getTamanho()-1;
+		JPanel pnlAdicionar = new JPanel();
+		pnlAdicionar.setBackground(Color.GREEN);
+		pnlAdicionar.setSize(5, 5);
+
+		//Se ainda não foi marcado o barco do jogador, exibe o nome dele na tela antes de adicionar o painel verde
+		if(marcadoresAdv[i] == null){
+			JPanel flowLayout = (JPanel) pnlDisplayBarcosAdvAcertados.getComponent(i);
+			JLabel lblNomeBarco = (JLabel)flowLayout.getComponent(0);
+			lblNomeBarco.setText(barco.getNomeEmbarcacao());
+			flowLayout.add(pnlAdicionar);
+			//adiciona a marcação para indicar que o marcador foi adicionado com sucesso
+			marcadoresAdv[i] = barco.getNomeEmbarcacao();			
+		}
+
+		//Adiciona o painel verde para indicar a marcação de hit do barco
+		JPanel flowLayout = (JPanel) pnlDisplayBarcosAdvAcertados.getComponent(i);
+		flowLayout.add(pnlAdicionar);
+		
+		repintarAfundado(barco, flowLayout);
+	}
+
+	private void repintarAfundado(Embarcacao barco, JPanel flowLayout) {
+		if(barco.getNaufragado()){
+			Component[] paineis = flowLayout.getComponents();
+			for (int j = 0; j < flowLayout.getComponentCount(); j++) {
+				Component painel = paineis[j];
+				if(painel instanceof JPanel){
+					painel.setBackground(Color.RED);
+				}	
+			}			
+		}
 	}
 
 	/**
@@ -1301,5 +1391,55 @@ public class NewClientGUI extends Applet{
 			imprimirMensagem("Erro ao tentar se conectar, socket falhou ao ser instanciado");
 		}
 		//Quando conectado, o cliente disparará um evento de conectarJogador
+	}
+
+	/**
+	 * This method initializes pnlDisplayBarcos	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getPnlDisplayBarcos() {
+		if (pnlDisplayBarcos == null) {
+			pnlDisplayBarcos = new JPanel();
+			pnlDisplayBarcos.setLayout(null);
+			pnlDisplayBarcos.setBounds(new Rectangle(9, 385, 661, 121));
+			pnlDisplayBarcos.add(getPnlDisplayBarcosDefAcertados(), null);
+			pnlDisplayBarcos.add(getPnlDisplayBarcosAdvAcertados(), null);
+		}
+		return pnlDisplayBarcos;
+	}
+
+	/**
+	 * This method initializes pnlDisplayBarcosDefAcertados	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getPnlDisplayBarcosDefAcertados() {
+		if (pnlDisplayBarcosDefAcertados == null) {
+			GridLayout gridLayout2 = new GridLayout();
+			gridLayout2.setRows(5);
+			gridLayout2.setColumns(0);
+			pnlDisplayBarcosDefAcertados = new JPanel();
+			pnlDisplayBarcosDefAcertados.setLayout(gridLayout2);
+			pnlDisplayBarcosDefAcertados.setBounds(new Rectangle(15, 0, 211, 121));
+		}
+		return pnlDisplayBarcosDefAcertados;
+	}
+
+	/**
+	 * This method initializes pnlDisplayBarcosAdvAcertados	
+	 * 	
+	 * @return javax.swing.JPanel	
+	 */
+	private JPanel getPnlDisplayBarcosAdvAcertados() {
+		if (pnlDisplayBarcosAdvAcertados == null) {
+			GridLayout gridLayout3 = new GridLayout();
+			gridLayout3.setRows(5);
+			gridLayout3.setColumns(0);
+			pnlDisplayBarcosAdvAcertados = new JPanel();
+			pnlDisplayBarcosAdvAcertados.setLayout(gridLayout3);
+			pnlDisplayBarcosAdvAcertados.setBounds(new Rectangle(420, 0, 226, 121));
+		}
+		return pnlDisplayBarcosAdvAcertados;
 	}
 }  //  @jve:decl-index=0:visual-constraint="9,17"

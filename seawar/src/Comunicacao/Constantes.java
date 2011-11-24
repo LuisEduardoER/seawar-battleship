@@ -7,7 +7,7 @@ public interface Constantes {
 	public static final int MULTICAST_SENDING_PORT = 4350;
 	public static final int MULTICAST_LISTENING_PORT = 4339;
 	public static final int MULTICAST_MESSAGE_SIZE = 1024;
-	public static final String SERVER_ADDRESS = "192.168.0.150";
+	public static final String SERVER_ADDRESS = "10.0.2.15";//"192.168.0.150";
 	public static final int SERVER_PORT = 4351;
 
 	public static final String TOKEN_SEPARATOR = "$";
@@ -18,6 +18,7 @@ public interface Constantes {
 	public static final int TAMANHO_TABULEIRO = 10;
 	public static final int CAPACIDADE_JOGO = 2;
 	public static final int VALOR_UNIDADE_EMBARCACAO = 5;
+	public static final int NUMERO_EMBARCACOES = 5;
 	
 	/*Constantes para cores de células*/
 	public static final Color CorAgua = null;//new Color(50,50,255); //um tom de azul mais claro que o azul puro
