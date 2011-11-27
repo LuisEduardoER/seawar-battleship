@@ -504,6 +504,7 @@ public class Servidor implements IMessageListener {
 				fireDisplayChangeEvent(
 						new ServerEvent(String.format("%s ganhou do %s no jogo %s", adversario.getLogin(), jogador.getLogin(), jogo.getIdJogo()), TipoEvento.DisplayAtualizado)
 						);
+				
 			}
 		}			
 	}
@@ -546,13 +547,17 @@ public class Servidor implements IMessageListener {
 				
 				this.declararVencedor(jogo, jogador);
 				this.declararPerdedor(jogo, adversario);
+				try{
 				jogador.gravarPontuacao(adversario);
 				adversario.gravarPontuacao(jogador);
-				
+				}
+				catch(Exception e){
+				 Log.gravarLog(e.getMessage());
+				}
 				fireDisplayChangeEvent(
 						new ServerEvent(String.format("%s ganhou do %s no jogo %s", jogador.getLogin(), adversario.getLogin(), jogo.getIdJogo()), TipoEvento.DisplayAtualizado)
 						);
-				firePlayerListChangeEvent(new ServerEvent(aListaJogadorJogando, TipoEvento.JogadoresAtualizados));
+				enviarMensagemListaAtualizada(jogador);
 			}
 		}
 		
@@ -684,7 +689,7 @@ public class Servidor implements IMessageListener {
 	}
 
 	private void CarregarBarcosDoJogadorNoJogo(List<String> lstTokens, Socket socket) {
-		int jogoId = -1;
+		int jogoId = -1;//key:value;key2:value2
 		Object tabuleiroObject = null;
 		for(String token : lstTokens){
 			String[] split = token.split(Constantes.VALUE_SEPARATOR);
@@ -1069,13 +1074,17 @@ public class Servidor implements IMessageListener {
 			//Atualiza a lista de jogadores online
 			firePlayerListChangeEvent(new ServerEvent(aListaJogadorOnline, TipoEvento.JogadoresAtualizados));
 			fireDisplayChangeEvent(new ServerEvent(String.format("%s conectou",obj.getLogin()), TipoEvento.DisplayAtualizado));
-			//Envia a mensagem multicast pra todos os jogadores falando que fulano conectou-se no servidor
-			String msgMulticast = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.NovoJogadorConectado);
-			msgMulticast = String.format(msgMulticast, obj.getLogin());
-			MulticastSender multicast = new MulticastSender(msgConectado);
-			serverExecutor.execute(multicast);
-		}
+			enviarMensagemListaAtualizada(obj);
+			}
 		
+	}
+
+	private void enviarMensagemListaAtualizada(Jogador obj) {
+		//Envia a mensagem multicast pra todos os jogadores falando que fulano conectou-se no servidor
+		String msgMulticast = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.NovoJogadorConectado);
+		msgMulticast = String.format(msgMulticast, obj.getLogin());
+		MulticastSender multicast = new MulticastSender(msgMulticast);
+		serverExecutor.execute(multicast);
 	}
 	//Permite que os jogadores possam posicionar suas embarcações
 	private void iniciarPosicionamentos(Jogo jogo) {
