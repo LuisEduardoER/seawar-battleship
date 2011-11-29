@@ -1062,9 +1062,9 @@ public class Servidor implements IMessageListener {
 		Usuario usuarioValidado = Usuario.logar(obj.getLogin(), obj.getSenha());
 		if(usuarioValidado != null ){
 		//if(true){
-			//obj.carregarDadosUsuario(usuarioValidado);
-			//obj.setId_usuario(usuarioValidado.getId_usuario());
-			//obj.setPontuacao(usuarioValidado.getPontuacao());
+			obj.carregarDadosUsuario(usuarioValidado);
+			obj.setId_usuario(usuarioValidado.getId_usuario());
+			obj.setPontuacao(usuarioValidado.getPontuacao());
 			aListaJogadorOnline.add(obj);
 			//informa o jogador que ele foi conectado com sucesso!
 			String msgConectado = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.ConectarServidor);
