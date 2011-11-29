@@ -433,10 +433,14 @@ public class Servidor implements IMessageListener {
 
 	private void AtivarBotComoOponenteParaJogador(List<String> lstTokens,Socket socketEnviou) {
 		int jogoId = -1;
+		boolean aceitouJogar = false;
 		for(String token : lstTokens){
 			String[] split = token.split(Constantes.VALUE_SEPARATOR);
 			if(split[TOKEN_HEADER].equalsIgnoreCase("jogoid")){
 				jogoId = Integer.parseInt(split[TOKEN_VALUE]);
+			}
+			else if(split[TOKEN_HEADER].equalsIgnoreCase("aceitou")){
+				aceitouJogar = Boolean.parseBoolean(split[TOKEN_VALUE]);
 			}
 		}
 		//Recupera o jogo que conterá o bot
@@ -445,8 +449,10 @@ public class Servidor implements IMessageListener {
 			//Encontra o jogador que solicitou o bot
 			Jogador jogador = jogo.EncontrarJogador(socketEnviou);
 			if(jogador != null){
-				//Define o adversário do jogador como um bot
+				//Pega o adversário, que foi marcado como bot ao cair do jogo
 				Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
+				
+				if(aceitouJogar){
 				//Se o adversario for um bot e for a vez dele jogar, ele jogará
 				if(adversario.isBot() && adversario.isMinhaVez()){
 					Bot bot = (Bot)adversario;
@@ -457,7 +463,10 @@ public class Servidor implements IMessageListener {
 				fireDisplayChangeEvent(
 						new ServerEvent(String.format("Jogador %s ativou o bot no lugar do jogador %s", jogador.getLogin(), /*bot.getLogin()*/"adversário"), TipoEvento.DisplayAtualizado)
 						);
-				
+				}
+				else{
+					this.declararVencedor(jogo, jogador);
+				}
 				
 			}
 		}		
@@ -527,24 +536,8 @@ public class Servidor implements IMessageListener {
 			if(jogador != null){
 
 				Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
-				
-//				//Atualiza a pontuação do cara se nao for BOT (200 pontos por perder?)
-//				int pontos = 0;
-//				//Verifica quantos barcos ele afundou no campo do adversário
-//				for(Embarcacao barco : this.getTabuleiroDefesa().getArrEmbarcacoes()){
-//					if(barco != null){
-//						if(barco.getNaufragado()){
-//							//pontua pelo valor do barco
-//							pontos += barco.getValorEmbarcacao();
-//						}else {
-//							for(Celula celulaBarco : barco.getListaCelulas()){							
-//								//Pontua de acordo com as células que ele acertou
-//								pontos += (celulaBarco.getTipoCelula() == TipoCelula.Embarcacao && celulaBarco.isAtirada()) ? barco.getValorEmbarcacao()/barco.getTamanho() : 0;
-//							}
-//						}
-//					}
-//				}
-				
+				calculaPontuacaoVencedor(jogador);
+				calculaPontuacaoPerdedor(adversario);
 				this.declararVencedor(jogo, jogador);
 				this.declararPerdedor(jogo, adversario);
 				try{
@@ -562,7 +555,43 @@ public class Servidor implements IMessageListener {
 		}
 		
 	}
-	
+
+	private void calculaPontuacaoVencedor(Jogador jogadorVencedor) {
+		//Atualiza a pontuação do cara se nao for BOT
+		int pontos = 0;
+		//Verifica quantos barcos ele afundou
+		for(Embarcacao barco : jogadorVencedor.getTabuleiroAtaque().getArrEmbarcacoes()){
+			if(barco.getNaufragado()){
+				//pontua pelo valor do barco
+				pontos += barco.getValorEmbarcacao()*10;
+			}else {
+				for(Celula celulaBarco : barco.getListaCelulas()){							
+					//Pontua de acordo com as células que ele acertou
+					pontos += ((celulaBarco.getTipoCelula() == TipoCelula.Embarcacao) ? barco.getValorEmbarcacao()/barco.getTamanho() : 0) * 5;
+				}
+			}
+		}
+		//Define a pontuação calculada com base nos barcos afundados e partes acertadas
+		jogadorVencedor.setPontuacao(pontos);
+	}
+	private void calculaPontuacaoPerdedor(Jogador jogadorPerdedor) {
+		//Atualiza a pontuação do cara se nao for BOT
+		int pontos = 0;
+		//Verifica quantos barcos ele afundou
+		for(Embarcacao barco : jogadorPerdedor.getTabuleiroAtaque().getArrEmbarcacoes()){
+			if(barco.getNaufragado()){
+				//pontua pelo valor do barco
+				pontos += (barco.getValorEmbarcacao());
+			}else {
+				for(Celula celulaBarco : barco.getListaCelulas()){							
+					//Pontua de acordo com as células que ele acertou
+					pontos += ((celulaBarco.getTipoCelula() == TipoCelula.Embarcacao) ? barco.getValorEmbarcacao()/barco.getTamanho() : 0);
+				}
+			}
+		}
+		//Define a pontuação calculada com base nos barcos afundados e partes acertadas
+		jogadorPerdedor.setPontuacao(pontos);
+	}
 	private void declararVencedor(Jogo jogo,Jogador vencedor) {
 		//Define o vencedor no id do usuário
 		//this.jogoCorrente.declaraJogadorVencedor(vencedor.getId_usuario());
@@ -1060,8 +1089,7 @@ public class Servidor implements IMessageListener {
 			}
 		}
 		Usuario usuarioValidado = Usuario.logar(obj.getLogin(), obj.getSenha());
-		if(usuarioValidado != null ){
-		//if(true){
+		if(usuarioValidado != null){
 			obj.carregarDadosUsuario(usuarioValidado);
 			obj.setId_usuario(usuarioValidado.getId_usuario());
 			obj.setPontuacao(usuarioValidado.getPontuacao());

@@ -96,7 +96,7 @@ public class DicionarioMensagem {
 			mensagem = CriarMensagemParametrizada("jogoid", "nome", "usuarioid");
 			break;
 		case JogarComBot:
-			mensagem = CriarMensagemParametrizada("jogoid");
+			mensagem = CriarMensagemParametrizada("jogoid", "aceitou");
 			break;
 		case SairDeJogo:
 			mensagem = CriarMensagemParametrizada("jogoid");
