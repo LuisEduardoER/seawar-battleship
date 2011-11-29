@@ -395,11 +395,12 @@ public class ClienteMulti implements IMessageListener {
 					if(jogador != this.perfil){
 						if(JOptionPane.showConfirmDialog(null, "Seu adversário saiu do jogo por algum motivo,\ndeseja continuar utilizando um bot em seu lugar?\n(Seus pontos continuarão a ser computados)", "Adversário desconectado", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION){
 							this.jogo.setBot(jogador);
-							EnviarDecisaoJogarContraBot();
+							EnviarDecisaoJogarContraBot(true);
 							fireAtivarBotEvent(this.jogo, jogador);
 						}
 						else{
-							this.jogo.removerJogador(jogador);	
+							this.jogo.removerJogador(jogador);
+							EnviarDecisaoJogarContraBot(false);	
 						}
 					}
 					break;
@@ -415,9 +416,9 @@ public class ClienteMulti implements IMessageListener {
 	}
 
 	//Envia a mensagem para o servidor que você escolheu jogar contra BOT
-	private void EnviarDecisaoJogarContraBot() {
+	private void EnviarDecisaoJogarContraBot(boolean aceitou) {
 		String msg = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.JogarComBot);
-		String msgEnviar = String.format(msg,this.jogo.getIdJogo());
+		String msgEnviar = String.format(msg,this.jogo.getIdJogo(), aceitou);
 		MessageSender send = new MessageSender(this.mySocket, msgEnviar);
 		send.run();		
 	}

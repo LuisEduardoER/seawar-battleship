@@ -24,6 +24,7 @@ import java.util.Dictionary;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -406,6 +407,11 @@ public class NewClientGUI extends Applet{
 		pnlListas.setVisible(false);
 		lblTurnoAtacar.setVisible(false);
 		btnDesistir.setEnabled(true);
+		
+		pnlTabuleiros.repaint();
+		//Rectangle areaTabuleiros = pnlTabuleiros.getBounds();
+		//pnlTabuleiros.repaint(areaTabuleiros);
+		pnlTabuleiros.revalidate();
 	}
 
 	private void exibirTelaInicial() {
@@ -489,6 +495,11 @@ public class NewClientGUI extends Applet{
 				botao.setCelula(celulaTabuleiro);
 				//Define a cor do botão se for barco
 				botao.setBackground(getCorBotao(celulaTabuleiro));
+				
+				//Define uma imagem para o botão
+				Icon icone = celulaTabuleiro.getIcone();
+				if(icone != null)
+					botao.setIcon(icone);
 				
 				botao.repaint();
 			}
@@ -876,10 +887,10 @@ public class NewClientGUI extends Applet{
 			public void carregarTelaJogo(Object source) {
 				try{
 					mostrarPainelLogin(false);		
-					exibirTabuleiros();
 					habilitarTabuleirosParaPosicionamento();
 					PreencherTabuleiroDefesa(client.getPerfil().getTabuleiroDefesa());
 					PreencherTabuleiroAtaque(client.getPerfil().getTabuleiroAtaque());
+					exibirTabuleiros();
 	
 					
 				}
