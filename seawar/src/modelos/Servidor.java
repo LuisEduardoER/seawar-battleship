@@ -1059,9 +1059,9 @@ public class Servidor implements IMessageListener {
 				obj.setSenha(split[TOKEN_VALUE]);
 			}
 		}
-		//Usuario usuarioValidado = Usuario.logar(obj.getLogin(), obj.getSenha());
-		//if(usuarioValidado != null ){
-		if(true){
+		Usuario usuarioValidado = Usuario.logar(obj.getLogin(), obj.getSenha());
+		if(usuarioValidado != null ){
+		//if(true){
 			//obj.carregarDadosUsuario(usuarioValidado);
 			//obj.setId_usuario(usuarioValidado.getId_usuario());
 			//obj.setPontuacao(usuarioValidado.getPontuacao());
