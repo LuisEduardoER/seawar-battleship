@@ -141,21 +141,25 @@ public class Bot extends Jogador implements Runnable{
 			for(int y = 0; y< tamY;y++){
 				cel = this.getTabuleiroAtaque().encontrarCelula(x, y);
 				foiAcertada = false;
-				foiAcertada = this.getTabuleiroAtaque().getEmbarcacao(x, y).getCelula(x, y).isAtirada();
+				//foiAcertada = this.getTabuleiroAtaque().getEmbarcacao(cel.x, cel.y).getCelula(cel.x, cel.y).isAtirada();
+				foiAcertada = this.getTabuleiroAtaque().seCelulaAtacada(cel);
 				if (cel.getTipoCelula() == TipoCelula.Embarcacao && foiAcertada) {
-					for(Celula celPesquisa : arrNavios){
-						if(cel != celPesquisa){
+					arrNavios.add(cel);
+					//for(Celula celPesquisa : arrNavios){
+					//	if(cel == celPesquisa){
 						//if(this.getTabuleiroAtaque().getEmbarcacao(cel.x, cel.y).getNomeEmbarcacao() != this.getTabuleiroAtaque().getEmbarcacao(celPesquisa.x, celPesquisa.y).getNomeEmbarcacao()){
-							arrNavios.add(cel);								
-						}
-					}
+					//		arrNavios.remove(cel);								
+					//	}
+					//}
 				}
 			}
 		}
+
 		//Passo todas as células que foram acertadas para a pilha de naviosNaoAfundados
 		for(Celula celPesquisa : arrNavios){
 			if(celPesquisa != null){
 				pushNaviosNaoAfundados(celPesquisa);
+				System.out.print(celPesquisa.x + "," + celPesquisa.y);
 			}
 		}
 		bAnalisouNavios = true;
@@ -163,7 +167,7 @@ public class Bot extends Jogador implements Runnable{
 	
 	public void analisarTabuleiro() {
 		if (!bAnalisouNavios){
-			//analisarNaviosTabuleiro();
+			analisarNaviosTabuleiro();
 		}
 		Celula atacada = null;
 		if (bAcertouEmbarcacao && !bAfundouEmbarcacao) {
@@ -210,11 +214,27 @@ public class Bot extends Jogador implements Runnable{
 				atacada.acertar();
 				setCelulasEscolhida(atacada);
 			}
+			//Caso o retorno da proxima celula a ser atacada seja nulo, defino as variaveis abaixo
+			//como false, para o Bot começar a atirar randomicamente, uma vez que não há mais barcos à afundas
+			else{
+				bAfundouEmbarcacao = false;	
+				bAcertouEmbarcacao = false;
+				celulasAtacadasEmbarcacao.clear();
+			}
 		} else {
 			// Após acertar duas células do navio vai pegando a proxima até
 			// afundar o navio
 			atacada = getCelula();
-			setCelulasEscolhida(atacada);
+			if (atacada != null) {
+				setCelulasEscolhida(atacada);
+			}
+			//Caso o retorno da proxima celula a ser atacada seja nulo, defino as variaveis abaixo
+			//como false, para o Bot começar a atirar randomicamente, uma vez que não há mais barcos à afundas
+			else{
+				bAfundouEmbarcacao = false;	
+				bAcertouEmbarcacao = false;
+				celulasAtacadasEmbarcacao.clear();
+			}	
 		}
 	}
 
