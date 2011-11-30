@@ -490,8 +490,8 @@ public class Servidor implements IMessageListener {
 			if(jogador != null){				
 				//Encontra o adversário do jogador
 				Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
-				calculaPontuacaoVencedor(adversario);
-				calculaPontuacaoPerdedor(jogador);
+				calculaPontuacaoVencedor(adversario, jogador);
+				calculaPontuacaoPerdedor(jogador, adversario);
 				this.declararVencedor(jogo, adversario);
 				this.declararPerdedor(jogo, jogador);
 				try{
@@ -532,8 +532,8 @@ public class Servidor implements IMessageListener {
 			if(jogador != null){
 
 				Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
-				calculaPontuacaoVencedor(jogador);
-				calculaPontuacaoPerdedor(adversario);
+				calculaPontuacaoVencedor(jogador, adversario);
+				calculaPontuacaoPerdedor(adversario,jogador);
 				try{
 					//grava a pontuação de acordo com os  barcos acertados no tabuleiro do outro jogador
 					adversario.gravarPontuacao();
@@ -553,11 +553,11 @@ public class Servidor implements IMessageListener {
 		
 	}
 
-	private void calculaPontuacaoVencedor(Jogador jogadorVencedor) {
+	private void calculaPontuacaoVencedor(Jogador jogadorVencedor, Jogador adversario) {
 		//Atualiza a pontuação do cara se nao for BOT
 		int pontos = 0;
 		//Verifica quantos barcos ele afundou
-		for(Embarcacao barco : jogadorVencedor.getTabuleiroAtaque().getArrEmbarcacoes()){
+		for(Embarcacao barco : adversario.getTabuleiroDefesa().getArrEmbarcacoes()){
 			if(barco.getNaufragado()){
 				//pontua pelo valor do barco
 				pontos += barco.getValorEmbarcacao()*10;
@@ -571,11 +571,11 @@ public class Servidor implements IMessageListener {
 		//Define a pontuação calculada com base nos barcos afundados e partes acertadas
 		jogadorVencedor.setPontuacao(jogadorVencedor.getPontuacao() + pontos);
 	}
-	private void calculaPontuacaoPerdedor(Jogador jogadorPerdedor) {
+	private void calculaPontuacaoPerdedor(Jogador jogadorPerdedor, Jogador adversario) {
 		//Atualiza a pontuação do cara se nao for BOT
 		int pontos = 0;
 		//Verifica quantos barcos ele afundou
-		for(Embarcacao barco : jogadorPerdedor.getTabuleiroAtaque().getArrEmbarcacoes()){
+		for(Embarcacao barco : adversario.getTabuleiroDefesa().getArrEmbarcacoes()){
 			if(barco.getNaufragado()){
 				//pontua pelo valor do barco
 				pontos += (barco.getValorEmbarcacao());
@@ -1085,11 +1085,12 @@ public class Servidor implements IMessageListener {
 				obj.setSenha(split[TOKEN_VALUE]);
 			}
 		}
-		Usuario usuarioValidado = Usuario.logar(obj.getLogin(), obj.getSenha());
-		if(usuarioValidado != null){
-			obj.carregarDadosUsuario(usuarioValidado);
-			obj.setId_usuario(usuarioValidado.getId_usuario());
-			obj.setPontuacao(usuarioValidado.getPontuacao());
+//		Usuario usuarioValidado = Usuario.logar(obj.getLogin(), obj.getSenha());
+//		if(usuarioValidado != null){
+		if(true){
+//			obj.carregarDadosUsuario(usuarioValidado);
+//			obj.setId_usuario(usuarioValidado.getId_usuario());
+//			obj.setPontuacao(usuarioValidado.getPontuacao());
 			aListaJogadorOnline.add(obj);
 			//informa o jogador que ele foi conectado com sucesso!
 			String msgConectado = DicionarioMensagem.GerarMensagemPorTipo(TipoMensagem.ConectarServidor);
