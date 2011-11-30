@@ -231,27 +231,9 @@ public class Jogador extends Usuario implements Cloneable {
 		return (Jogador)super.clone();
 	}
 
-	public void gravarPontuacao(Jogador adversario) {
+	public void gravarPontuacao() {
 		if(this.bIsBot)
 			return;
-			//Atualiza a pontuação do cara se nao for BOT (200 pontos por perder?)
-			int pontos = 0;
-			//Verifica quantos barcos ele afundou no campo do adversário
-			for(Embarcacao barco : adversario.getTabuleiroDefesa().getArrEmbarcacoes()){
-				if(barco != null){
-					if(barco.getNaufragado()){
-						//pontua pelo valor do barco
-						pontos += barco.getValorEmbarcacao();
-					}else {
-						for(Celula celulaBarco : barco.getListaCelulas()){							
-							//Pontua de acordo com as células que ele acertou
-							pontos += (celulaBarco.getTipoCelula() == TipoCelula.Embarcacao && celulaBarco.isAtirada()) ? barco.getValorEmbarcacao()/barco.getTamanho() : 0;
-						}
-					}
-				}
-			}
-			int novaPontuacao = this.getPontuacao() + pontos;
-			this.setPontuacao(novaPontuacao);
 			dao.UsuarioDAO.atualizarPontuacao(this);
 			
 	}
