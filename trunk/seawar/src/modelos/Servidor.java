@@ -466,6 +466,7 @@ public class Servidor implements IMessageListener {
 				}
 				else{
 					this.declararVencedor(jogo, jogador);
+					removerJogo(jogoId);
 				}
 				
 			}
@@ -486,26 +487,21 @@ public class Servidor implements IMessageListener {
 		if(jogo != null){
 			//Recupera o jogador que perdeu o jogo
 			Jogador jogador = jogo.EncontrarJogador(socketEnviou);
-			if(jogador != null){
-				//Atualiza a pontuação do cara (200 pontos por perder?)
-				int pontos = 0;
-				//Verifica quantos barcos ele afundou
-				for(Embarcacao barco : jogador.getTabuleiroAtaque().getArrEmbarcacoes()){
-					if(barco.getNaufragado()){
-						//pontua pelo valor do barco
-						pontos += barco.getValorEmbarcacao();
-					}else {
-						for(Celula celulaBarco : barco.getListaCelulas()){							
-							//Pontua de acordo com as células que ele acertou
-							pontos += (celulaBarco.getTipoCelula() == TipoCelula.Embarcacao) ? barco.getValorEmbarcacao()/barco.getTamanho() : 0;
-						}
-					}
-				}
-				//Define a pontuação calculada com base nos barcos afundados e partes acertadas
-				jogador.setPontuacao(pontos);
-				
+			if(jogador != null){				
 				//Encontra o adversário do jogador
 				Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
+				calculaPontuacaoVencedor(adversario);
+				calculaPontuacaoPerdedor(jogador);
+				this.declararVencedor(jogo, adversario);
+				this.declararPerdedor(jogo, jogador);
+				try{
+					//grava a pontuação de acordo com os  barcos acertados no tabuleiro do outro jogador
+				jogador.gravarPontuacao();
+				adversario.gravarPontuacao();
+				}
+				catch(Exception e){
+					 Log.gravarLog(e.getMessage());					
+				}
 				//Declara o jogador como perdedor e o adversário como ganhador
 				this.declararVencedor(jogo, adversario);
 				this.declararPerdedor(jogo, jogador);
@@ -538,15 +534,16 @@ public class Servidor implements IMessageListener {
 				Jogador adversario = jogo.EncontrarJogadorAdversario(jogador);
 				calculaPontuacaoVencedor(jogador);
 				calculaPontuacaoPerdedor(adversario);
-				this.declararVencedor(jogo, jogador);
-				this.declararPerdedor(jogo, adversario);
 				try{
-				jogador.gravarPontuacao(adversario);
-				adversario.gravarPontuacao(jogador);
+					//grava a pontuação de acordo com os  barcos acertados no tabuleiro do outro jogador
+					adversario.gravarPontuacao();
+					jogador.gravarPontuacao();
 				}
 				catch(Exception e){
 				 Log.gravarLog(e.getMessage());
 				}
+				this.declararVencedor(jogo, jogador);
+				this.declararPerdedor(jogo, adversario);
 				fireDisplayChangeEvent(
 						new ServerEvent(String.format("%s ganhou do %s no jogo %s", jogador.getLogin(), adversario.getLogin(), jogo.getIdJogo()), TipoEvento.DisplayAtualizado)
 						);
@@ -572,7 +569,7 @@ public class Servidor implements IMessageListener {
 			}
 		}
 		//Define a pontuação calculada com base nos barcos afundados e partes acertadas
-		jogadorVencedor.setPontuacao(pontos);
+		jogadorVencedor.setPontuacao(jogadorVencedor.getPontuacao() + pontos);
 	}
 	private void calculaPontuacaoPerdedor(Jogador jogadorPerdedor) {
 		//Atualiza a pontuação do cara se nao for BOT
@@ -590,7 +587,7 @@ public class Servidor implements IMessageListener {
 			}
 		}
 		//Define a pontuação calculada com base nos barcos afundados e partes acertadas
-		jogadorPerdedor.setPontuacao(pontos);
+		jogadorPerdedor.setPontuacao(jogadorPerdedor.getPontuacao() + pontos);
 	}
 	private void declararVencedor(Jogo jogo,Jogador vencedor) {
 		//Define o vencedor no id do usuário
